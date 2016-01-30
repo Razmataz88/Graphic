@@ -1,17 +1,27 @@
 #ifndef EDGEWEIGHTCONTROLLER_H
 #define EDGEWEIGHTCONTROLLER_H
+#include "edge.h"
+#include "node.h"
 
+#include <QLineEdit>
 #include <QObject>
 
-class EdgeWeightController : public QObject
+class LabelController : public QObject
 {
     Q_OBJECT
 public:
-    explicit EdgeWeightController(QObject *parent = 0);
+    LabelController(Edge * anEdge, QLineEdit * anEdit);
+    LabelController(Node * aNode, QLineEdit * anEdit);
 
-signals:
+private slots:
+    void setEdgeWeight(QString string);
+    void setNodeLabel(QString string);
+    void deletedLineEdit();
 
-public slots:
+private:
+    Edge * edge;
+    Node * node;
+    QLineEdit * edit;
 };
 
 #endif // EDGEWEIGHTCONTROLLER_H

@@ -1,17 +1,23 @@
 #ifndef COLORFILLCONTROLLER_H
 #define COLORFILLCONTROLLER_H
+#include "node.h"
 
+#include <QPushButton>
 #include <QObject>
 
 class ColorFillController : public QObject
 {
     Q_OBJECT
 public:
-    explicit ColorFillController(QObject *parent = 0);
+    ColorFillController(Node * aNode, QPushButton * aButton);
 
-signals:
+private slots:
+    void setNodeFillColor();
+    void deleteButton();
 
-public slots:
+private:
+    Node * node;
+    QPushButton * button;
 };
 
 #endif // COLORFILLCONTROLLER_H

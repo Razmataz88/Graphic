@@ -1,12 +1,30 @@
 #ifndef EDGESIZECONTROLLER_H
 #define EDGESIZECONTROLLER_H
 
-#include <QObject>
+#include "edge.h"
+#include "node.h"
 
-class EdgeSizeController
+#include <QObject>
+#include <QDoubleSpinBox>
+
+class SizeController : QObject
+
 {
+    Q_OBJECT
 public:
-    EdgeSizeController();
+    SizeController(Edge * anEdge, QDoubleSpinBox * aBox);
+    SizeController(Node * aNode, QDoubleSpinBox * aBox);
+
+
+private slots:
+    void setEdgeSize(double value);
+    void setNodeSize(double value);
+    void deletedBox();
+
+private:
+    Edge * edge;
+    Node * node;
+    QDoubleSpinBox * box;
 };
 
 #endif // EDGESIZECONTROLLER_H

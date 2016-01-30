@@ -1,17 +1,28 @@
 #ifndef EDGEWEIGTHCONTROLLLER_H
 #define EDGEWEIGTHCONTROLLLER_H
+#include "edge.h"
+#include "node.h"
 
+#include <QDoubleSpinBox>
 #include <QObject>
 
-class EdgeWeigthControlller : public QObject
+class LabelSizeController : public QObject
 {
     Q_OBJECT
 public:
-    explicit EdgeWeigthControlller(QObject *parent = 0);
+    LabelSizeController(Edge * anEdge, QDoubleSpinBox * aBox);
+    LabelSizeController(Node * aNode, QDoubleSpinBox * aBox);
 
-signals:
+private slots:
+    void setEdgeWeightSize(double value);
+    void setNodeLabelSize(double value);
+    void deletedSpinBox();
 
-public slots:
+private:
+    Edge * edge;
+    Node * node;
+    QDoubleSpinBox * box;
+
 };
 
 #endif // EDGEWEIGTHCONTROLLLER_H

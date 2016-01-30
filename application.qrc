@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+	<file>fonts/cmmi10.ttf</file>
+	<file>fonts/cmr10.ttf</file>
+</qresource>
+</RCC>
