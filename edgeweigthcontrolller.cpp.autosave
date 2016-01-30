@@ -1,0 +1,13 @@
+#include "edgeweigthcontrolller.h"
+
+
+EdgeWeigthControlller::EdgeWeigthControlller(Edge *anEdge, QDoubleSpinBox *aBox)
+{
+    edge = anEdge;
+    box = aBox;
+    if (box != nullptr || box != 0)
+        connect(box, SIGNAL(valueChanged(double)),
+                this, SLOT(setEdgeWeightLabel(double)));
+}
+
+
