@@ -107,10 +107,6 @@ void Label::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 void Label::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    if (parentItem() != nullptr)
-        setPos(parentItem()->boundingRect().center().x() - boundingRect().width() / 2.,
-               parentItem()->boundingRect().center().y() - boundingRect().height() / 2.);
     QGraphicsTextItem::paint(painter, option, widget);
-
 }
 

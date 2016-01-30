@@ -333,7 +333,7 @@ void PreView::Style_Graph(Graph * graph, int graphType, qreal nodeDiameter,
              edge->setWeightLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
              if (edgeLabel.length() != 0)
                 edge->setWeight(edgeLabel);
-             edge->adjust();
+             //edge->adjust();
              edge->setParentItem(graph);
         }
     }

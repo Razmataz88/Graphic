@@ -371,7 +371,6 @@ qreal Edge::getSourceRadius()
 void Edge::setPenWidth(qreal aPenWidth)
 {
     penSize = aPenWidth;
-    update();
 }
 
 /*
@@ -440,7 +439,6 @@ qreal Edge::getRotation()
 void Edge::setColour(QColor colour)
 {
     edgeColour = colour;
-    update(); //updates the edge ddrawing
 }
 
 /*
