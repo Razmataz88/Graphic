@@ -1,3 +1,13 @@
+/*
+ * File:	mainwindow.h
+ * Author:	Rachel Bood
+ * Date:	January 25, 2015.
+ * Version:	1.1
+ *
+ * Purpose:	
+ */
+
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -8,7 +18,7 @@
 #include <QScrollArea>
 
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 class MainWindow : public QMainWindow
@@ -16,14 +26,14 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget * parent = 0);
     ~MainWindow();
     void setKeyStatusLabel(QString text);
 
 private slots:
     bool save_Graph();
     bool load_Graphic_File();
-    void load_Grapha_Library();
+    void load_Graphic_Library();
     void select_Custom_Graph(QString graphName);
     void generate_Graph();
     void style_Graph();
@@ -54,7 +64,7 @@ private slots:
     void on_tabWidget_currentChanged(int index);
 
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow * ui;
     QDir dir;
     QString fileDirectory;
     QGridLayout * gridLayout;

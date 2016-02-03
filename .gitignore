@@ -1,0 +1,8 @@
+*.[oa]
+moc_*
+Makefile
+.emacs_zsd
+Graphic
+qrc_application.cpp
+ui_mainwindow.h
+*~

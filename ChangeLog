@@ -1,0 +1,9 @@
+2016 Feb 3 (JD)
+        Removed a number of files which were not needed.
+        Fixed a filename case error.
+        Rmdir'ed Graphic.
+        Renamed the .pro file.
+        Fixed a few typos in comments.
+        Tidied up a few files.
+        None of the above changes should affect Graphic in any functional way.
+        Created and populated a .gitignore file.
