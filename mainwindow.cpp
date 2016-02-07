@@ -1156,6 +1156,7 @@ void MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
       {
 	  ui->partitionLabel->setText("Nodes & Blades");
 	  ui->numOfNodes1->setMinimum(2);
+	  ui->numOfNodes2->show();
 	  ui->numOfNodes2->setMinimum(3);
 	  if (ui->numOfNodes2->value() < 3)
 	      ui->numOfNodes2->setValue(3);
