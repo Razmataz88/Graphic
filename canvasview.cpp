@@ -1,5 +1,5 @@
 /*
- * File:    canvas.cpp
+ * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
  * Version: 1.1
