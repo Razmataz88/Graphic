@@ -38,7 +38,7 @@ static const bool verbose = false;
 
 /*
  * Name:        Edge
- * Purpose:     Contructor for Edge class
+ * Purpose:     Constructor for Edge class
  * Arguments:   two Nodes
  * Output:      none
  * Modifies:    private Edge variables
@@ -205,7 +205,7 @@ void Edge::setWeight(QString aWeight)
  * Name:        isDigits()
  * Purpose:     Checks if the string contains only digits.
  * Arguments:   String
- * Output:      boolean
+ * Output:      Boolean
  * Modifies:    none
  * Returns:     True if string contains only digits otherwise false.
  * Assumptions: none
@@ -552,7 +552,7 @@ qreal Edge::getWeightLabelSize()
  * Assumptions: none
  * Bugs:        none
  * Notes:       This is a function that MUST be implemented when creating a
- *              custom QGrpahicsItem.  The issue with bounding
+ *              custom QGraphicsItem.  The issue with bounding
  *		Rectangles is that they do not rotate with the
  *		QGraphicsItem.  What I mean is, that should the user
  *		create an diagonal edge, the bounding rect WON'T be
@@ -563,7 +563,7 @@ qreal Edge::getWeightLabelSize()
  *		that updates the bounding rect so it is rotated and
  *		it's length is parallel to the edge length.
  *		Below is a *rough* drawing illustrating this idea.
- *              ISSUE:           SOLUION:
+ *              ISSUE:           SOLUTION:
  *              ------         -----
  *              | \  |          \ \ \
  *              |  \ |            \ \ \
