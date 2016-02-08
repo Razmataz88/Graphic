@@ -7,3 +7,15 @@
         Tidied up a few files.
         None of the above changes should affect Graphic in any functional way.
         Created and populated a .gitignore file.
+
+2016 Feb 5 (JD)
+        basicgraphs.cpp: fixed scaling of internal polygon of antiprisms
+        so that it scales according to both height and width.
+
+2016 Feb 8 (JD)
+        node.cpp: Modify setWeight(QString) so that it uses cmr10 if the
+           string is numeric.  This function is (apparently) called by the
+           callback in labelcontroller.cpp when a user edits a label.
+        edge.cpp: fix edge label font (cmmi and cmr were reversed).
+        canvasview.cpp: change the help text for join (JOIN_DESCRIPTION)
+           to clarify usage.
