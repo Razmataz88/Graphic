@@ -191,13 +191,16 @@ QGraphicsItem * Edge::getRootParent()
 
 void Edge::setWeight(QString aWeight)
 {
-    QRegExp re("\\d*");  // A digit (\d), zero or more times (*)
 
-    weight = aWeight;
-    if (re.exactMatch(aWeight))
-        label->setHtml("<font face=\"cmr10\">" + aWeight + "</font>");
-    else
-        label->setHtml("<font face=\"cmmi10\">" + aWeight + "</font>");
+    label->setLabel(aWeight);
+    //    QRegExp re("\\d*");  // A digit (\d), zero or more times (*)
+
+//    weight = aWeight;
+//    if (re.exactMatch(aWeight))
+//        label->setHtml("<font face=\"cmr10\">" + aWeight + "</font>");
+//    else
+//        label->setHtml("<font face=\"cmmi10\">" + aWeight + "</font>");
+//
 }
 
 

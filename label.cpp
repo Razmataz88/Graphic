@@ -3,11 +3,13 @@
 #include <QEvent>
 #include <QGraphicsSceneMouseEvent>
 #include <QDebug>
+#include <QInputMethodEvent>
 
 class QEvent;
 Label::Label(QGraphicsItem * parent)
 {
     this->setParentItem(parent);
+    labelText = "";
     setZValue(3);
     QFont font = this->font();
     QFont font1;
@@ -54,59 +56,32 @@ void Label::setTextInteraction(bool on, bool selectAll)
            c.clearSelection();
            this->setTextCursor(c);
            clearFocus();
-       }
-   }
-
-
-QVariant Label::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value)
-{
-//    if(change == QGraphicsItem::ItemSelectedChange) qDebug("itemChange '%s', selected=%s", this->toPlainText().toStdString().c_str(), value.toString().toStdString().c_str());
-//    if(change == QGraphicsItem::ItemSelectedChange
-//            && textInteractionFlags() != Qt::NoTextInteraction
-//            && !value.toBool())
-//    {
-//        // item received SelectedChange event AND is in editor mode AND is about to be deselected:
-//        setTextInteraction(false); // leave editor mode
-//    }
-    return QGraphicsTextItem::itemChange(change, value);
+    }
 }
 
-void Label::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
+void Label::setLabel(QString string)
 {
-    qDebug() << "Double click on label";
-    QGraphicsTextItem::mouseDoubleClickEvent(event);
-}
+    QRegExp re("\\d*");  // A digit (\d), zero or more times (*)
 
-void Label::mousePressEvent(QGraphicsSceneMouseEvent *event)
-{
-    qDebug("mouseClickEvent '%s'", this->toPlainText().toStdString().c_str());
-//    if (event->button() == Qt::RightButton)
-//    {
-//        if(textInteractionFlags() == Qt::TextEditorInteraction)
-//        {
-//            // if editor mode is already on: pass double click events on to the editor:
-//            QGraphicsTextItem::mousePressEvent(event);
-//            return;
-//        }
-
-//        // if editor mode is off:
-//        // 1. turn editor mode on and set selected and focused:
-//        setTextInteraction(true);
-
-//        // 2. send a single click to this QGraphicsTextItem (this will set the cursor to the mouse position):
-//        // create a new mouse event with the same parameters as evt
-//        QGraphicsSceneMouseEvent *click = new QGraphicsSceneMouseEvent(QEvent::GraphicsSceneMousePress);
-//        click->setButton(event->button());
-//        click->setPos(event->pos());
-//        QGraphicsTextItem::mousePressEvent(click);
-//        delete click; // don't forget to delete the event
-//    }
-    QGraphicsTextItem::mousePressEvent(event);
-
+    labelText = string;
+    QString htmlFormat = "";
+    for (int i = 0; i < string.length(); i++)
+    {
+        if (re.exactMatch(string.at(i)))
+            htmlFormat += "<font face=\"cmr10\">" + QString(string.at(i)) +"</font>";
+        else
+            htmlFormat += "<font face=\"cmmi10\">" + QString(string.at(i)) + "</font>";
+    }
+    this->setHtml(htmlFormat);
+    if (parentItem() != nullptr)
+        setPos(parentItem()->boundingRect().center().x() - boundingRect().width() / 2.,
+               parentItem()->boundingRect().center().y() - boundingRect().height() / 2.);
 }
 
 void Label::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     QGraphicsTextItem::paint(painter, option, widget);
 }
+
+
 

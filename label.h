@@ -11,11 +11,13 @@ public:
     enum { Type = UserType + 4 };
     int type() const { return Type; }
 
+    void setLabel(QString string);
+
 protected:
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event);
-    void mousePressEvent(QGraphicsSceneMouseEvent * event);
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+
+private:
+    QString labelText;
 };
 
 #endif // LABEL_H

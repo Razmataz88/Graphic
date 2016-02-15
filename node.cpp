@@ -420,14 +420,9 @@ void Node::setNodeLabel(QString aLabel, qreal number)
  */
 
 void Node::setNodeLabel(QString aLabel)
-{
-    QRegExp re("\\d*");
-    
+{    
     label = aLabel;
-    if (re.exactMatch(aLabel))
-	text->setHtml("<font face=\"cmr10\">" + label + "</font>");
-    else
-	text->setHtml("<font face=\"cmmi10\">" + label + "</font>");
+    text->setLabel(aLabel);
 }
 
 
