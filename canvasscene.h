@@ -1,12 +1,23 @@
-
-#include "node.h"
-#include <QGraphicsScene>
-
 #ifndef CANVASSCENE_H
 #define CANVASSCENE_H
 
-#include"mainwindow.h"
+/*
+ * File:	canvasscene.h
+ * Author:	Rachel Bood
+ * Date:	?
+ * Version:	1.0
+ *
+ * Purpose:
+ *
+ * Modification history:
+ * Feb 3, 2016 (JD):
+ *    Minor formatting changes/cleanups, add header comment.
+ */
 
+#include "node.h"
+#include "mainwindow.h"
+
+#include <QGraphicsScene>
 
 class CanvasScene : public QGraphicsScene
 {
@@ -16,7 +27,7 @@ public:
     {
         QPointF pos;
         Node * node;
-    }undo_Node_Pos;
+    } undo_Node_Pos;
 
     CanvasScene();
     void isSnappedToGrid(bool snap);
@@ -25,8 +36,8 @@ public:
     void setCanvasMode(int mode);
 
 protected:
-    void dragMoveEvent ( QGraphicsSceneDragDropEvent * event );
-    void dropEvent ( QGraphicsSceneDragDropEvent * event );
+    void dragMoveEvent (QGraphicsSceneDragDropEvent * event);
+    void dropEvent (QGraphicsSceneDragDropEvent * event);
     void drawBackground(QPainter * painter, const QRectF &rect);
     void mousePressEvent(QGraphicsSceneMouseEvent * event);
     void mouseMoveEvent(QGraphicsSceneMouseEvent * event);
@@ -36,12 +47,11 @@ protected:
 
 private:
     int numOfNodes, modeType;
-    //QRectF sRect;
     bool snapToGrid;
-    const QSize mCellSize; // The size of the cells in the grid.
-    QGraphicsItem *mDragged;  // The item being dragged.
-    Node * connectNode1a, *connectNode1b; //first Node to be joined
-    Node * connectNode2a, *connectNode2b; //second Node to be joined
+    const QSize mCellSize;		// The size of the cells in the grid.
+    QGraphicsItem * mDragged;		// The item being dragged.
+    Node * connectNode1a, * connectNode1b; // The first Nodes to be joined.
+    Node * connectNode2a, * connectNode2b; // The second Nodes to be joined.
     QPointF mDragOffset;
     QList<undo_Node_Pos *> undoPositions;
     // The distance from the top left of the item to the mouse position.

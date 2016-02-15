@@ -1,10 +1,16 @@
 /*
- * File:    canvas.cpp
- * Author:  Rachel Bood 100088769
+ * File:    canvasview.cpp
+ * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.0
+ * Version: 1.1
  *
- * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
+ * Purpose: Initializes a QGraphicsView that is used to house the
+ *	    QGraphicsScene.
+ *
+ * Modification history:
+ * Feb 8, 2016 (JD):
+ * (a) Change the help text for join (JOIN_DESCRIPTION) to clarify usage.
+ * (b) Drive-by cleanup.
  */
 
 #include "canvasview.h"
@@ -20,30 +26,27 @@
 
 static const bool verbose = true;
 
-static const QString JOIN_DESCRIPTION = "Join mode: Graphs can be joined by selecting "
-                                        "nodes and then pressing the \"J\" "
-                                        "key to join the graphs."
-                                        " Selecting one node from Graph 1 and "
-                                        "Graph 2 will join the graphs together "
-                                        "by one node. Selecting two nodes from "
-                                        "Graph 1 and Graph2 will connect the "
-                                        "graphs together by two nodes.";
+static const QString JOIN_DESCRIPTION =
+    "Join mode: Select one or two nodes from each graph and press 'J'.  "
+    "The first selected node from graph 1 is joined to the first selected "
+    "node from graph 2.  "
+    "If two other nodes were selected, they are joined to each other.";
 
-static const QString DELETE_DESCRIPTION = "Delete mode: Click on any node or "
-                                          "edge to be deleted. Double Click on a "
-                                          "graph to delete it entirely.";
+static const QString DELETE_DESCRIPTION =
+    "Delete mode: Click on any node or edge to be deleted.  "
+    "Double Click on a graph to delete it entirely.";
 
-static const QString EDIT_DESCRIPTION = "Edit mode: Move individual nodes "
-                                        "around within a graph.";
+static const QString EDIT_DESCRIPTION =
+    "Edit mode: Move individual nodes around within a graph.";
 
-static const QString FREESTYLE_DESCRIPTION = "You can add nodes by double "
-                                             "clicking and edges by left "
-                                             "clicking on two nodes "
-                                             "consecutively.";
+static const QString FREESTYLE_DESCRIPTION =
+    "You can add nodes by double clicking and edges by left "
+    "clicking on two nodes consecutively.";
+
 
 /*
  * Name:        Canvas
- * Purpose:     Contructor for Canvas class
+ * Purpose:     Contructor for Canvas class.
  * Arguments:   QWidget *
  * Output:      none
  * Modifies:    canvas
@@ -52,12 +55,13 @@ static const QString FREESTYLE_DESCRIPTION = "You can add nodes by double "
  * Bugs:        none
  * Notes:       none
  */
-CanvasView::CanvasView(QWidget *parent)
-    : QGraphicsView(parent), timerId(0)
+
+CanvasView::CanvasView(QWidget * parent)
+: QGraphicsView(parent), timerId(0)
 {
     aScene = new CanvasScene();
     aScene->setSceneRect(rect());
-    setViewportUpdateMode(BoundingRectViewportUpdate); //updates the canvas
+    setViewportUpdateMode(BoundingRectViewportUpdate); // Updates the canvas
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
     setAcceptDrops(true);
     setScene(aScene);
@@ -70,6 +74,7 @@ CanvasView::CanvasView(QWidget *parent)
     node2 = nullptr;
 }
 
+
 void CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
                                  QString label, qreal nodeLabelSize,
                                  QColor nodeFillColor, QColor nodeOutLineColor)
@@ -81,6 +86,7 @@ void CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
     nodeParams->fillColour = nodeFillColor;
     nodeParams->outlineColour = nodeOutLineColor;
 }
+
 
 Node * CanvasView::createNode(QPointF pos)
 {
@@ -107,57 +113,56 @@ Node * CanvasView::createNode(QPointF pos)
  * Bugs:        none
  * Notes:       none
  */
-void CanvasView::keyPressEvent(QKeyEvent *event)
+
+void CanvasView::keyPressEvent(QKeyEvent * event)
 {
     QGraphicsView::keyPressEvent(event);
 }
+
 
 void CanvasView::setMode(int m)
 {
     modeType = m;
     freestyleGraph = nullptr;
 
-    switch (modeType) {
-    case mode::join:
+    switch (modeType)
     {
-        emit setKeyStatusLabelText(JOIN_DESCRIPTION);
-        break;
-    }
-    case mode::del:
-    {
-        emit setKeyStatusLabelText(DELETE_DESCRIPTION);
-        break;
-    }
-    case mode::edit:
-    {
-        emit setKeyStatusLabelText(EDIT_DESCRIPTION);
-        break;
-    }
-    case mode::none:
-    {
-        emit setKeyStatusLabelText("");
-        break;
-    }
-    case mode::freestyle:
-    {
-        emit setKeyStatusLabelText(FREESTYLE_DESCRIPTION);
-        freestyleGraph = new Graph();
-        aScene->addItem(freestyleGraph);
-        freestyleGraph->isMoved();
-        node1 = nullptr;
-        node2 = nullptr;
-        break;
-    }
-    default:
+      case mode::join:
+	emit setKeyStatusLabelText(JOIN_DESCRIPTION);
+	break;
+
+      case mode::del:
+	emit setKeyStatusLabelText(DELETE_DESCRIPTION);
+	break;
+
+      case mode::edit:
+	emit setKeyStatusLabelText(EDIT_DESCRIPTION);
+	break;
+
+      case mode::none:
+	emit setKeyStatusLabelText("");
+	break;
+
+      case mode::freestyle:
+	emit setKeyStatusLabelText(FREESTYLE_DESCRIPTION);
+	freestyleGraph = new Graph();
+	aScene->addItem(freestyleGraph);
+	freestyleGraph->isMoved();
+	node1 = nullptr;
+	node2 = nullptr;
+	break;
+
+      default:
         break;
     }
     aScene->setCanvasMode(m);
 }
 
+
 /*
  * Name:        MouseDoubleClickEvent
- * Purpose:     generates a new node in the CanvasScene if in freestyle mode
- *              when use doubleclicks the mouse
+ * Purpose:     Generates a new node in the CanvasScene if in freestyle mode
+ *              when use doubleclicks the mouse.
  * Arguments:   QMouseEvent
  * Output:      none
  * Modifies:    CanvasScene
@@ -166,70 +171,70 @@ void CanvasView::setMode(int m)
  * Bugs:        none
  * Notes:       none
  */
-void CanvasView::mouseDoubleClickEvent(QMouseEvent *event)
+
+void CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
 {
+    QPointF pt;
+
     switch(getMode())
     {
-    case mode::freestyle:
-    {
-        QPointF pt = mapToScene(event->pos());
-        createNode(pt);
-        break;
-    }
-    default:
+      case mode::freestyle:
+	pt = mapToScene(event->pos());
+	createNode(pt);
+	break;
+
+      default:
         QGraphicsView::mouseDoubleClickEvent(event);
     }
 }
 
-void CanvasView::mousePressEvent(QMouseEvent *event)
-{
 
+void CanvasView::mousePressEvent(QMouseEvent * event)
+{
     QList<QGraphicsItem *> itemList = this->scene()->items(
-                this->mapToScene(event->pos()),
-                Qt::IntersectsItemShape,
-                Qt::DescendingOrder,
-                QTransform());
+	this->mapToScene(event->pos()),
+	Qt::IntersectsItemShape,
+	Qt::DescendingOrder,
+	QTransform());
 
     switch(getMode())
     {
-    case(mode::freestyle):
-    {
-        if (event->button() == Qt::LeftButton)
-        {
-            foreach(QGraphicsItem * item, itemList)
-            {
+      case(mode::freestyle):
+	if (event->button() == Qt::LeftButton)
+	{
+	    foreach(QGraphicsItem * item, itemList)
+	    {
+		// TODO: should this not be && item != 0 ?
+		if (item != nullptr || item != 0)  // Pointer is not null
+		{
+		    if (item->type() == Node::Type)
+		    {
+			if (node1 == nullptr)
+			    node1 = qgraphicsitem_cast<Node*>(item);
+			else if (node2 == nullptr)
+			    node2 = qgraphicsitem_cast<Node*>(item);
+		    }
+		}
+		// If the user selected two nodes make an edge.
+		if (node1 != nullptr && node2 != nullptr && node1 != node2)
+		{
+		    addEdgeToScene(node1, node2);
+		    // Set up the node variables so the user can add edges.
+		    node1 = node2;
+		    node2 = nullptr;
+		    break;
+		}
+	    }
+	}
+	break;
 
-                if (item != nullptr || item != 0) //pointer is not null
-                {
-                    if (item->type() == Node::Type)
-                    {
-                        if (node1 == nullptr)
-                            node1 = qgraphicsitem_cast<Node*>(item);
-                        else if (node2 == nullptr)
-                            node2 = qgraphicsitem_cast<Node*>(item);
-                    }
-                }
-                // if the user selected two nodes...make an edge
-                if (node1 != nullptr && node2 != nullptr && node1 != node2)
-                {
-                    addEdgeToScene(node1, node2);
-                    //set up the node variables so the user can  add edges
-                    node1 = node2;
-                    node2 = nullptr;
-                    break;
-                }
-            }
-        }
-        break;
-    }
-    default:
-    {
-        node1 = nullptr;
-        node2 = nullptr;
-        QGraphicsView::mousePressEvent(event);
-    }
+      default:
+	node1 = nullptr;
+	node2 = nullptr;
+	QGraphicsView::mousePressEvent(event);
     }
 }
+
 
 void CanvasView::snapToGrid(bool snap)
 {
@@ -237,7 +242,8 @@ void CanvasView::snapToGrid(bool snap)
     aScene->update();
 }
 
-void CanvasView::dragEnterEvent(QDragEnterEvent *event)
+
+void CanvasView::dragEnterEvent(QDragEnterEvent * event)
 {
     emit resetNoMode();
     QGraphicsView::dragEnterEvent(event);
@@ -245,38 +251,41 @@ void CanvasView::dragEnterEvent(QDragEnterEvent *event)
 
 Edge * CanvasView::addEdgeToScene(Node * source, Node * destination)
 {
-
     Edge * edge = createEdge(source, destination);
-    // if both nodes are from the same parent item
     if (node1->parentItem() == node2->parentItem())
     {
+	// Both nodes are from the same parent item
         Graph * parent = qgraphicsitem_cast<Graph*>(node1->parentItem());
         edge->setParentItem(parent);
     }
-    else //Each node has a different parent
+    else
     {
+	// Each node has a different parent
         /*
          * Create a graph that will be the parent of the two
          * graphs that each contain the nodes that the new
          * edge will be incident to
          */
         Graph * root = new Graph();
-        Graph* parent1 = nullptr;
-        Graph* parent2 = nullptr;
+        Graph * parent1 = nullptr;
+        Graph * parent2 = nullptr;
 
         parent1 = qgraphicsitem_cast<Graph*>(node1->parentItem());
         parent2 = qgraphicsitem_cast<Graph*>(node2->parentItem());
 
+	// TODO: should this not be &&
         while (parent1->parentItem() != nullptr
                || parent1->parentItem() != 0)
             parent1 = qgraphicsitem_cast<Graph*>(parent1->parentItem());
 
+	// TODO: should this not be &&
         while (parent2->parentItem() != nullptr
                || parent2->parentItem() != 0)
             parent2 = qgraphicsitem_cast<Graph*>(parent2->parentItem());
 
+	// TODO: should these not be &&
         if ((parent2 != nullptr || parent2 != 0)
-                && (parent1 != nullptr || parent1 != 0))
+	    && (parent1 != nullptr || parent1 != 0))
         {
             edge->setZValue(0);
             edge->setParentItem(root);
@@ -286,18 +295,19 @@ Edge * CanvasView::addEdgeToScene(Node * source, Node * destination)
             aScene->addItem(root);
             aScene->addItem(edge);
             edge->adjust();
-
         }
     }
     return edge;
 }
+
 
 Edge * CanvasView::createEdge(Node * source, Node * destination)
 {
     Edge * edge = new Edge(source, destination);
     edge->setPenWidth(edgeParams->size);
     edge->setColour(edgeParams->color);
-    edge->setWeightLabelSize((edgeParams->LabelSize > 0) ? edgeParams->LabelSize : 1 );
+    edge->setWeightLabelSize((edgeParams->LabelSize > 0)
+			     ? edgeParams->LabelSize : 1);
     edge->setWeight(edgeParams->label);
     edge->setDestRadius(node2->getDiameter() / 2.);
     edge->setSourceRadius(node1->getDiameter() / 2.);
@@ -305,10 +315,10 @@ Edge * CanvasView::createEdge(Node * source, Node * destination)
 }
 
 
-void CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel, qreal edgeLabelSize,
-                                 QColor edgeLineColor)
+void CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel,
+				 qreal edgeLabelSize, QColor edgeLineColor)
 {
-    if (verbose) /* debug statements */
+    if (verbose)
     {
         qDebug() << "edgeSize = " << edgeSize << endl;
         qDebug() << "edgeLabel = " << edgeLabel << endl;
@@ -319,6 +329,7 @@ void CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel, qreal edgeLa
     edgeParams->color = edgeLineColor;
     edgeParams->LabelSize = edgeLabelSize;
 }
+
 
 int CanvasView::getMode() const
 {
