@@ -19,3 +19,10 @@
         edge.cpp: fix edge label font (cmmi and cmr were reversed).
         canvasview.cpp: change the help text for join (JOIN_DESCRIPTION)
            to clarify usage.
+2016 Feb 15 (RB)
+	label.cpp: Created method setLabel(QString string) 
+	The argument, string, is examined and the font changes if a 
+	character is a letter or a number. 
+	Changes should be made to the node.cpp and mainwindow.ui so 
+	the user can decide if they want node labels to have a subscript
+	or not.
