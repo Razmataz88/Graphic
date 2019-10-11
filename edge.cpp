@@ -2,13 +2,15 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.1
+ * Version: 1.2
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
  * Feb 8, 2016 (JD):
- * (a) Fix edge label font (cmmi and cmr were reversed).
- * (b) Drive by formatting/typo/... cleanups.
+ *  (a) Fix edge label font (cmmi and cmr were reversed).
+ *  (b) Drive by formatting/typo/... cleanups.
+ * Oct 11, 2019 (JD, V1.2)
+ *  (a) Minor formatting changes.
  */
 
 #include "edge.h"
@@ -73,6 +75,7 @@ Edge::Edge(Node * sourceNode, Node * destNode)
 }
 
 
+
 /*
  * Name:        sourceNode()
  * Purpose:     Getter function for the sourceNode of the edge.
@@ -91,6 +94,7 @@ Node * Edge::sourceNode() const
 }
 
 
+
 /*
  * Name:        destNode
  * Purpose:     Getter function for the destNode.
@@ -107,6 +111,7 @@ Node * Edge::destNode() const
 {
     return dest;
 }
+
 
 
 /*
@@ -130,6 +135,7 @@ void Edge::editWeight(bool edit)
 }
 
 
+
 /*
  * Name:        getRootParent()
  * Purpose:     Returns the root parent of the edge.
@@ -149,6 +155,7 @@ QGraphicsItem * Edge::getRootParent()
         parent = parent->parentItem();
     return parent;
 }
+
 
 
 /*
@@ -172,6 +179,7 @@ QGraphicsItem * Edge::getRootParent()
 //    label = nullptr;
 //    setParentItem(nullptr);
 //}
+
 
 
 /*
@@ -204,6 +212,7 @@ void Edge::setWeight(QString aWeight)
 }
 
 
+
 /*
  * Name:        isDigits()
  * Purpose:     Checks if the string contains only digits.
@@ -222,6 +231,7 @@ bool isDigits(const std::string &str)
 }
 
 
+
 /*
  * Name:        getWeight()
  * Purpose:     Returns the (unadorned) weight of the edge label.
@@ -238,6 +248,7 @@ QString Edge::getWeight()
 {
     return weight;
 }
+
 
 
 /*
@@ -279,6 +290,7 @@ void Edge::adjust()
 }
 
 
+
 /*
  * Name:        setDestNode()
  * Purpose:     Stores the destination node to which the edge is incident.
@@ -297,6 +309,7 @@ void Edge::setDestNode(Node * node)
     setDestRadius(node->getDiameter() / 2.);
     adjust();
 }
+
 
 
 /*
@@ -319,6 +332,7 @@ void Edge::setSourceNode(Node * node)
 }
 
 
+
 /*
  * Name:        setDestRadius()
  * Purpose:     Stores the radius of the destination node.
@@ -338,6 +352,7 @@ void Edge::setDestRadius(qreal aRadius)
 }
 
 
+
 /*
  * Name:        getDestRadius()
  * Purpose:     Returns the radius of the destination node.
@@ -354,6 +369,7 @@ qreal Edge::getDestRadius()
 {
     return destRadius;
 }
+
 
 
 /*
@@ -375,6 +391,7 @@ void Edge::setSourceRadius(qreal aRadius)
 }
 
 
+
 /*
  * Name:        getSourceRadius()
  * Purpose:     Returns the radius of the source node.
@@ -391,6 +408,7 @@ qreal Edge::getSourceRadius()
 {
     return sourceRadius;
 }
+
 
 
 /*
@@ -413,6 +431,7 @@ void Edge::setPenWidth(qreal aPenWidth)
 }
 
 
+
 /*
  * Name:        getPenWidth()
  * Purpose:     Returns the width (penSize) of the edge.
@@ -433,8 +452,9 @@ qreal Edge::getPenWidth()
 }
 
 
+
 /*
- * Name:     setRotation()
+ * Name:	setRotation()
  * Purpose:
  * Arguments:
  * Output:
@@ -452,8 +472,9 @@ void Edge::setRotation(qreal aRotation)
 }
 
 
+
 /*
- * Name:        getRotation()
+ * Name:	getRotation()
  * Purpose:
  * Arguments:
  * Output:
@@ -468,6 +489,7 @@ qreal Edge::getRotation()
 {
     return rotation;
 }
+
 
 
 /*
@@ -488,6 +510,7 @@ void Edge::setColour(QColor colour)
 }
 
 
+
 /*
  * Name:        getColour()
  * Purpose:     Returns the colour of an edge.
@@ -499,10 +522,12 @@ void Edge::setColour(QColor colour)
  * Bugs:        none
  * Notes:       none
  */
+
 QColor Edge::getColour()
 {
     return edgeColour;
 }
+
 
 
 /*
@@ -526,6 +551,7 @@ void Edge::setWeightLabelSize(qreal edgeWeightLabelSize)
 }
 
 
+
 /*
  * Name:        getWeightLabelSize()
  * Purpose:     Returns the font size of the edge label.
@@ -543,6 +569,7 @@ qreal Edge::getWeightLabelSize()
 {
     return eSize;
 }
+
 
 
 /*
@@ -566,7 +593,7 @@ qreal Edge::getWeightLabelSize()
  *		that updates the bounding rect so it is rotated and
  *		it's length is parallel to the edge length.
  *		Below is a *rough* drawing illustrating this idea.
- *              ISSUE:           SOLUTION:
+ *              ISSUE:         SOLUTION:
  *              ------         -----
  *              | \  |          \ \ \
  *              |  \ |            \ \ \
@@ -580,6 +607,7 @@ QRectF Edge::boundingRect() const
 
     return selectionPolygon.boundingRect();
 }
+
 
 
 /*
@@ -600,6 +628,7 @@ QPainterPath Edge::shape() const
     ret.addPolygon(selectionPolygon);
     return ret;
 }
+
 
 
 /*
@@ -653,8 +682,8 @@ void Edge::paint(QPainter *painter, const QStyleOptionGraphicsItem * option,
 		      (line.p2().ry() + line.p1().ry()) / 2.
                       - label->boundingRect().height() / 2.);
     }
-
 }
+
 
 
 /*
@@ -677,6 +706,7 @@ void Edge::edgeDeleted()
 {
 
 }
+
 
 
 /*
