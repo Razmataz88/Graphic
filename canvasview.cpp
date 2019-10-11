@@ -2,15 +2,19 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.1
+ * Version: 1.3
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
  *
  * Modification history:
- * Feb 8, 2016 (JD):
- * (a) Change the help text for join (JOIN_DESCRIPTION) to clarify usage.
- * (b) Drive-by cleanup.
+ * Feb 8, 2016 (JD V1.2):
+ *  (a) Change the help text for join (JOIN_DESCRIPTION) to clarify usage.
+ *  (b) Drive-by cleanup.
+ * Oct 11, 2019 (JD V1.3):
+ *  (a) Further clarify JOIN_DESCRIPTION text.
+ *  (b) Add the second sentence to EDIT_DESCRIPTION.
+ *  (c) Improved a few debug messages.
  */
 
 #include "canvasview.h"
@@ -27,17 +31,19 @@
 static const bool verbose = true;
 
 static const QString JOIN_DESCRIPTION =
-    "Join mode: Select one or two nodes from each graph and press 'J'.  "
-    "The first selected node from graph 1 is joined to the first selected "
-    "node from graph 2.  "
-    "If two other nodes were selected, they are joined to each other.";
+    "Join mode: Select 1 or 2 nodes from each of 2 graph components "
+    "and press 'J'.  "
+    "The second component is moved and the second selected node is "
+    "identified with the first.  "
+    "If two other nodes were selected, they are also identified.";
 
 static const QString DELETE_DESCRIPTION =
     "Delete mode: Click on any node or edge to be deleted.  "
     "Double Click on a graph to delete it entirely.";
 
 static const QString EDIT_DESCRIPTION =
-    "Edit mode: Move individual nodes around within a graph.";
+    "Edit mode: Drag individual nodes around within a graph drawing.  "
+    "Click on a node to give it a label.";
 
 static const QString FREESTYLE_DESCRIPTION =
     "You can add nodes by double clicking and edges by left "
@@ -75,6 +81,7 @@ CanvasView::CanvasView(QWidget * parent)
 }
 
 
+
 void CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
                                  QString label, qreal nodeLabelSize,
                                  QColor nodeFillColor, QColor nodeOutLineColor)
@@ -102,6 +109,7 @@ Node * CanvasView::createNode(QPointF pos)
 }
 
 
+
 /*
  * Name:        keyPressEvent
  * Purpose:
@@ -118,6 +126,7 @@ void CanvasView::keyPressEvent(QKeyEvent * event)
 {
     QGraphicsView::keyPressEvent(event);
 }
+
 
 
 void CanvasView::setMode(int m)
@@ -159,10 +168,12 @@ void CanvasView::setMode(int m)
 }
 
 
+
 /*
  * Name:        MouseDoubleClickEvent
  * Purpose:     Generates a new node in the CanvasScene if in freestyle mode
  *              when use doubleclicks the mouse.
+ *		Otherwise pass the event to QGraphicsView.
  * Arguments:   QMouseEvent
  * Output:      none
  * Modifies:    CanvasScene
@@ -189,6 +200,7 @@ void CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
 }
 
 
+
 void CanvasView::mousePressEvent(QMouseEvent * event)
 {
     QList<QGraphicsItem *> itemList = this->scene()->items(
@@ -197,12 +209,12 @@ void CanvasView::mousePressEvent(QMouseEvent * event)
 	Qt::DescendingOrder,
 	QTransform());
 
-    switch(getMode())
+    switch (getMode())
     {
-      case(mode::freestyle):
+      case (mode::freestyle):
 	if (event->button() == Qt::LeftButton)
 	{
-	    foreach(QGraphicsItem * item, itemList)
+	    foreach (QGraphicsItem * item, itemList)
 	    {
 		// TODO: should this not be && item != 0 ?
 		if (item != nullptr || item != 0)  // Pointer is not null
@@ -236,6 +248,7 @@ void CanvasView::mousePressEvent(QMouseEvent * event)
 }
 
 
+
 void CanvasView::snapToGrid(bool snap)
 {
     aScene->isSnappedToGrid(snap);
@@ -243,11 +256,14 @@ void CanvasView::snapToGrid(bool snap)
 }
 
 
+
 void CanvasView::dragEnterEvent(QDragEnterEvent * event)
 {
     emit resetNoMode();
     QGraphicsView::dragEnterEvent(event);
 }
+
+
 
 Edge * CanvasView::addEdgeToScene(Node * source, Node * destination)
 {
@@ -273,17 +289,17 @@ Edge * CanvasView::addEdgeToScene(Node * source, Node * destination)
         parent1 = qgraphicsitem_cast<Graph*>(node1->parentItem());
         parent2 = qgraphicsitem_cast<Graph*>(node2->parentItem());
 
-	// TODO: should this not be &&
+	// TODO: should this not be && ?
         while (parent1->parentItem() != nullptr
                || parent1->parentItem() != 0)
             parent1 = qgraphicsitem_cast<Graph*>(parent1->parentItem());
 
-	// TODO: should this not be &&
+	// TODO: should this not be && ?
         while (parent2->parentItem() != nullptr
                || parent2->parentItem() != 0)
             parent2 = qgraphicsitem_cast<Graph*>(parent2->parentItem());
 
-	// TODO: should these not be &&
+	// TODO: should these not be && ?
         if ((parent2 != nullptr || parent2 != 0)
 	    && (parent1 != nullptr || parent1 != 0))
         {
@@ -301,6 +317,7 @@ Edge * CanvasView::addEdgeToScene(Node * source, Node * destination)
 }
 
 
+
 Edge * CanvasView::createEdge(Node * source, Node * destination)
 {
     Edge * edge = new Edge(source, destination);
@@ -315,20 +332,22 @@ Edge * CanvasView::createEdge(Node * source, Node * destination)
 }
 
 
+
 void CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel,
 				 qreal edgeLabelSize, QColor edgeLineColor)
 {
     if (verbose)
     {
-        qDebug() << "edgeSize = " << edgeSize << endl;
-        qDebug() << "edgeLabel = " << edgeLabel << endl;
-        qDebug() << "edgeLabelSize =" << edgeLabelSize << endl;
+        qDebug() << "setUpEdgeParams(): edgeSize = " << edgeSize;
+        qDebug() << "setUpEdgeParams(): edgeLabel = " << edgeLabel;
+        qDebug() << "setUpEdgeParams(): edgeLabelSize =" << edgeLabelSize;
     }
     edgeParams->size = edgeSize;
     edgeParams->label = edgeLabel;
     edgeParams->color = edgeLineColor;
     edgeParams->LabelSize = edgeLabelSize;
 }
+
 
 
 int CanvasView::getMode() const
