@@ -2,12 +2,12 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.1
+ * Version:	1.4
  *
  * Purpose:
  *
  * Modification history:
- * Jan 25, 2016 (JD):
+ * Jan 25, 2016 (JD V1.2):
  *  (a) Don't include TIFF and JPEG as file types to make the list shorter;
  *	assume (!) that the list also includes TIF and JPG.
  *  (b) TikZ: only output edge label font size if there is an edge label.
@@ -26,10 +26,19 @@
  *	graphs in on_graphType_ComboBox_currentIndexChanged().
  *  (i) Re-ordered file type drop-down list so to put the "text" outputs
  *	at the top.
- * Feb 3, 2016 (JD)
+ * Feb 3, 2016 (JD V1.3)
  *  (a) Removed "GraphSettings.h" since it is not used.
  *  (b) Minor formatting cleanups.
  *  (c) Changed "Grapha" to "Graphic".
+ * Oct 11, 2019 (JD V1.4)
+ *  (a) Allow blank lines and comments ([ \t]*#.*) in .grphc files.
+ *  (b) Add some comments.  Reformat a bit.  Improve debug stmts.
+ *  (c) Output a more informative and human-readable .grhpc file.
+ *      Output the information as we compute it, rather than slowly
+ *      constructing two big honkin' strings piece by piece and
+ *	then outputting them.
+ *  (d) Check for some error conditions and pop up a QErrorMessage in
+ *      such cases.
  */
 
 #include "mainwindow.h"
@@ -50,10 +59,12 @@
 #include <QShortcut>
 #include <qmath.h>
 #include <QtSvg/QSvgGenerator>
-
+#include <QErrorMessage>
+#include <QDate>
 
 #define GRAPHICS_FILE_EXTENSION ".grphc"
 #define GRAPHICS_SAVE_FILE	"Graph-ic (*.grphc)"
+#define GRAPHICS_SAVE_SUBDIR	"graph-ic"
 #define TIKZ_SAVE_FILE		"TikZ (*.tikz)"
 #define EDGES_SAVE_FILE		"Edge list (*.edges)"
 #define SVG_SAVE_FILE		"SVG (*.svg)"
@@ -76,25 +87,34 @@
 
 /*
  * Name:	MainWindow
- * Purpose:	Main window contructor
+ * Purpose:	Main window constructor
  * Arguments:	QWidget *
  * Output:	none
  * Modifies:	private MainWindow variables
  * Returns:	none
  * Assumptions: none
  * Bugs:	none...so far
- * Notes:	This is a cpp file used in with the mainwindow.ui file
+ * Notes:	This is a cpp file used with the mainwindow.ui file
  */
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(QWidget * parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    fileDirectory = QDir::currentPath().append("/graph-ic");
+    fileDirectory = QDir::currentPath().append("/" GRAPHICS_SAVE_SUBDIR);
     QDir dir(fileDirectory);
 
     if (!dir.exists())
-	dir.mkdir(fileDirectory);
+	if (!dir.mkdir(fileDirectory))
+	{
+	    QErrorMessage * qem = new QErrorMessage();
+	    qem->showMessage("Unable to create the subdirectory ./"
+			     GRAPHICS_SAVE_SUBDIR
+			     " (where the graphs you create are stored); "
+			     "I will boldly carry on anyway.  Perhaps you "
+			     "can fix that problem from a terminal or file "
+			     "manager before you try to save a graph.");
+	}
 
     ui->setupUi(this);
     this->generate_Combobox_Titles();
@@ -102,11 +122,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save_Graph()));
     connect(ui->actionOpen_File, SIGNAL(triggered()),
 	    this, SLOT(load_Graphic_File()));
-    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q), this, SLOT(close()));
 
     // Ctrl-Q quits.
+    // TODO: we should ask whether to save an unsaved graph or not
+    //       before quitting.
+    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q), this, SLOT(close()));
+
+    // Ctrl-O pops up the open file dialog.
     new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_O),
 		  this, SLOT(load_Graphic_File()));
+
     // Save dialog pops up via Ctrl-S.
     new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_S), this, SLOT(save_Graph()));
 
@@ -205,6 +230,7 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 
 
+
 /*
  * Name:	~MainWindow
  * Purpose:	frees the memory of mainwindow
@@ -223,16 +249,17 @@ MainWindow::~MainWindow()
 }
 
 
+
 /*
- * Name:
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Name:	setKeyStatusLabel()
+ * Purpose:	Set the help text to the given string.
+ * Arguments:   The new help text (or empty string).
+ * Outputs:	Nothing.
+ * Modifies:	The help area of the main window.
+ * Returns:	Nothing.
+ * Assumptions:	?
+ * Bugs:	None(?).
+ * Notes:	Is this a confusing name?
  */
 
 void MainWindow::setKeyStatusLabel(QString text)
@@ -241,14 +268,16 @@ void MainWindow::setKeyStatusLabel(QString text)
 }
 
 
+
 /*
- * Name:
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
+ * Name:	generate_Combobox_Titles()
+ * Purpose:	Populate the list of graph types with the defined
+ *		basic types, then add a separator.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The ui->graphType_ComboBox
+ * Returns:	Nothing.
+ * Assumptions:	ui->graphType_ComboBox is set up.
  * Bugs:
  * Notes:
  */
@@ -257,6 +286,7 @@ void MainWindow::generate_Combobox_Titles()
 {
     BasicGraphs * simpleG = new BasicGraphs();
     int i = 1;
+
     while (i < BasicGraphs::Count)
     {
 	ui->graphType_ComboBox->addItem(simpleG->getGraphName(i));
@@ -265,6 +295,7 @@ void MainWindow::generate_Combobox_Titles()
     ui->graphType_ComboBox->insertSeparator(BasicGraphs::Count);
     this->load_Graphic_Library();
 }
+
 
 
 /*
@@ -309,10 +340,8 @@ bool MainWindow::save_Graph()
 	"All Files (*)";
 
     QString selectedFilter;
-    QString fileName = QFileDialog::getSaveFileName(this,
-						    "Save graph",
-						    fileDirectory,
-						    fileTypes,
+    QString fileName = QFileDialog::getSaveFileName(this, "Save graph",
+						    fileDirectory, fileTypes,
 						    &selectedFilter);
 
 #ifdef __linux__
@@ -327,14 +356,15 @@ bool MainWindow::save_Graph()
 
 	if (start < 0 || end < 0)
 	{
-	    qDebug() << "?? could not find extension in " << selectedFilter;
+	    qDebug() << "?? save_Graph() could not find extension in "
+		     << selectedFilter;
 	    return false;
 	}
 
 	QString extension = selectedFilter.mid(start, end - start);
-	qDebug() << "computed extension is" << extension;
+	qDebug() << "save_Graph(): computed extension is" << extension;
 	fileName += extension;
-	qDebug() << "computed filename is" << fileName;
+	qDebug() << "save_Graph(): computed filename is" << fileName;
     }
 #endif
 
@@ -354,8 +384,7 @@ bool MainWindow::save_Graph()
 	&& selectedFilter != SVG_SAVE_FILE)
     {
 	ui->canvas->scene()->clearSelection();
-	ui->canvas->scene()->invalidate(ui->canvas->scene()
-					->itemsBoundingRect(),
+	ui->canvas->scene()->invalidate(ui->canvas->scene()->itemsBoundingRect(),
 					ui->canvas->scene()->BackgroundLayer);
 
 	QPixmap * image = new QPixmap(ui->canvas->scene()
@@ -370,7 +399,8 @@ bool MainWindow::save_Graph()
 	ui->canvas->scene()->setBackgroundBrush(Qt::transparent);
 	ui->canvas->
 	    scene()->render(&painter,
-			    QRectF(0, 0, ui->canvas->scene()
+			    QRectF(0, 0,
+				   ui->canvas->scene()
 				   ->itemsBoundingRect().width(),
 				   ui->canvas->scene()
 				   ->itemsBoundingRect().height()),
@@ -391,9 +421,8 @@ bool MainWindow::save_Graph()
     outputFile.open(QIODevice::WriteOnly);
     if (!outputFile.isOpen())
     {
-	// TO DO: need to pop up an error window here, the average person
-	// won't see this error message!
-	qDebug() << "- Error, unable to open" << fileName << "for output";
+	QErrorMessage * qem = new QErrorMessage();
+	qem->showMessage("Unable to open " + fileName + " for output!");
 	return false;
     }
 
@@ -412,58 +441,91 @@ bool MainWindow::save_Graph()
 
     if (selectedFilter == GRAPHICS_SAVE_FILE)
     {
-	QString nodeStyles = QString::number(numOfNodes) + "\n";
+	// Use some painful Qt constructs to output the node and edge
+	// information with a more readable format.
+	// Note that tests with explicitly setting the format to 'g'
+	// and the precision to 6 indicate that Qt5.9.8 (on S64-14.2)
+	// will do whatever it damn well pleases, vis-a-vis the number
+	// of chars printed.
+	outStream << "# graph-ic graph definition created ";
+	QDateTime dateTime = dateTime.currentDateTime();
+	outStream << dateTime.toString("yyyy-MM-dd hh:mm:ss") << "\n\n";
 
+	outStream << "# The number of nodes in this graph:\n";
+	outStream << nodes.count() << "\n\n";
+
+	QString nodeInfo = QString::number(numOfNodes) + "\n\n";
+
+	outStream << "# The node descriptions; the format is:\n";
+	outStream << "# x,y, diameter, rotation, fill R,G,B, outline R,G,B\n";
 	for (int i = 0; i < nodes.count(); i++)
 	{
 	    Node * node = nodes.at(i);
-	    nodeStyles += QString::number(node->scenePos().rx()) + ","
-		+ QString::number(node->scenePos().ry()) + ","
-		+ QString::number(node->getDiameter()) + ","
-		+ QString::number(node->getRotation()) + ","
-		+ QString::number(node->getFillColour().redF()) + ","
-		+ QString::number(node->getFillColour().greenF()) + ","
-		+ QString::number(node->getFillColour().blueF()) + ","
-		+ QString::number(node->getLineColour().redF()) + ","
-		+ QString::number(node->getLineColour().greenF()) + ","
-		+ QString::number(node->getLineColour().blueF()) + "\n";
+	    outStream << "# Node " + QString::number(i) + ":\n";
+	    outStream << QString::number(node->scenePos().rx()) << ","
+		      << QString::number(node->scenePos().ry()) << ", "
+		      << QString::number(node->getDiameter()) << ", "
+		      << QString::number(node->getRotation()) << ", "
+		      << QString::number(node->getFillColour().redF()) << ","
+		      << QString::number(node->getFillColour().greenF()) << ","
+		      << QString::number(node->getFillColour().blueF()) << ", "
+		      << QString::number(node->getLineColour().redF()) << ","
+		      << QString::number(node->getLineColour().greenF()) << ","
+		      << QString::number(node->getLineColour().blueF()) << "\n";
 	}
 
+	outStream << "\n# Edge descriptions; the format is:\n"
+		  << "# u,v, dest_radius, source_radius, "
+		  << "rotation, pen_width, line R,G,B\n";
 	for (int i = 0; i < nodes.count(); i++)
 	{
 	    for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
 	    {
 		Edge * edge = nodes.at(i)->edgeList.at(j);
-		if (edge->sourceNode()->getID() == i
-		    && edge->destNode()->getID() > i)
+#ifdef DEBUG
+		outStream << "# Looking at i, j = "
+			  << QString::number(i) << ", " << QString::number(j)
+			  << "  ->  src, dst = "
+			  << QString::number(edge->sourceNode()->getID())
+			  << ", "
+			  << QString::number(edge->destNode()->getID())
+			  << "\n";
+#endif
+
+		int printThisOne = 0;
+		int sourceID = edge->sourceNode()->getID();
+		int destID = edge->destNode()->getID();
+		if (sourceID == i && destID > i)
 		{
-		    edges += QString::number(edge->sourceNode()->getID()) + ","
-			+ QString::number(edge->destNode()->getID()) + ","
-			+ QString::number(edge->getDestRadius()) + ","
-			+ QString::number(edge->getSourceRadius()) + ","
-			+ QString::number(edge->getRotation()) + ","
-			+ QString::number(edge->getPenWidth()) + ","
-			+ QString::number(edge->getColour().redF()) + ","
-			+ QString::number(edge->getColour().greenF()) + ","
-			+ QString::number(edge->getColour().blueF()) + "\n";
+		    printThisOne++;
+		    outStream << QString("%1").arg(sourceID, 2, 10, QChar(' '))
+			      <<  ","
+			      << QString("%1").arg(destID, 2, 10, QChar(' '));
 		}
-		else if (edge->destNode()->getID() == i
-			 && edge->sourceNode()->getID() > i)
+		else if (destID == i && sourceID > i)
 		{
-		    edges += QString::number(edge->destNode()->getID()) + ","
-			+ QString::number(edge->sourceNode()->getID()) + ","
-			+ QString::number(edge->getDestRadius()) + ","
-			+ QString::number(edge->getSourceRadius()) + ","
-			+ QString::number(edge->getRotation()) + ","
-			+ QString::number(edge->getPenWidth()) + ","
-			+ QString::number(edge->getColour().redF()) + ","
-			+ QString::number(edge->getColour().greenF()) + ","
-			+ QString::number(edge->getColour().blueF()) + "\n";
+		    printThisOne++;
+		    outStream << QString("%1").arg(destID, 2, 10, QChar(' '))
+			      <<  ","
+			      << QString("%1").arg(sourceID, 2, 10, QChar(' '));
+		}
+		if (printThisOne)
+		{
+		    outStream << ", " << QString::number(edge->getDestRadius())
+			      << ", " << QString::number(edge->getSourceRadius())
+			      << ", " << QString::number(edge->getRotation())
+			      << ", " << QString::number(edge->getPenWidth())
+			      << ", "
+			      << QString::number(edge->getColour().redF())
+			      << ","
+			      << QString::number(edge->getColour().greenF())
+			      << ","
+			      << QString::number(edge->getColour().blueF())
+			      << "\n";
 		}
 	    }
 	}
 
-	outStream << nodeStyles + edges ;
 	outputFile.close();
 	ui->canvas->snapToGrid(saveStatus);
 	ui->canvas->update();
@@ -647,9 +709,11 @@ bool MainWindow::save_Graph()
     }
 
     // ? Should not get here!
-    qDebug() << "Unexpected output filter in MainWindow::save_Graph()!";
+    qDebug() << "save_Graph(): Unexpected output filter in "
+	     << "MainWindow::save_Graph()!";
     return false;
 }
+
 
 
 /*
@@ -675,6 +739,7 @@ bool MainWindow::load_Graphic_File()
 }
 
 
+
 /*
  * Name:
  * Purpose:
@@ -694,7 +759,10 @@ void MainWindow::load_Graphic_Library()
     {
 	dirIt.next();
 	if (QFileInfo(dirIt.filePath()).isFile())
-	    qDebug() << QFileInfo(dirIt.filePath()).suffix() << endl;
+	    qDebug() << "load_Graphic_Library(): suffix of"
+		     << QFileInfo(dirIt.filePath()).fileName()
+		     << "is"
+		     << QFileInfo(dirIt.filePath()).suffix();
 
 	if (QFileInfo(dirIt.filePath()).suffix() == "grphc")
 	{
@@ -705,24 +773,27 @@ void MainWindow::load_Graphic_Library()
 }
 
 
+
 /*
- * Name:
- * Purpose:
- * Arguments:
- * Outputs:
+ * Name:	    select_Custom_Graph()
+ * Purpose:	    Read in a .grphc file.
+ * Arguments:	    The name of the file to read from.
+ * Outputs:	    None.
  * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Returns:	    Nothing.
+ * Assumptions:	    The input file is valid.
+ * Bugs:	    May (almost certainly will) crash and burn on invalid input.
+ * Notes:	    JD added "comment lines" capability Oct 2019.
  */
 
 void MainWindow::select_Custom_Graph(QString graphName)
 {
-    qDebug() << graphName;
     if (!graphName.isNull())
     {
+	qDebug() << "select_Custom_Graph(): graphName is" << graphName;
+
 	QFile file(graphName);
+
 	if (!file.open(QIODevice::ReadOnly))
 	    QMessageBox::information(0,
 				     "Error",
@@ -730,19 +801,27 @@ void MainWindow::select_Custom_Graph(QString graphName)
 				     + graphName + file.errorString());
 
 	QTextStream in(&file);
-	int check = 0;
 	int i = 0;
 	QVector<Node *> nodes;
-	int numOfNodes = 0;
+	int numOfNodes = -1;		// < 0 ==> haven't read it yet
 	Graph * graph = new Graph();
 
-	while(!in.atEnd())
+	while (!in.atEnd())
 	{
 	    QString line = in.readLine();
-	    if (check == 0)
+	    QString simpLine = line.simplified();
+	    if (simpLine.isEmpty())
+	    {
+		// Allow visually blank lines
+	    }
+	    else if (simpLine.at(0).toLatin1() == '#')
+	    {
+		// Allow comments where first non-white is '#'.
+		// Should we save these comments somewhere?
+	    }
+	    else if (numOfNodes < 0)
 	    {
 		numOfNodes = line.toInt();
-		check++;
 	    }
 	    else if (i < numOfNodes)
 	    {
@@ -764,7 +843,6 @@ void MainWindow::select_Custom_Graph(QString graphName)
 		lineColor.setBlueF(fields.at(9).toDouble());
 		node->setLineColour(lineColor);
 		nodes.append(node);
-		// item->addToGroup(node);
 		node->setParentItem(graph);
 		i++;
 	    }
@@ -782,17 +860,20 @@ void MainWindow::select_Custom_Graph(QString graphName)
 		lineColor.setGreen(fields.at(7).toDouble());
 		lineColor.setBlue(fields.at(8).toDouble());
 		edge->setColour(lineColor);
-		// item->addToGroup(edge);
 		edge->setParentItem(graph);
 	    }
 	}
 	file.close();
-	qDebug() << graph->childItems().length();
+	qDebug() << "select_Custom_Graph: graph->childItems().length() ="
+		 << graph->childItems().length();
 	graph->setRotation(-1 * ui->graphRotation->value());
 	ui->preview->scene()->clear();
 	ui->preview->scene()->addItem(graph);
     }
+    else
+	qDebug() << "select_Custom_Graph(): graphName is NULL!! ??";
 }
+
 
 
 /*
@@ -1166,7 +1247,8 @@ void MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
       }
       default:
 	// ToDo: may need to change grphc file format to add
-	qDebug() << "Unknown " << endl;
+	qDebug() << "on_graphType_ComboBox_currentIndexChanged"
+		 << "Unknown index " << index;
 	ui->numOfNodes1->hide();
 	ui->numOfNodes2->hide();
 	ui->graphHeight->hide();
