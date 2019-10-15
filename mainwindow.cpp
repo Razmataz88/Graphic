@@ -4,7 +4,7 @@
  * Date:	January 25, 2015.
  * Version:	1.4
  *
- * Purpose:
+ * Purpose:	Implement the main window and functions called from there.
  *
  * Modification history:
  * Jan 25, 2016 (JD V1.2):
@@ -39,6 +39,22 @@
  *	then outputting them.
  *  (d) Check for some error conditions and pop up a QErrorMessage in
  *      such cases.
+ * Oct 13, 2019 (JD V1.5)
+ *  (a) Before this version, node labels and corresponding font sizes
+ *	were not stored in the .grphc file.  Go figure.
+ *  (b) Look up TikZ-known colours (for TikZ output) and use those
+ *	names rather than defining new colours for every coloured item.
+ *  (c) When saving the graph, only do Linux-specific filename checks
+ *	*after* confirming the selected filename is non-null.
+ *  (d) Added some error checking when selecting files as possible
+ *      graph-ic files, as well as checking contents of a graph-ic file.
+ *  (e) Since node.{h,cpp} have been updated to allow superscripts as
+ *	well as subscripts, and this allows the "edit" function to change
+ *	vertex labels with subs/supers, the TikZ export has been changed
+ *	to add '^{}' iff there is no '^' in the label.  This adds a
+ *	spurious (but apparently harmless) empty superscript to labels
+ *	which have neither sub nor super.
+ *  (f) Added a number of function comments.
  */
 
 #include "mainwindow.h"
@@ -62,8 +78,8 @@
 #include <QErrorMessage>
 #include <QDate>
 
-#define GRAPHICS_FILE_EXTENSION ".grphc"
-#define GRAPHICS_SAVE_FILE	"Graph-ic (*.grphc)"
+#define GRAPHICS_FILE_EXTENSION "grphc"
+#define GRAPHICS_SAVE_FILE	"Graph-ic (*." GRAPHICS_FILE_EXTENSION ")"
 #define GRAPHICS_SAVE_SUBDIR	"graph-ic"
 #define TIKZ_SAVE_FILE		"TikZ (*.tikz)"
 #define EDGES_SAVE_FILE		"Edge list (*.edges)"
@@ -98,7 +114,7 @@
  */
 
 MainWindow::MainWindow(QWidget * parent) :
-    QMainWindow(parent),
+QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     fileDirectory = QDir::currentPath().append("/" GRAPHICS_SAVE_SUBDIR);
@@ -107,13 +123,14 @@ MainWindow::MainWindow(QWidget * parent) :
     if (!dir.exists())
 	if (!dir.mkdir(fileDirectory))
 	{
-	    QErrorMessage * qem = new QErrorMessage();
-	    qem->showMessage("Unable to create the subdirectory ./"
-			     GRAPHICS_SAVE_SUBDIR
-			     " (where the graphs you create are stored); "
-			     "I will boldly carry on anyway.  Perhaps you "
-			     "can fix that problem from a terminal or file "
-			     "manager before you try to save a graph.");
+	    QMessageBox::information(0, "Error", 
+				     "Unable to create the subdirectory ./"
+				     GRAPHICS_SAVE_SUBDIR
+				     " (where the graphs you create are "
+				     "stored); I will boldly carry on anyway.  "
+				     "Perhaps you can fix that problem from "
+				     "a terminal or file manager before you "
+				     "try to save a graph.");
 	}
 
     ui->setupUi(this);
@@ -196,7 +213,7 @@ MainWindow::MainWindow(QWidget * parent) :
 		     this, SLOT(generate_Graph()));
 
     QObject::connect(ui->snapToGrid_checkBox, SIGNAL(clicked(bool)),
-		    ui->canvas, SLOT(snapToGrid(bool)));
+		     ui->canvas, SLOT(snapToGrid(bool)));
 
     QObject::connect(ui->canvas, SIGNAL(setKeyStatusLabelText(QString)),
 		     ui->keyPressStatus_label, SLOT(setText(QString)));
@@ -299,13 +316,13 @@ void MainWindow::generate_Combobox_Titles()
 
 
 /*
- * Name:	save_Graph
- * Purpose:	saves an image/tikz/grphcs of the Canvas
- * Arguments:	QByteArray
- * Output:	true to save file,false to not save file
- * Modifies:	none
- * Returns:	none
- * Assumptions: none
+ * Name:	save_Graph()
+ * Purpose:	Saves an image/tikz/grphc version of the canvas.
+ * Arguments:	None.
+ * Output:	Nothing.
+ * Modifies:	An output file.
+ * Returns:	True on file successfully saved, false otherwise.
+ * Assumptions: ?
  * Bugs:	none
  * Notes:	none
  */
@@ -343,6 +360,8 @@ bool MainWindow::save_Graph()
     QString fileName = QFileDialog::getSaveFileName(this, "Save graph",
 						    fileDirectory, fileTypes,
 						    &selectedFilter);
+    if (fileName.isNull())
+	return false;
 
 #ifdef __linux__
     // Stupid, stupid Qt file browser works differently on different OSes.
@@ -368,14 +387,11 @@ bool MainWindow::save_Graph()
     }
 #endif
 
-    if (fileName.isNull())
-	return false;
-
     // Handle all image (i.e., non-text) outputs here;
     // check for all known text-file types.
     // TODO: should we use QFileInfo(fileName).extension().lower();
     bool saveStatus = ui->snapToGrid_checkBox->isChecked();
-    if (ui->snapToGrid_checkBox->isChecked())
+    if (saveStatus)
 	ui->canvas->snapToGrid(false);
 
     if (selectedFilter != GRAPHICS_SAVE_FILE
@@ -421,8 +437,8 @@ bool MainWindow::save_Graph()
     outputFile.open(QIODevice::WriteOnly);
     if (!outputFile.isOpen())
     {
-	QErrorMessage * qem = new QErrorMessage();
-	qem->showMessage("Unable to open " + fileName + " for output!");
+	QMessageBox::information(0, "Error",
+				 "Unable to open " + fileName + " for output!");
 	return false;
     }
 
@@ -457,9 +473,11 @@ bool MainWindow::save_Graph()
 	QString nodeInfo = QString::number(numOfNodes) + "\n\n";
 
 	outStream << "# The node descriptions; the format is:\n";
-	outStream << "# x,y, diameter, rotation, fill R,G,B, outline R,G,B\n";
+	outStream << "# x,y, diameter, rotation, fill R,G,B, outline R,G,B,\n";
+	outStream << "#      label,label font size\n";
 	for (int i = 0; i < nodes.count(); i++)
 	{
+	    // TODO: s/,/\\/ before writing out label.  Undo this when reading.
 	    Node * node = nodes.at(i);
 	    outStream << "# Node " + QString::number(i) + ":\n";
 	    outStream << QString::number(node->scenePos().rx()) << ","
@@ -471,7 +489,9 @@ bool MainWindow::save_Graph()
 		      << QString::number(node->getFillColour().blueF()) << ", "
 		      << QString::number(node->getLineColour().redF()) << ","
 		      << QString::number(node->getLineColour().greenF()) << ","
-		      << QString::number(node->getLineColour().blueF()) << "\n";
+		      << QString::number(node->getLineColour().blueF()) << ", "
+		      << node->getLabel() << ","
+		      << QString::number(node->getLabelSize()) << "\n";
 	}
 
 	outStream << "\n# Edge descriptions; the format is:\n"
@@ -580,23 +600,35 @@ bool MainWindow::save_Graph()
 	for (int i = 0; i < nodes.count(); i++)
 	{
 	    Node * node = nodes.at(i);
-	    // Create the variable name to refer to the node's fill
-	    // and line colours.
-	    QString fillColour = "node" + QString::number(i) + "fillColour";
-	    QString lineColour = "node" + QString::number(i) + "lineColour";
+	    // If the line or fill colour is a TikZ "known" colour,
+	    // use the name.  Otherwise define a colour.
+	    // TODO: don't define a colour more than once.
+	    // Use TikZ RGB format, since that is what we use
+	    // internally.  Drawings may need to be tweaked by hand if
+	    // they are to be printed, due to the RGB/rgb <=>
+	    // conversion nightmare.
 
-	    // Define the Node's fill colour using RGB format.
-	    nodeStyles += "\\definecolor{" + fillColour + "} {RGB} {"
-		+ QString::number(node->getFillColour().red())
-		+ "," + QString::number(node->getFillColour().green())
-		+ "," + QString::number(node->getFillColour().blue())
-		+ "}\n";
-	    // Define the Node's line colour using RGB format.
-	    nodeStyles += "\\definecolor{" + lineColour + "}{RGB}{"
-		+ QString::number(node->getLineColour().red())
-		+ "," + QString::number(node->getLineColour().green())
-		+ "," + QString::number(node->getLineColour().blue())
-		+ "}\n";
+	    QString fillColour = lookupColour(node->getFillColour());
+	    if (fillColour == nullptr)
+	    {
+		fillColour = "node" + QString::number(i) + "fillColour";
+		nodeStyles += "\\definecolor{" + fillColour + "} {RGB} {"
+		    + QString::number(node->getFillColour().red())
+		    + "," + QString::number(node->getFillColour().green())
+		    + "," + QString::number(node->getFillColour().blue())
+		    + "}\n";
+	    }
+
+	    QString lineColour = lookupColour(node->getLineColour());
+	    if (lineColour == nullptr)
+	    {
+		lineColour = "node" + QString::number(i) + "lineColour";
+		nodeStyles += "\\definecolor{" + lineColour + "}{RGB}{"
+		    + QString::number(node->getLineColour().red())
+		    + "," + QString::number(node->getLineColour().green())
+		    + "," + QString::number(node->getLineColour().blue())
+		    + "}\n";
+	    }
 
 	    // Use (x,y) coordinate system for node positions.
 	    nodeStyles += "\\node (v" + QString::number(i) + ") at ("
@@ -617,19 +649,20 @@ bool MainWindow::save_Graph()
 	    // there is a node label.
 	    if (node->getLabel().length() > 0)
 	    {
-		bool check;
-
 		nodeStyles += ", \n\tfont=\\fontsize{"
 		    + QString::number(node->getLabelSize()) // Font size
 		    + "}{1}\\selectfont";
 
-		node->getLabel().toInt(&check);
-		if (check)
-		    nodeStyles += "] {$" + node->getLabel() + "$};\n";
+		QString thisLabel = node->getLabel();
+		// TODO: this check just checks for a '^', but
+		// if a subscript itself has a superscript
+		// and there is no (top-level) superscript, we would
+		// fail to add the "^{}" text.
+		// printf("thisLabel = /%s/\n", thisLabel.toLatin1().data());
+		if (thisLabel.indexOf('^') != -1)
+		    nodeStyles += "] {$" + thisLabel + "$};\n";
 		else
-		    nodeStyles += "] {$" + node->getLabel()
-			+ "^{}_{" + QString::number(node->getID())
-			+ "}$};\n";
+		    nodeStyles += "] {$" + thisLabel + "^{}$};\n";
 	    }
 	    else
 		nodeStyles += "] {$$};\n";
@@ -681,7 +714,8 @@ bool MainWindow::save_Graph()
 	    }
 	}
 
-	outStream << begin << nodeStyles << edgeStyles << "\\end{tikzpicture}";
+	outStream << begin << nodeStyles << edgeStyles
+		  << "\\end{tikzpicture}\n";
 	outputFile.close();
 	ui->canvas->snapToGrid(saveStatus);
 	ui->canvas->update();
@@ -717,13 +751,14 @@ bool MainWindow::save_Graph()
 
 
 /*
- * Name:
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
+ * Name:	load_Graphic_File()
+ * Purpose:	Ask the user for a file to load.  If we get a name,
+ *		call a function to read in the alleged graph.
+ * Arguments:	None.
+ * Outputs:	Displays a file chooser.
+ * Modifies:	Nothing.
+ * Returns:	True.  (TODO: Why?)
+ * Assumptions:	None.
  * Bugs:
  * Notes:
  */
@@ -734,20 +769,25 @@ bool MainWindow::load_Graphic_File()
 						    "Load Graph-ics File",
 						    fileDirectory,
 						    GRAPHICS_SAVE_FILE);
-    select_Custom_Graph(fileName);
+    if (! fileName.isNull())
+	select_Custom_Graph(fileName);
+
     return true;
 }
 
 
 
 /*
- * Name:
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
+ * Name:	load_Graphic_Library()
+ * Purpose:	Append all of the graph-ic files in the library
+ *		directory to the graphType menu.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	ui->graphType_ComboBox
+ * Returns:	Nothing.
+ * Assumptions:	fileDirectory has been initialized.
+ *		This assumes that if a file has a GRAPHICS_FILE_EXTENSION
+ *		extension then it is a graph-ic file.
  * Bugs:
  * Notes:
  */
@@ -758,13 +798,16 @@ void MainWindow::load_Graphic_Library()
     while (dirIt.hasNext())
     {
 	dirIt.next();
+#ifdef DEBUG
 	if (QFileInfo(dirIt.filePath()).isFile())
 	    qDebug() << "load_Graphic_Library(): suffix of"
 		     << QFileInfo(dirIt.filePath()).fileName()
 		     << "is"
 		     << QFileInfo(dirIt.filePath()).suffix();
+#endif
 
-	if (QFileInfo(dirIt.filePath()).suffix() == "grphc")
+	if (QFileInfo(dirIt.filePath()).suffix() == GRAPHICS_FILE_EXTENSION
+	    && QFileInfo(dirIt.filePath()).isFile())
 	{
 	    QFileInfo fileInfo(dirIt.filePath());
 	    ui->graphType_ComboBox->addItem(fileInfo.baseName());
@@ -776,10 +819,10 @@ void MainWindow::load_Graphic_Library()
 
 /*
  * Name:	    select_Custom_Graph()
- * Purpose:	    Read in a .grphc file.
+ * Purpose:	    Read in a graph-ic file.
  * Arguments:	    The name of the file to read from.
  * Outputs:	    None.
- * Modifies:
+ * Modifies:	    Creates a graph object.
  * Returns:	    Nothing.
  * Assumptions:	    The input file is valid.
  * Bugs:	    May (almost certainly will) crash and burn on invalid input.
@@ -797,8 +840,8 @@ void MainWindow::select_Custom_Graph(QString graphName)
 	if (!file.open(QIODevice::ReadOnly))
 	    QMessageBox::information(0,
 				     "Error",
-				     "File: "
-				     + graphName + file.errorString());
+				     "File: " + graphName
+				     + ": " + file.errorString());
 
 	QTextStream in(&file);
 	int i = 0;
@@ -817,15 +860,42 @@ void MainWindow::select_Custom_Graph(QString graphName)
 	    else if (simpLine.at(0).toLatin1() == '#')
 	    {
 		// Allow comments where first non-white is '#'.
-		// Should we save these comments somewhere?
+		// TODO: Should we save these comments somewhere?
 	    }
 	    else if (numOfNodes < 0)
 	    {
-		numOfNodes = line.toInt();
+		bool ok;
+		numOfNodes = line.toInt(&ok);
+		// TODO: do we want to allow 0-node graphs?
+		// Theoretically yes, but practically, no.
+		if (! ok || numOfNodes < 0)
+		{
+		    QMessageBox::information(0, "Error",
+					     "The file " + graphName
+					     + " has an invalid number of "
+					     "nodes.  Thus I can not read "
+					     "this file.");
+		    return;
+		}
 	    }
 	    else if (i < numOfNodes)
 	    {
 		QStringList fields = line.split(",");
+
+		// Accept "old" (no label info) and new graph-ic files.
+		if (fields.count() != 10 && fields.count() != 12)
+		{
+		    QMessageBox::information(0, "Error",
+					     "Node " + QString::number(i)
+					     + "of file "
+					     + graphName
+					     + " has an invalid number of "
+					     "fields.  Thus I can not read "
+					     "this file.");
+		    // TODO: do I need to free any storage?
+		    return;
+		}
+
 		Node * node = new Node();
 		node->setPos(fields.at(0).toDouble(),
 			     fields.at(1).toDouble());
@@ -842,6 +912,11 @@ void MainWindow::select_Custom_Graph(QString graphName)
 		lineColor.setGreenF(fields.at(8).toDouble());
 		lineColor.setBlueF(fields.at(9).toDouble());
 		node->setLineColour(lineColor);
+		if (fields.count() == 12)
+		{
+		    node->setNodeLabel(fields.at(10));
+		    node->setNodeLabelSize(fields.at(11).toFloat());
+		}
 		nodes.append(node);
 		node->setParentItem(graph);
 		i++;
@@ -947,7 +1022,7 @@ void MainWindow::generate_Graph()
     else
 	select_Custom_Graph(fileDirectory + "/"
 			    + ui->graphType_ComboBox->currentText()
-			    + GRAPHICS_FILE_EXTENSION);
+			    + "." + GRAPHICS_FILE_EXTENSION);
 
     this->style_Graph();
 }
@@ -1496,4 +1571,103 @@ void MainWindow::on_tabWidget_currentChanged(int index)
       default:
 	break;
     }
+}
+
+
+/*
+ * Name:	lookupColour()
+ * Purpose:	Given an RGB colour, see if this is a colour known to
+ *		TikZ by a human-friendly name; if so, return the name.
+ * Arguments:	A QColor.
+ * Outputs:	Nothing.
+ * Modifies:	Nothing.
+ * Returns:	A TikZ colour name (as a QString) or nullptr.
+ * Assumptions:	None.
+ * Bugs:	This is shamefully unsophisticated.
+ *		The colours known to TikZ may be a moving target.
+ * Notes:	At time of writing (Oct 2019), the following are
+ *		(allegedly) the known colours (in RGB):
+ *		red, green, blue, cyan, magenta, yellow, black,
+ *		gray (128,128, 128), darkgray (64,64,64),
+ *		lightgray (191,191,191), brown (191,128,64), lime (191,255,0),
+ *		olive (150,141,0), orange (255,128,0), pink (255,191,191),
+ *		purple (191,0,64), teal (0,128,128), violet (128,0,128)
+ *		and white.
+ *		I got the RGB values by running pdflatex on a file and
+ *		using xmag to get the RGB colours.  However, LaTeX
+ *		(mostly?) defines the colours using cmyk, and acroread
+ *		(as well as evince and xpdf, although they are
+ *		different) use some colour mapping from cmyk to RGB
+ *		which makes the colours look quite different than the
+ *		RGB equivalents found in (for example) X11's rgb.txt.
+ *		E.g., olive is 128,128,0 in rgb.txt but LaTeX's olive
+ *		shows up as 150,141,0 in acroread (Linux, anyway) but
+ *		considerably different in evince and xpdf.
+ *		Not knowing what numbers to turn to what names, I will
+ *		only map the subset of the above names found in
+ *		.../texmf-dist/tex/generic/pgf/utilities/pgfutil-plain.def,
+ *		as well as lightgray and darkgray.
+ */
+
+// Allow a bit of slop in some cases (see noted examples below).
+#define     CLOSE(x, c)	    (((x) == (c)) || ((x) == ((c) + 1)))
+
+QString
+MainWindow::lookupColour(QColor color)
+{
+    int r = color.red();
+    int g = color.green();
+    int b = color.blue();
+
+    if (r == 0)
+    {
+	if (g == 0 && b == 0)
+	    return "black";
+	if (g == 255 && b == 0)
+	    return "green";
+	if (g == 0 && b == 255)
+	    return "blue";
+	if (g == 255 && b == 255)
+	    return "cyan";
+	return nullptr;
+    }
+
+    if (CLOSE(r, 63) && CLOSE(g, 63) && CLOSE(b, 63))
+	return "darkgray";
+
+    if (CLOSE(r, 127))			    // 0.5 -> 127.5
+    {
+	if (CLOSE(g, 127) && CLOSE(b, 127))
+	    return "gray";
+	if (g == 0 && CLOSE(b, 127))
+	    return "violet";
+	return nullptr;
+    }
+
+    if (CLOSE(r, 191))			    // 0.75 -> 191.25
+    {
+	if (g == 0 && CLOSE(b, 63))	    // 0.25 -> 63.75
+	    return "purple";
+	if (g == 128 && CLOSE(b, 63))
+	    return "brown";
+	if (CLOSE(g, 191) && CLOSE(b, 191))
+	    return "lightgray";
+	return nullptr;
+    }
+
+    if (r == 255)
+    {
+	if (g == 255 && b == 255)
+	    return "white";
+	if (g == 0 && b == 0)
+	    return "red";
+	if (g == 0 && b == 255)
+	    return "magenta";
+	if (g == 255 && b == 0)
+	    return "yellow";
+	if (CLOSE(g, 127) && b == 0)
+	    return "orange";
+	return nullptr;
+    }
+    return nullptr;
 }

@@ -1,3 +1,19 @@
+/*
+ * File:    node.cpp
+ * Author:  Rachel Bood
+ * Date:    2014/11/07
+ * Version: 1.1
+ *
+ * Purpose: Declare the node class.
+ * 
+ * Modification history:
+ * Oct 13, 2019 (JD V1.1)
+ *  (a) Remove unused lSize from here and node.cpp.
+ *  (b) Minor formatting changes.
+ *  (c) renamed "choose" to "penStyle".
+ */
+
+
 #ifndef NODE_H
 #define NODE_H
 
@@ -15,7 +31,7 @@ class Node : public QGraphicsObject
 public:
     Node();
 
-    void addEdge(Edge *edge);
+    void addEdge(Edge * edge);
 
     bool removeEdge(Edge * edge);
 
@@ -32,14 +48,15 @@ public:
 
     void setLineColour(QColor lColor);
     QColor getLineColour();
-    QGraphicsItem *findRootParent();
+    QGraphicsItem * findRootParent();
     void setID(int id);
     int getID();
 
     void setNodeLabel(qreal number);
     void setNodeLabel(QString aLabel);
     void setNodeLabel(QString aLabel, qreal number);
-    void setNodeLabel(QString htmltext, qreal labelSize, QString label);
+    void setNodeLabel(QString aLabel, QString subscript);
+// defunct?    void setNodeLabel(QString htmltext, qreal labelSize, QString label);
     void setNodeLabelSize(qreal labelSize);
     
     QString getLabel() const;
@@ -59,24 +76,27 @@ public:
    // ~Node();
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-    void mousePressEvent(QGraphicsSceneMouseEvent *event);  
+    void mousePressEvent(QGraphicsSceneMouseEvent * event);  
     void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
+	       QWidget * widget);
 
 signals:
     void nodeDeleted();
 
 private:
-    QPointF newPos;
-    qreal nodeDiameter, edgeWeight, rotation;
-    QString  label;
-    Label * text;
-    qreal lSize;
-    QColor nodeLine, nodeFill;
-    int nodeID, choose;
-bool select;
-    qreal logicalDotsPerInchX;
-    qreal logicalDotsPerInchY;
+    QPointF	newPos;
+    qreal	nodeDiameter, edgeWeight, rotation;
+    QString	label;
+    Label	* text;
+    QColor	nodeLine, nodeFill;
+    int		nodeID;		    // The (internal) number of the node.
+    int		penStyle;
+    bool	select;
+    qreal	logicalDotsPerInchX;
+    qreal	logicalDotsPerInchY;
+    void labelToHtml();
+    QString strToHtml(QString);
 };
 
 #endif // NODE_H

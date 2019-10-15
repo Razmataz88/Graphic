@@ -2,9 +2,14 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.1
+ * Version:	1.2
  *
- * Purpose:	
+ * Purpose:	Define the MainWindow class.
+ *
+ * Modification history:
+ * Oct 13, 2019 (JD V1.2)
+ *  (a) Minor comment & formatting changes.
+ *  (b) Add lookupColour() (for TikZ output routine).
  */
 
 
@@ -17,7 +22,8 @@
 #include <QGridLayout>
 #include <QScrollArea>
 
-namespace Ui {
+namespace Ui
+{
     class MainWindow;
 }
 
@@ -62,6 +68,8 @@ private slots:
     void on_freestyleMode_radioButton_clicked();
 
     void on_tabWidget_currentChanged(int index);
+
+    QString lookupColour(QColor color);
 
 private:
     Ui::MainWindow * ui;
