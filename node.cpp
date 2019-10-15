@@ -17,7 +17,7 @@
  * Oct 13, 2019 (JD V1.2)
  *  (a) Remove unused lSize from here and node.h.
  *  (b) Add '_' and the subscript to label (when there is a subscript).
- *  (c) Formatting tweaking and comment improvements/additions.
+ *  (c) Format tweaking and comment improvements/additions.
  *      Deleted and/or commented out some spurious code.
  *  (d) Renamed "choose" to "penStyle".
  *  (e) Added code to parse vertex labels and create corresponding HTML
