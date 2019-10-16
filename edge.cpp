@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.2
+ * Version: 1.3
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -11,6 +11,10 @@
  *  (b) Drive by formatting/typo/... cleanups.
  * Oct 11, 2019 (JD, V1.2)
  *  (a) Minor formatting changes.
+ * Oct 16, 2019 (JD, V1.3)
+ *  (a) setWeight() used to just set the label, but it also now sets
+ *	the weight.  Even though setHtml() is never called, the label
+ *	is showing up (on the canvas) in the appropriate font.  (How?)
  */
 
 #include "edge.h"
@@ -118,13 +122,13 @@ Node * Edge::destNode() const
  * Name:        editWeight()
  * Purpose:     Sets flags so that the label is editable.
  * Argument:    Boolean
- * Output:      none
+ * Output:      Nothing.
  * Modifies:    ItemisFocusable flag, ItemIsFocusable flag,
  *		setHandlesChildEvents
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Returns:     Nothign.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
 
 void Edge::editWeight(bool edit)
@@ -140,12 +144,12 @@ void Edge::editWeight(bool edit)
  * Name:        getRootParent()
  * Purpose:     Returns the root parent of the edge.
  * Arguments:   none
- * Output:      QGraphicsItem *
- * Modifies:    none
+ * Output:      Nothing.
+ * Modifies:    Nothing.
  * Returns:     QGraphicsItem *
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
 
 QGraphicsItem * Edge::getRootParent()
@@ -185,13 +189,14 @@ QGraphicsItem * Edge::getRootParent()
 /*
  * Name:        setWeight()
  * Purpose:     Set the weight and label of an edge.
- * Arguments:   QString
- * Output:      none
+ * Argument:    QString
+ * Output:      Nothing.
  * Modifies:    label, weight
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       Both the "unadorned" label and the HTML-ized label are
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       BOGUS ARCHAIC NOTES:
+ *		Both the "unadorned" label and the HTML-ized label are
  *		needed.  If the programmer tries to return the text in
  *		the label it will return the text and QML/HTML tags
  *		used to style the text.
@@ -199,16 +204,18 @@ QGraphicsItem * Edge::getRootParent()
 
 void Edge::setWeight(QString aWeight)
 {
-
     label->setLabel(aWeight);
-    //    QRegExp re("\\d*");  // A digit (\d), zero or more times (*)
+    weight = aWeight;
 
+// TODO: why has this been commented out.  It seems we don't need it,
+// at least if we are not using subscripts in edge labels/weights.
+// Perhaps we don't need it for vertices either (in no sub/sup case).
+//    QRegExp re("\\d*");  // A digit (\d), zero or more times (*)
 //    weight = aWeight;
 //    if (re.exactMatch(aWeight))
 //        label->setHtml("<font face=\"cmr10\">" + aWeight + "</font>");
 //    else
 //        label->setHtml("<font face=\"cmmi10\">" + aWeight + "</font>");
-//
 }
 
 
@@ -218,10 +225,10 @@ void Edge::setWeight(QString aWeight)
  * Purpose:     Checks if the string contains only digits.
  * Arguments:   String
  * Output:      Boolean
- * Modifies:    none
+ * Modifies:    Nothing.
  * Returns:     True if string contains only digits otherwise false.
- * Assumptions: none
- * Bugs:        none
+ * Assumptions: None.
+ * Bugs:        None.
  * Notes:       TODO: IS THIS USED ANYWHERE?
  */
 
@@ -235,13 +242,13 @@ bool isDigits(const std::string &str)
 /*
  * Name:        getWeight()
  * Purpose:     Returns the (unadorned) weight of the edge label.
- * Arguments:   none
- * Output:      none
- * Modifies:    none
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    None.
  * Returns:     QString weight
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
 
 QString Edge::getWeight()
@@ -255,13 +262,13 @@ QString Edge::getWeight()
  * Name:        adjust()
  * Purpose:     Adjusts the QPointFs of the edge so it moves around with
  *              the node when the node is dragged.
- * Arguments:   none
- * Output:      none
+ * Arguments:   None.
+ * Output:      Nothing.
  * Modifies:    Edge
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
 
 void Edge::adjust()
@@ -691,10 +698,10 @@ void Edge::paint(QPainter *painter, const QStyleOptionGraphicsItem * option,
  * Purpose:     A signal emitted when an edge is deleted.
  * Arguments:   None
  * Output:      void
- * Modifies:    none
- * Returns:     nothing
- * Assumptions: none
- * Bugs:        none
+ * Modifies:    Nothing.
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None.
  * Notes:       Currently signaling controllers to remove widgets from
  *		edit tab that were assigned to style this edge.  Since
  *		the edge is being deleted there is no reason to keep
@@ -710,16 +717,16 @@ void Edge::edgeDeleted()
 
 
 /*
- * Name:        createSelectionPoygon
+ * Name:        createSelectionPolygon
  * Purpose:     Constructs a boundingRect for edges where the length
  *              runs parallel and the width runs perpendicular to the edge.
  * Arguments:   QLineF
- * Output:      void
+ * Output:      Nothing.
  * Modifies:    selectionPolygon
- * Returns:     nothing
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
 
 void Edge::createSelectionPolygon()
