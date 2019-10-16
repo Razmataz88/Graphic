@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.6
+ * Version:	1.7
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -62,6 +62,13 @@
  *  (b) Output coords (to .grphc file) using a %.<VP_PREC_GRPHC>f
  *	format, rather than the default %6g format, to avoid numbers
  *	like -5.68434e-14 (DAMHIKT) in the output file.
+ * Oct 16, 2019 (JD V1.7)
+ *  (a) The original code was outputting (TikZ case) too many edge
+ *      colour definitions, and in some cases they could be wrong.
+ *	Fix that, and also add in the "well known colour" stuff from
+ *	the nodes, as described in V1.5(b) above.
+ *  (b) Only output the edge label and size if there is one.
+ *  (c) Read edges from .grphc file with and without label info.
  */
 
 #include "mainwindow.h"
@@ -482,7 +489,7 @@ bool MainWindow::save_Graph()
 	QString nodeInfo = QString::number(numOfNodes) + "\n\n";
 
 	outStream << "# The node descriptions; the format is:\n";
-	outStream << "# x,y, diameter, rotation, fill R,G,B, outline R,G,B,\n";
+	outStream << "# x,y, diameter, rotation, fill r,g,b, outline r,g,b,\n";
 	outStream << "#      label,label font size\n";
 
 	// In some cases I have created a graph where all the
@@ -531,14 +538,22 @@ bool MainWindow::save_Graph()
 		      << QString::number(node->getFillColour().blueF()) << ", "
 		      << QString::number(node->getLineColour().redF()) << ","
 		      << QString::number(node->getLineColour().greenF()) << ","
-		      << QString::number(node->getLineColour().blueF()) << ", "
-		      << node->getLabel() << ","
-		      << QString::number(node->getLabelSize()) << "\n";
+		      << QString::number(node->getLineColour().blueF());
+	    // Output the node label and its font size if and only if
+	    // there is a node label.
+	    if (node->getLabel().length() > 0)
+	    {
+		outStream << ", "
+			  << node->getLabel() << ","
+			  << QString::number(node->getLabelSize());
+	    }
+	    outStream << "\n";
 	}
 
 	outStream << "\n# Edge descriptions; the format is:\n"
-		  << "# u,v, dest_radius, source_radius, "
-		  << "rotation, pen_width, line R,G,B\n";
+		  << "# u,v, dest_radius, source_radius, rotation, pen_width,\n"
+		  << "#       line r,g,b[, label,label font size]\n";
+	    
 	for (int i = 0; i < nodes.count(); i++)
 	{
 	    for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
@@ -582,8 +597,14 @@ bool MainWindow::save_Graph()
 			      << ","
 			      << QString::number(edge->getColour().greenF())
 			      << ","
-			      << QString::number(edge->getColour().blueF())
-			      << "\n";
+			      << QString::number(edge->getColour().blueF());
+		    if (edge->getWeight().length() > 0)
+		    {
+			// TODO: check for ',' in the label and deal with it.
+			outStream << ", " << edge->getWeight()
+				  << "," << edge->getWeightLabelSize();
+		    }
+		    outStream << "\n";
 		}
 	    }
 	}
@@ -667,11 +688,11 @@ bool MainWindow::save_Graph()
 	// If the line or fill colour is a TikZ "known" colour,
 	// use the name.  Otherwise define a colour.
 	// TODO: don't define a colour more than once.
-	// Use RGB (0-255) colour space, since that is what we use
-	// internally.  Drawings may need to be tweaked by hand if
-	// they are to be printed, due to the RGB <-> rgb conversion
-	// nightmare.
-
+	// Q: why did Rachel output in RGB, as opposed to rgb?
+	// Note that drawings may need to be tweaked by hand if they
+	// are to be printed, due to the RGB/rgb <-> cmyk conversion nightmare.
+	// Note that TikZ for plain TeX does not support the cmyk colourspace
+	// nor (without JD's addition) the RGB colourspace.
 	for (int i = 0; i < nodes.count(); i++)
 	{
 	    Node * node = nodes.at(i);
@@ -741,23 +762,32 @@ bool MainWindow::save_Graph()
 	{
 	    for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
 	    {
+		// TODO: is it possible that with various and sundry
+		// operations on graphs neither the sourceID nor the
+		// destID of an edge in nodes.at(i)'s list is equal to
+		// i, and thus some edge won't be printed?  If so,
+		// should we just test "sourceID < destID in the if
+		// test immediately below?
 		Edge * edge = nodes.at(i)->edgeList.at(j);
-		QString edgeColour = "edge" + QString::number(i + j)
-		    + "edgeColour";
-
-		nodeStyles += "\\definecolor{" + edgeColour + "}{RGB}{"
-		    + QString::number(edge->getColour().red())
-		    + "," + QString::number(edge->getColour().green())
-		    + "," + QString::number(edge->getColour().blue())
-		    + "}\n";
-
-		if ((edge->sourceNode()->getID() == i
-		     && edge->destNode()->getID() > i)
-		    || (edge->destNode()->getID() == i
-			&& edge->sourceNode()->getID() > i))
+		int sourceID = edge->sourceNode()->getID();
+		int destID = edge->destNode()->getID();
+		if ((sourceID == i && destID > i)
+		    || (destID == i && sourceID > i))
 		{
+		    QString edgeColour = lookupColour(edge->getColour());
+		    if (edgeColour == nullptr)
+		    {
+			edgeColour = "edge" + QString::number(sourceID)
+			    + "_" + QString::number(destID) + "Colour";
+			edgeStyles += "\\definecolor{" + edgeColour + "} {RGB} {"
+			    + QString::number(edge->getColour().red())
+			    + "," + QString::number(edge->getColour().green())
+			    + "," + QString::number(edge->getColour().blue())
+			    + "}\n";
+		    }
+
 		    edgeStyles += "\\path (v"
-			+ QString::number(edge->sourceNode()->getID())
+			+ QString::number(sourceID)
 			+ ") edge[draw=" + edgeColour
 			+ ", line width="
 			+ QString::number(edge->getPenWidth()
@@ -776,7 +806,7 @@ bool MainWindow::save_Graph()
 
 		    // Finally, output the other end of the edge:
 		    edgeStyles += " (v"
-			+ QString::number(edge->destNode()->getID())
+			+ QString::number(destID)
 			+ ");\n";
 		}
 	    }
@@ -950,7 +980,7 @@ void MainWindow::select_Custom_Graph(QString graphName)
 	    {
 		QStringList fields = line.split(",");
 
-		// Accept "old" (no label info) and new graph-ic files.
+		// Nodes may or may not have label info.  Accept both.
 		if (fields.count() != 10 && fields.count() != 12)
 		{
 		    QMessageBox::information(0, "Error",
@@ -992,6 +1022,21 @@ void MainWindow::select_Custom_Graph(QString graphName)
 	    else
 	    {
 		QStringList fields = line.split(",");
+
+		// Edges may or may not have label info.  Accept both.
+		if (fields.count() != 9 && fields.count() != 11)
+		{
+		    QMessageBox::information(0, "Error",
+					     "Edge "
+					     + QString::number(i - numOfNodes)
+					     + "of file "
+					     + graphName
+					     + " has an invalid number of "
+					     "fields.  Thus I can not read "
+					     "this file.");
+		    // TODO: do I need to free any storage?
+		    return;
+		}
 		Edge * edge = new Edge(nodes.at(fields.at(0).toInt()),
 				       nodes.at(fields.at(1).toInt()));
 		edge->setDestRadius(fields.at(2).toDouble());
@@ -1003,7 +1048,13 @@ void MainWindow::select_Custom_Graph(QString graphName)
 		lineColor.setGreen(fields.at(7).toDouble());
 		lineColor.setBlue(fields.at(8).toDouble());
 		edge->setColour(lineColor);
+		if (fields.count() == 11)
+		{
+		    edge->setWeight(fields.at(9));
+		    edge->setWeightLabelSize(fields.at(10).toFloat());
+		}
 		edge->setParentItem(graph);
+		i++;
 	    }
 	}
 	file.close();
