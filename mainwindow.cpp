@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.4
+ * Version:	1.6
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -55,6 +55,13 @@
  *	spurious (but apparently harmless) empty superscript to labels
  *	which have neither sub nor super.
  *  (f) Added a number of function comments.
+ * Oct 16, 2019 (JD V1.6)
+ *  (a) When creating .grphc file, center graph on (0,0) so that when
+ *      it is read back in it is centered (and thus accessible) in the
+ *	preview pane.  Ditto
+ *  (b) Output coords (to .grphc file) using a %.<VP_PREC_GRPHC>f
+ *	format, rather than the default %6g format, to avoid numbers
+ *	like -5.68434e-14 (DAMHIKT) in the output file.
  */
 
 #include "mainwindow.h"
@@ -98,6 +105,8 @@
 // TikZ output:
 #define VP_PREC_TIKZ  4
 #define ET_PREC_TIKZ  4
+// Similar for vertex precision in .grphc output:
+#define VP_PREC_GRPHC  4
 
 
 
@@ -475,13 +484,46 @@ bool MainWindow::save_Graph()
 	outStream << "# The node descriptions; the format is:\n";
 	outStream << "# x,y, diameter, rotation, fill R,G,B, outline R,G,B,\n";
 	outStream << "#      label,label font size\n";
+
+	// In some cases I have created a graph where all the
+	// coordinates are negative and "large", and the graph is not
+	// visible in the preview pane when I load it, which also
+	// means (as of time of writing) that I can't drag it to the
+	// canvas.  Thus the graph is effectively lost.  Avoid this by
+	// centering the graph on (0, 0) when writing it out.
+	qreal minx = 0, maxx = 0, miny = 0, maxy = 0;	// Init to silence gcc
+	if (nodes.count() > 0)
+	{
+	    Node * node = nodes.at(0);
+	    minx = maxx = node->scenePos().rx();
+	    miny = maxy = node->scenePos().ry();
+	}
+	for (int i = 1; i < nodes.count(); i++)
+	{
+	    Node * node = nodes.at(i);
+	    qreal x = node->scenePos().rx();
+	    qreal y = node->scenePos().ry();
+	    if (x > maxx)
+		maxx = x;
+	    else if (x < minx)
+		minx = x;
+	    if (y > maxy)
+		maxy = y;
+	    else if (y < minx)
+		miny = y;
+	}
+
+	qreal midx = (maxx + minx) / 2.;
+	qreal midy = (maxy + miny) / 2.;
 	for (int i = 0; i < nodes.count(); i++)
 	{
 	    // TODO: s/,/\\/ before writing out label.  Undo this when reading.
 	    Node * node = nodes.at(i);
 	    outStream << "# Node " + QString::number(i) + ":\n";
-	    outStream << QString::number(node->scenePos().rx()) << ","
-		      << QString::number(node->scenePos().ry()) << ", "
+	    outStream << QString::number(node->scenePos().rx() - midx,
+					 'f', VP_PREC_GRPHC) << ","
+		      << QString::number(node->scenePos().ry() - midy,
+					 'f', VP_PREC_GRPHC) << ", "
 		      << QString::number(node->getDiameter()) << ", "
 		      << QString::number(node->getRotation()) << ", "
 		      << QString::number(node->getFillColour().redF()) << ","
@@ -596,18 +638,43 @@ bool MainWindow::save_Graph()
 	QString edgeStyles = "";
 	QString begin = "\\begin{tikzpicture} "
 	    "[x=1in, y=1in, xscale=1, yscale=1]\n";
-	// Nodes
+
+	// Nodes: find center of graph, output it centered on (0, 0)
+	qreal minx = 0, maxx = 0, miny = 0, maxy = 0;	// Init to silence gcc
+	if (nodes.count() > 0)
+	{
+	    Node * node = nodes.at(0);
+	    minx = maxx = node->scenePos().rx();
+	    miny = maxy = node->scenePos().ry();
+	}
+	for (int i = 1; i < nodes.count(); i++)
+	{
+	    Node * node = nodes.at(i);
+	    qreal x = node->scenePos().rx();
+	    qreal y = node->scenePos().ry();
+	    if (x > maxx)
+		maxx = x;
+	    else if (x < minx)
+		minx = x;
+	    if (y > maxy)
+		maxy = y;
+	    else if (y < minx)
+		miny = y;
+	}
+	qreal midx = (maxx + minx) / 2.;
+	qreal midy = (maxy + miny) / 2.;
+
+	// If the line or fill colour is a TikZ "known" colour,
+	// use the name.  Otherwise define a colour.
+	// TODO: don't define a colour more than once.
+	// Use RGB (0-255) colour space, since that is what we use
+	// internally.  Drawings may need to be tweaked by hand if
+	// they are to be printed, due to the RGB <-> rgb conversion
+	// nightmare.
+
 	for (int i = 0; i < nodes.count(); i++)
 	{
 	    Node * node = nodes.at(i);
-	    // If the line or fill colour is a TikZ "known" colour,
-	    // use the name.  Otherwise define a colour.
-	    // TODO: don't define a colour more than once.
-	    // Use TikZ RGB format, since that is what we use
-	    // internally.  Drawings may need to be tweaked by hand if
-	    // they are to be printed, due to the RGB/rgb <=>
-	    // conversion nightmare.
-
 	    QString fillColour = lookupColour(node->getFillColour());
 	    if (fillColour == nullptr)
 	    {
@@ -632,11 +699,11 @@ bool MainWindow::save_Graph()
 
 	    // Use (x,y) coordinate system for node positions.
 	    nodeStyles += "\\node (v" + QString::number(i) + ") at ("
-		+  QString::number(node->scenePos().rx()
+		+  QString::number((node->scenePos().rx() - midx)
 				   / screen->logicalDotsPerInchX(),
 				   'f', VP_PREC_TIKZ)
 		+ ","
-		+ QString::number(node->scenePos().ry()
+		+ QString::number((node->scenePos().ry() - midy)
 				  / -screen->logicalDotsPerInchX(),
 				  'f', VP_PREC_TIKZ)
 		+  ") " + "[scale=1, inner sep=0,\n\t"
@@ -645,6 +712,7 @@ bool MainWindow::save_Graph()
 		+ "in,\n\t"
 		+ "fill=" + fillColour
 		+ ", draw=" + lineColour;
+
 	    // Output the node label and its font size if and only if
 	    // there is a node label.
 	    if (node->getLabel().length() > 0)
@@ -676,7 +744,7 @@ bool MainWindow::save_Graph()
 		Edge * edge = nodes.at(i)->edgeList.at(j);
 		QString edgeColour = "edge" + QString::number(i + j)
 		    + "edgeColour";
-		// Output
+
 		nodeStyles += "\\definecolor{" + edgeColour + "}{RGB}{"
 		    + QString::number(edge->getColour().red())
 		    + "," + QString::number(edge->getColour().green())
