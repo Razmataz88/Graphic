@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.7
+ * Version:	1.8
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -69,6 +69,9 @@
  *	the nodes, as described in V1.5(b) above.
  *  (b) Only output the edge label and size if there is one.
  *  (c) Read edges from .grphc file with and without label info.
+ * Nov 10, 2019 (JD V1.8)
+ *  (a) Output the label font size before label so that a space before the
+ *      label doesn't need to be trimmed.
  */
 
 #include "mainwindow.h"
@@ -489,8 +492,8 @@ bool MainWindow::save_Graph()
 	QString nodeInfo = QString::number(numOfNodes) + "\n\n";
 
 	outStream << "# The node descriptions; the format is:\n";
-	outStream << "# x,y, diameter, rotation, fill r,g,b, outline r,g,b,\n";
-	outStream << "#      label,label font size\n";
+	outStream << "# x,y, diameter, rotation, fill r,g,b,\n";
+	outStream << "#      outline r,g,b[, label font size,label]\n";
 
 	// In some cases I have created a graph where all the
 	// coordinates are negative and "large", and the graph is not
@@ -544,15 +547,16 @@ bool MainWindow::save_Graph()
 	    if (node->getLabel().length() > 0)
 	    {
 		outStream << ", "
-			  << node->getLabel() << ","
-			  << QString::number(node->getLabelSize());
+			  << QString::number(node->getLabelSize())
+			  << ","
+			  << node->getLabel();
 	    }
 	    outStream << "\n";
 	}
 
 	outStream << "\n# Edge descriptions; the format is:\n"
-		  << "# u,v, dest_radius, source_radius, rotation, pen_width,\n"
-		  << "#       line r,g,b[, label,label font size]\n";
+		  << "# u, v, dest_radius, source_radius, rotation, pen_width,\n"
+		  << "#       line r,g,b[, weight font size, weight]\n";
 	    
 	for (int i = 0; i < nodes.count(); i++)
 	{
@@ -601,8 +605,10 @@ bool MainWindow::save_Graph()
 		    if (edge->getWeight().length() > 0)
 		    {
 			// TODO: check for ',' in the label and deal with it.
-			outStream << ", " << edge->getWeight()
-				  << "," << edge->getWeightLabelSize();
+			outStream << ", "
+				  << edge->getWeightLabelSize()
+				  << ","
+				  << edge->getWeight();
 		    }
 		    outStream << "\n";
 		}
@@ -1012,8 +1018,8 @@ void MainWindow::select_Custom_Graph(QString graphName)
 		node->setLineColour(lineColor);
 		if (fields.count() == 12)
 		{
-		    node->setNodeLabel(fields.at(10));
-		    node->setNodeLabelSize(fields.at(11).toFloat());
+		    node->setNodeLabelSize(fields.at(10).toFloat());
+		    node->setNodeLabel(fields.at(11));
 		}
 		nodes.append(node);
 		node->setParentItem(graph);
@@ -1045,16 +1051,37 @@ void MainWindow::select_Custom_Graph(QString graphName)
 		edge->setPenWidth(fields.at(5).toDouble());
 		QColor lineColor;
 		lineColor.setRedF(fields.at(6).toDouble());
-		lineColor.setGreen(fields.at(7).toDouble());
-		lineColor.setBlue(fields.at(8).toDouble());
+		lineColor.setGreenF(fields.at(7).toDouble());
+		lineColor.setBlueF(fields.at(8).toDouble());
+		printf("setting edge (%d, %d) colour to %.3f, %.3f, %.3f\n",
+		       fields.at(0).toInt(), fields.at(1).toInt(),
+		       fields.at(6).toDouble(), fields.at(7).toDouble(),
+		       fields.at(8).toDouble());
 		edge->setColour(lineColor);
 		if (fields.count() == 11)
 		{
-		    edge->setWeight(fields.at(9));
-		    edge->setWeightLabelSize(fields.at(10).toFloat());
+		    edge->setWeightLabelSize(fields.at(9).toFloat());
+		    edge->setWeight(fields.at(10));
 		}
 		edge->setParentItem(graph);
 		i++;
+		for (int i = 0; i < nodes.count(); i++)
+		{
+		    for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
+		    {
+			Edge * e = nodes.at(i)->edgeList.at(j);
+			int sourceID = e->sourceNode()->getID();
+			int destID = e->destNode()->getID();
+			printf("node[%d]'s %d-th edge has src = %d, dst = %d",
+			    i, j, sourceID, destID);
+			QString wt = e->getWeight();
+			QColor col = e->getColour();
+			printf(", wt /%s/, rgb (%.2f,%.2f,%.2f)\n",
+			       wt.toLatin1().data(),
+			       col.redF(), col.greenF(), col.blueF());
+		    }
+		}
+		printf("\n");
 	    }
 	}
 	file.close();
