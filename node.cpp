@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.2
+ * Version: 1.3
  *
  * Purpose: creates a node for the users graph
  *
@@ -27,6 +27,13 @@
  *	      However, TeX outputs digits (at least sub and sup) in cmr,
  *	      so I need to go through this code and see if I can get
  *	      all the fonts correct in the HTML text.
+ * Nov 11, 2019 (JD V1.3)
+ *  (a) Move the strToHtml() code to html-label.{h,cpp} (where it was
+ *	partially rewritten anyway).  Modify labelToHtml() accordingly.
+ *	digits are rendered in cmr10, so that they look more like what
+ *	TeX will create.  The other parts are rendered in cmmi10.
+ *	The code could be better, but it seems to display OK and is
+ *	never written out to a file.
  */
 
 #include "edge.h"
@@ -74,7 +81,7 @@ Node::Node()
     nodeDiameter = 1;
     edgeWeight = 1;     // UNUSED IN V 1.1.
     rotation = 0;
-    text = new Label(this);
+    text = new HTML_Label(this);
     setHandlesChildEvents(true);
     select = false;
     QScreen * screen = QGuiApplication::primaryScreen();
@@ -451,7 +458,7 @@ void Node::setNodeLabel(QString aLabel, qreal number)
 
 void Node::setNodeLabel(QString aLabel, QString subscript)
 {
-    label = aLabel + "_{" + subscript + "}";//+ "^{a}";
+    label = aLabel + "_{" + subscript + "}";
     // qDebug() << "\nsetNodeLabel(QS, QS) set label to /" << label << "/";
     labelToHtml();
 }
@@ -501,170 +508,19 @@ void Node::setNodeLabel(QString aLabel)
 
 void Node::labelToHtml()
 {
-    QString html = "<font face=\"cmmi10\">" + Node::strToHtml(label) + "</font>";
+#ifdef DEBUG
+    printf("labelToHtml() looking at node %d with label /%s/\n",
+	   nodeID, label.toLocal8Bit().data());
+#endif
+
+    QString html = HTML_Label::strToHtml(label);
     text->setHtml(html);
-    // printf("labelToHtml setting text to /%s/\n",
-	//   (char *)html.toLocal8Bit().data());
-}
 
-
-
-/*
- * Name:	strToHtml()
- * Purpose:	Parse the arg string, turn it into HTML, return that text.
- * Arguments:	A hopefully-correct TeX-ish vertex label string.
- * Outputs:	Nothing.
- * Modifies:	Nothing.
- * Returns:	On success, the HTML text.  On failure, the empty string.
- * Assumptions:	The label string is syntactically valid.
- * Bugs:	Should return a success indication should parsing fail.
- * Notes:
- */
-
-QString Node::strToHtml(QString str)
-{
-    QString base, rest, sub, sup, retval;
-    char other_one;
-    int first;
-    int brCount, pos;
-    int firstUnderscore = str.indexOf('_');
-    int firstCircumflex = str.indexOf('^');
 #ifdef DEBUG
-    printf("\nstrToHtml(%s) called\n", str.toLocal8Bit().data());
-    printf("\t firstUnderscore() = %d", firstUnderscore);
-    printf("  firstCircumflex() = %d\n", firstCircumflex);
+    printf("labelToHtml setting text to /%s/ for /%s/\n",
+	   (char *)html.toLocal8Bit().data(),
+	   (char *)label.toLocal8Bit().data());
 #endif
-
-    // Trivial case: no superscript or subscript:
-    if (firstUnderscore == -1 && firstCircumflex == -1)
-    {
-#ifdef DEBUG
-	printf("\tstrToHtml(): trivial case, returning\n");
-#endif
-	return str;
-    }
-
-    if (firstUnderscore == -1)
-	first = firstCircumflex;
-    else if (firstCircumflex == -1)
-	first = firstUnderscore;
-    else
-	first = firstUnderscore < firstCircumflex
-	    ? firstUnderscore : firstCircumflex;
-#ifdef DEBUG
-    printf("first = %d\n", first);
-#endif
-
-    base = str.left(first);
-    rest = str.mid(first + 1);
-#ifdef DEBUG
-    printf("base part of str is /%s/\n", (char *)base.toLocal8Bit().data());
-    printf("rest of str is /%s/\n", (char *)rest.toLocal8Bit().data());
-#endif
-
-    int rest_len = rest.count();
-    if (rest_len < 3 || rest.at(0) != '{')
-    {
-	printf("BOGUS rest PART!  (too short or doesn't start with '{')\n");
-	return "";
-    }
-
-    // Find and recursively process the subscript and/or superscript.
-    // Below we check for nullptr to see if we found that part.
-    sub = nullptr;
-    sup = "<sup></sup>"; //TODO: see whether this makes it look more TeXish
-
-    // Initial values: count and skip over the '{'
-    for (pos = 1, brCount = 1; brCount > 0 && pos < rest_len; pos++)
-    {
-	if (rest.at(pos) == '}')
-	    brCount--;
-	else if (rest.at(pos) == '{')
-	    brCount++;
-#ifdef DEBUG
-	printf("\trest[%d] = %c\n", pos, (char)rest.at(pos).toLatin1());
-#endif
-    }
-    // pos is now 1 more than the index of the '}'
-
-    if (brCount != 0)
-    {
-	// More '{'s than '}'s
-	printf("BOGUS braces in rest\n");
-	return "";
-    }
-
-    // Recursive call on sub/sup; [0] is '{', [pos-1] is '}'
-    if (str.at(first) == '_')
-    {
-	sub = "<sub>" + Node::strToHtml(rest.mid(1, pos - 2)) + "</sub>";
-	other_one = '^';
-    }
-    else
-    {
-	sup = "<sup>" + Node::strToHtml(rest.mid(1, pos - 2)) + "</sup>";
-	other_one = '_';
-    }
-
-    // We now have processed "rest" up to index "pos - 1".
-    // Repeat the above code, +/-, if there is more.  (Refactor this??)
-#ifdef DEBUG
-    printf("aaa pos = %d, rest=/%s/, rest_len = %d\n",
-	   pos, rest.toLocal8Bit().data(), rest_len);
-#endif
-    if (pos < rest_len)
-    {
-	// Trim the previous sub/sup from the start of "rest".
-	rest = rest.mid(pos);
-#ifdef DEBUG
-	printf("bbb pos = %d, rest=/%s/\n", pos, rest.toLocal8Bit().data());
-#endif
-	if (rest.at(0) != other_one)
-	{
-	    printf("BOGUS repetition of '%c' in vertex label\n", other_one);
-	    return "";
-	}
-	if (rest.at(1) != '{')
-	{
-	    printf("BOGUS char after '%c' in vertex label\n", other_one);
-	    return "";
-	}
-	rest_len = rest.count();
-	if (rest_len < 4)
-	{
-	    printf("BOGUS second sub/sup (too short)!\n");
-	    return "";
-	}
-
-	// Initial values: count and skip over the '{'
-	for (pos = 2, brCount = 1; brCount > 0 && pos < rest_len; pos++)
-	{
-	    if (rest.at(pos) == '}')
-		brCount--;
-	    else if (rest.at(pos) == '{')
-		brCount++;
-	}
-	if (brCount != 0 || pos != rest_len)
-	{
-	    // More '{'s than '}'s or got to matching '}' before end of string.
-	    printf("BOGUS braces in second sub/sup\n");
-	    return "";
-	}
-
-	// All OK (?)
-	if (other_one == '_')
-	    sub = "<sub>" + Node::strToHtml(rest.mid(2, rest_len - 3))
-		+ "</sub>";
-	else
-	    sup = "<sup>" + Node::strToHtml(rest.mid(2, rest_len - 3))
-		+ "</sup>";
-    }
-
-    retval = base + sup + sub;
-#ifdef DEBUG
-    printf("returning /%s/\n", (char *)retval.toLocal8Bit().data());
-#endif
-    return retval;
 }
 
 

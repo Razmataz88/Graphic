@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -15,6 +15,10 @@
  *  (a) setWeight() used to just set the label, but it also now sets
  *	the weight.  Even though setHtml() is never called, the label
  *	is showing up (on the canvas) in the appropriate font.  (How?)
+ * Nov 13, 2019 (JD, V1.4):
+ *  (a) Clean up / add some comments.
+ *  (b) Apply change of name Label -> HTML_Label.
+ *  (c) Apply change of name setLabel() -> set_Html_Label().
  */
 
 #include "edge.h"
@@ -46,10 +50,10 @@ static const bool verbose = false;
  * Name:        Edge
  * Purpose:     Constructor for Edge class
  * Arguments:   two Nodes
- * Output:      none
+ * Output:      Nothing.
  * Modifies:    private Edge variables
- * Returns:     none
- * Assumptions: none
+ * Returns:     A new edge.
+ * Assumptions: The two args are valid nodes.
  * Bugs:        none
  * Notes:       none
  */
@@ -71,7 +75,7 @@ Edge::Edge(Node * sourceNode, Node * destNode)
     destRadius = 1;     // Set arbitrarily
     sourceRadius = 1;
     setHandlesChildEvents(true);
-    label = new Label(this);
+    label = new HTML_Label(this);
     label->setPos((edgeLine.p2().rx() + edgeLine.p1().rx()) / 2.
 		  - label->boundingRect().width() / 2.,
 		  (edgeLine.p2().ry() + edgeLine.p1().ry()) / 2.
@@ -83,13 +87,13 @@ Edge::Edge(Node * sourceNode, Node * destNode)
 /*
  * Name:        sourceNode()
  * Purpose:     Getter function for the sourceNode of the edge.
- * Arguments:   none
- * Output:      none
- * Modifies:    none
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    Nothing.
  * Returns:     Node *
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
 
 Node * Edge::sourceNode() const
@@ -204,10 +208,10 @@ QGraphicsItem * Edge::getRootParent()
 
 void Edge::setWeight(QString aWeight)
 {
-    label->setLabel(aWeight);
+    label->setHtmlLabel(aWeight);
     weight = aWeight;
 
-// TODO: why has this been commented out.  It seems we don't need it,
+// TODO: why has this been commented out?  It seems we don't need it,
 // at least if we are not using subscripts in edge labels/weights.
 // Perhaps we don't need it for vertices either (in no sub/sup case).
 //    QRegExp re("\\d*");  // A digit (\d), zero or more times (*)

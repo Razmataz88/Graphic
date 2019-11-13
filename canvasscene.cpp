@@ -19,14 +19,16 @@
  *    away the braces before I noticed this because it made the
  *    indentation a bit weird, but perhaps I should have left well
  *    enough alone in this case.)
+ * Nov 13, 2019 (JD V1.2)
+ *  - rename Label to HTML_Label, as per changes to the naming scheme.
  */
 
 #include "canvasscene.h"
-#include "node.h"
+#include "canvasview.h"
 #include "edge.h"
 #include "graph.h"
 #include "graphmimedata.h"
-#include "canvasview.h"
+#include "node.h"
 
 #include <QtDebug>
 #include <QGraphicsSceneMouseEvent>
@@ -172,7 +174,7 @@ void CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 	    {
 		if (item != nullptr || item != 0)
 		{
-		    if (item->type() == Label::Type)
+		    if (item->type() == HTML_Label::Type)
 		    {
 			if (verbose)
 			    qDebug() << "mousepress/delete LABEL";

@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.1
+ * Version: 1.2
  *
  * Purpose: Declare the node class.
  * 
@@ -11,13 +11,16 @@
  *  (a) Remove unused lSize from here and node.cpp.
  *  (b) Minor formatting changes.
  *  (c) renamed "choose" to "penStyle".
+ * Nov 13, 2019 (JD V1.2)
+ *  - rename Label -> HTML_Label, label-h -> html-label.h,
+ *    remove strToHtml() decl.
  */
 
 
 #ifndef NODE_H
 #define NODE_H
 
-#include "label.h"
+#include "html-label.h"
 #include <QGraphicsItem>
 #include <QList>
 #include <QGraphicsSceneMouseEvent>
@@ -88,7 +91,7 @@ private:
     QPointF	newPos;
     qreal	nodeDiameter, edgeWeight, rotation;
     QString	label;
-    Label	* text;
+    HTML_Label	* text;
     QColor	nodeLine, nodeFill;
     int		nodeID;		    // The (internal) number of the node.
     int		penStyle;
@@ -96,7 +99,6 @@ private:
     qreal	logicalDotsPerInchX;
     qreal	logicalDotsPerInchY;
     void labelToHtml();
-    QString strToHtml(QString);
 };
 
 #endif // NODE_H
