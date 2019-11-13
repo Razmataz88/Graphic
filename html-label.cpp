@@ -2,7 +2,7 @@
  * File:	html-label.cpp	    Formerly label.cpp
  * Author:	Rachel Bood
  * Date:	2014-??-??
- * Version:	1.1
+ * Version:	1.2
  * 
  * Purpose:	Implement the functions relating to node and edge labels.
  *		(Some places in the code use "weight" for "edge label".)
@@ -17,6 +17,10 @@
  *  (b) Move (and improve) code to HTML-ize node labels, which may
  *	contain super- and sub-scripts, into this file (from node.cpp).
  *  (c) Various and sundry minor formatting and comment additions.
+ * Nov 13, 2019 (JD V1.2)
+ *  - in setHtmlLabel() (currently only called for edges) replace the
+ *    fontification code with strToHtml() so that edge labels can have
+ *    super- and subscripts as well.  Add function comment to setHtmlLabel().
  */
 
 #include "html-label.h"
@@ -90,23 +94,22 @@ HTML_Label::setTextInteraction(bool on, bool selectAll)
 
 
 
+/*
+ * Name:	setHtmlLabel()
+ * Purpose:	Create the htmlLabel from the plain text version.
+ * Arguments:	The plain text label.
+ * Outputs:	Nothing.
+ * Modifies:	The edge's htmlLabel.
+ * Returns:	Nothing.
+ * Assumptions:	None.
+ * Bugs:	None.
+ * Notes:	None.
+ */
+
 void
 HTML_Label::setHtmlLabel(QString string)
 {
-    QRegExp re("\\d*");  // A digit (\d), zero or more times (*)
-
-    htmlLabelText = string;
-    QString htmlFormat = "";
-    for (int i = 0; i < string.length(); i++)
-    {
-        if (re.exactMatch(string.at(i)))  // Why not isdigit() ?
-            htmlFormat += "<font face=\"cmr10\">" + QString(string.at(i))
-		+ "</font>";
-        else
-            htmlFormat += "<font face=\"cmmi10\">" + QString(string.at(i))
-		+ "</font>";
-    }
-    this->setHtml(htmlFormat);
+    this->setHtml(strToHtml(string));
 
     if (parentItem() != nullptr)
         setPos(parentItem()->boundingRect().center().x()
