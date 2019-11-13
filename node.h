@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.2
+ * Version: 1.3
  *
  * Purpose: Declare the node class.
  * 
@@ -14,6 +14,9 @@
  * Nov 13, 2019 (JD V1.2)
  *  - rename Label -> HTML_Label, label-h -> html-label.h,
  *    remove strToHtml() decl.
+ * Nov 13, 2019 (JD V1.3)
+ *  - rename HTML_Label text to HTML_Label htmlLabel.
+ *  - delete cruft.
  */
 
 
@@ -59,7 +62,6 @@ public:
     void setNodeLabel(QString aLabel);
     void setNodeLabel(QString aLabel, qreal number);
     void setNodeLabel(QString aLabel, QString subscript);
-// defunct?    void setNodeLabel(QString htmltext, qreal labelSize, QString label);
     void setNodeLabelSize(qreal labelSize);
     
     QString getLabel() const;
@@ -91,7 +93,7 @@ private:
     QPointF	newPos;
     qreal	nodeDiameter, edgeWeight, rotation;
     QString	label;
-    HTML_Label	* text;
+    HTML_Label	* htmlLabel;
     QColor	nodeLine, nodeFill;
     int		nodeID;		    // The (internal) number of the node.
     int		penStyle;

@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose: creates a node for the users graph
  *
@@ -34,6 +34,8 @@
  *	TeX will create.  The other parts are rendered in cmmi10.
  *	The code could be better, but it seems to display OK and is
  *	never written out to a file.
+ * Nov 13, 2019 (JD V1.4)
+ *  - rename HTML_Label text to HTML_Label htmlLabel.
  */
 
 #include "edge.h"
@@ -81,7 +83,7 @@ Node::Node()
     nodeDiameter = 1;
     edgeWeight = 1;     // UNUSED IN V 1.1.
     rotation = 0;
-    text = new HTML_Label(this);
+    htmlLabel = new HTML_Label(this);
     setHandlesChildEvents(true);
     select = false;
     QScreen * screen = QGuiApplication::primaryScreen();
@@ -406,7 +408,7 @@ QList<Edge *> Node::edges() const
  * Purpose:     Sets the label of the node to a real number.
  * Arguments:   qreal
  * Output:      Nothing.
- * Modifies:    The text in the node label (both "text" and "label" fields).
+ * Modifies:    The text in the node label (both "htmlLabel" and "label" fields).
  * Returns:     Nothing.
  * Assumptions: None.
  * Bugs:        None.
@@ -417,8 +419,8 @@ void Node::setNodeLabel(qreal number)
 {
     label = QString::number(number);
     Node::labelToHtml();
-    text->setHtml("<font face=\"cmr10\">"
-		  + QString::number(number) + "</font>");
+    htmlLabel->setHtml("<font face=\"cmr10\">"
+		       + QString::number(number) + "</font>");
 }
 
 
@@ -429,7 +431,7 @@ void Node::setNodeLabel(qreal number)
  *		has a numeric subscript.
  * Arguments:   QString, qreal
  * Output:      Nothing.
- * Modifies:    The text in the node label (both "text" and "label" fields).
+ * Modifies:    The text in the node label (both "htmlLabel" and "label" fields).
  * Returns:     Nothing.
  * Assumptions: none
  * Bugs:        none
@@ -514,10 +516,10 @@ void Node::labelToHtml()
 #endif
 
     QString html = HTML_Label::strToHtml(label);
-    text->setHtml(html);
+    htmlLabel->setHtml(html);
 
 #ifdef DEBUG
-    printf("labelToHtml setting text to /%s/ for /%s/\n",
+    printf("labelToHtml setting htmlLabel to /%s/ for /%s/\n",
 	   (char *)html.toLocal8Bit().data(),
 	   (char *)label.toLocal8Bit().data());
 #endif
@@ -530,7 +532,7 @@ void Node::labelToHtml()
  * Purpose:     Sets the label of the node.
  * Arguments:   QString, qreal, QString
  * Output:      none
- * Modifies:    the text in the node's label
+ * Modifies:    the htmlLabel in the node's label
  * Returns:     none
  * Assumptions: none
  * Bugs:        none
@@ -544,10 +546,10 @@ void Node::labelToHtml()
 //    qDebug() << "setNodeLabel(QString, qreal, QString) called!";
 //
 //    label = aLabel;
-//    text->setHtml(htmltext);
-//    QFont font = text->font();
+//    htmlLabel->setHtml(htmltext);
+//    QFont font = htmlLabel->font();
 //    font.setPointSize(labelSize);
-//    text->setFont(font);
+//    htmlLabel->setFont(font);
 //    lSize = labelSize;
 //    update();
 //}
@@ -568,9 +570,9 @@ void Node::labelToHtml()
 
 void Node::setNodeLabelSize(qreal labelSize)
 {
-    QFont font = text->font();
+    QFont font = htmlLabel->font();
     font.setPointSize(labelSize);
-    text->setFont(font);
+    htmlLabel->setFont(font);
 }
 
 
@@ -608,7 +610,7 @@ QString Node::getLabel() const
 
 qreal Node::getLabelSize() const
 {
-    return text->font().pointSizeF();
+    return htmlLabel->font().pointSizeF();
 }
 
 
@@ -672,8 +674,8 @@ void Node::chosen(int pen_style)
 void Node::editLabel(bool edit)
 {
     setHandlesChildEvents(!edit);
-    text->setFlag(QGraphicsItem::ItemIsFocusable, edit);
-    text->setFlag(ItemIsSelectable, edit);
+    htmlLabel->setFlag(QGraphicsItem::ItemIsFocusable, edit);
+    htmlLabel->setFlag(ItemIsSelectable, edit);
 }
 
 
@@ -695,9 +697,9 @@ void Node::editLabel(bool edit)
 //    foreach(Edge * edge, edgeList)
 //       delete edge;
 
-//    text->setParentItem(nullptr);
-//    delete text;
-//    text = nullptr;
+//    htmlLabel->setParentItem(nullptr);
+//    delete htmlLabel;
+//    htmlLabel = nullptr;
 //    setParentItem(nullptr);
 //}
 
@@ -763,10 +765,10 @@ Node::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
                          -1 * nodeDiameter / 2,
                          nodeDiameter, nodeDiameter);
 
-    text->setPos(this->boundingRect().center().x()
-		 - text->boundingRect().width() / 2.,
-                 this->boundingRect().center().y()
-                 - text->boundingRect().height() / 2.);
+    htmlLabel->setPos(this->boundingRect().center().x()
+		      - htmlLabel->boundingRect().width() / 2.,
+		      this->boundingRect().center().y()
+		      - htmlLabel->boundingRect().height() / 2.);
 }
 
 
