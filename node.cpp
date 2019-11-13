@@ -27,7 +27,7 @@
  *	      However, TeX outputs digits (at least sub and sup) in cmr,
  *	      so I need to go through this code and see if I can get
  *	      all the fonts correct in the HTML text.
- * Nov 11, 2019 (JD V1.3)
+ * Nov 13, 2019 (JD V1.3)
  *  (a) Move the strToHtml() code to html-label.{h,cpp} (where it was
  *	partially rewritten anyway).  Modify labelToHtml() accordingly.
  *	digits are rendered in cmr10, so that they look more like what
