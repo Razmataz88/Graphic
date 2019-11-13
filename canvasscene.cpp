@@ -1,26 +1,28 @@
 /*
  * File:    canvasscene.cpp
- * Author:  Rachel Bood 100088769
+ * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.0
+ * Version: 1.3
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
  *
  * Modification history:
- * Oct 13, 2019 (JD V1.1)
- *  - no functional code changes: some formatting, some addition of comments,
- *    made some debug statements more verbose, deleted some
- *    long-commented-out-by-Rachel code, and deleted the setting of an
- *    unused variable.
- *    (Note that removing braces from some cases caused errors on
- *    stmts of the form "type var = value;", but, oddly, these go away
- *    if these are replaced with "type var; var = value;".  I took
- *    away the braces before I noticed this because it made the
- *    indentation a bit weird, but perhaps I should have left well
- *    enough alone in this case.)
- * Nov 13, 2019 (JD V1.2)
- *  - rename Label to HTML_Label, as per changes to the naming scheme.
+ *  Oct 13, 2019 (JD V1.1)
+ *   - no functional code changes: some formatting, some addition of comments,
+ *     made some debug statements more verbose, deleted some
+ *     long-commented-out-by-Rachel code, and deleted the setting of an
+ *     unused variable.
+ *     (Note that removing braces from some cases caused errors on
+ *     stmts of the form "type var = value;", but, oddly, these go away
+ *     if these are replaced with "type var; var = value;".  I took
+ *     away the braces before I noticed this because it made the
+ *     indentation a bit weird, but perhaps I should have left well
+ *     enough alone in this case.)
+ *  Nov 13, 2019 (JD V1.2)
+ *   - rename Label to HTML_Label, as per changes to the naming scheme.
+ *  Nov 13, 2019 (JD, V1.3)
+ *   - rename "Weight" to "Label" for edge function names.
  */
 
 #include "canvasscene.h"
@@ -63,14 +65,16 @@ CanvasScene::CanvasScene()
 
 
 
-void CanvasScene::dragMoveEvent(QGraphicsSceneDragDropEvent * event)
+void
+CanvasScene::dragMoveEvent(QGraphicsSceneDragDropEvent * event)
 {
     Q_UNUSED(event);
 }
 
 
 
-void CanvasScene::dropEvent(QGraphicsSceneDragDropEvent * event)
+void
+CanvasScene::dropEvent(QGraphicsSceneDragDropEvent * event)
 {
     const GraphMimeData * mimeData
 	= qobject_cast<const GraphMimeData *> (event->mimeData());
@@ -90,7 +94,8 @@ void CanvasScene::dropEvent(QGraphicsSceneDragDropEvent * event)
 
 
 
-void CanvasScene::drawBackground(QPainter * painter, const QRectF &rect)
+void
+CanvasScene::drawBackground(QPainter * painter, const QRectF &rect)
 {
     if (snapToGrid)
     {
@@ -107,7 +112,8 @@ void CanvasScene::drawBackground(QPainter * painter, const QRectF &rect)
 
 
 
-void CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
+void
+CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
     if (itemAt(event->scenePos(), QTransform()) != nullptr)
     {
@@ -310,7 +316,8 @@ void CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 
 
 
-void CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
+void
+CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 {
     if (verbose)
         qDebug() << "mosueMove/Mode: " + QString::number(getMode());
@@ -333,7 +340,8 @@ void CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 
 
 
-void CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
+void
+CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
     if (mDragged && snapToGrid
 	&& (getMode() == CanvasView::none || getMode() == CanvasView::edit))
@@ -368,7 +376,8 @@ void CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 
 
 
-void CanvasScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
+void
+CanvasScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
 {
     switch (getMode())
     {
@@ -407,7 +416,8 @@ void CanvasScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
 
 
 
-void CanvasScene::keyReleaseEvent(QKeyEvent * event)
+void
+CanvasScene::keyReleaseEvent(QKeyEvent * event)
 {
     switch (event->key())
     {
@@ -671,7 +681,8 @@ void CanvasScene::keyReleaseEvent(QKeyEvent * event)
 
 
 
-void CanvasScene::setCanvasMode(int mode)
+void
+CanvasScene::setCanvasMode(int mode)
 {
     modeType = mode;
 
@@ -714,24 +725,26 @@ void CanvasScene::setCanvasMode(int mode)
             Edge * edge = qgraphicsitem_cast<Edge *>(item);
             if (modeType == CanvasView::edit)
             {
-                edge->editWeight(true);
+                edge->editLabel(true);
             }
             else
-                edge->editWeight(false);
+                edge->editLabel(false);
         }
     }
 }
 
 
 
-void CanvasScene::isSnappedToGrid(bool snap)
+void
+CanvasScene::isSnappedToGrid(bool snap)
 {
     snapToGrid = snap;
 }
 
 
 
-int CanvasScene::getMode() const
+int
+CanvasScene::getMode() const
 {
     return modeType;
 }

@@ -1,16 +1,30 @@
+/*
+ * File:    labelcontroller.cpp
+ * Author:  Rachel Bood
+ * Date:    2014/11/07 (?)
+ * Version: 1.1
+ *
+ * Purpose: ?
+ *
+ * Modification history:
+ * Nov 13, 2019 (JD, V1.1)
+ *  - rename "Weight" to "Label" for edge function names.
+ */
+
+
 #include "labelcontroller.h"
 
 
-LabelController::LabelController(Edge *anEdge, QLineEdit *anEdit)
+LabelController::LabelController(Edge * anEdge, QLineEdit * anEdit)
 {
     edit = anEdit;
     edge = anEdge;
 
     if (edit != nullptr || edit != 0)
     {
-        edit->setText(edge->getWeight());
+        edit->setText(edge->getLabel());
         connect(edit, SIGNAL(textChanged(QString)),
-                this, SLOT(setEdgeWeight(QString)));
+                this, SLOT(setEdgeLabel(QString)));
         connect(anEdge, SIGNAL(destroyed(QObject*)),
                 this, SLOT(deletedLineEdit()));
         connect(anEdge, SIGNAL(destroyed(QObject*)),
@@ -18,7 +32,9 @@ LabelController::LabelController(Edge *anEdge, QLineEdit *anEdit)
     }
 }
 
-LabelController::LabelController(Node *aNode, QLineEdit *anEdit)
+
+
+LabelController::LabelController(Node * aNode, QLineEdit * anEdit)
 {
     node = aNode;
     edit = anEdit;
@@ -34,20 +50,28 @@ LabelController::LabelController(Node *aNode, QLineEdit *anEdit)
     }
 }
 
-void LabelController::setEdgeWeight(QString string)
+
+
+void
+LabelController::setEdgeLabel(QString string)
 {
     if (edge != nullptr || edge != 0)
-        edge->setWeight(string);
+        edge->setLabel(string);
 }
 
 
-void LabelController::setNodeLabel(QString string)
+
+void
+LabelController::setNodeLabel(QString string)
 {
     if (edge != nullptr || edge != 0)
         node->setNodeLabel(string);
 }
 
-void LabelController::deletedLineEdit()
+
+
+void
+LabelController::deletedLineEdit()
 {
     delete edit;
 }

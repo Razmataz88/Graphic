@@ -1,3 +1,16 @@
+/*
+ * File:    labelsizecontroller.cpp
+ * Author:  Rachel Bood
+ * Date:    2014/11/07 (?)
+ * Version: 1.1
+ *
+ * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
+ *
+ * Modification history:
+ *  Nov 13, 2019 (JD, V1.1):
+ *  - rename setWeightLabelSize() to setLabelSize().
+ */
+
 #include "labelsizecontroller.h"
 
 
@@ -10,7 +23,7 @@ LabelSizeController::LabelSizeController(Edge *anEdge, QDoubleSpinBox *aBox)
         if (box->value() == 0)
             box->setValue(12);
         else
-            box->setValue(edge->getWeightLabelSize());
+            box->setValue(edge->getLabelSize());
 
         connect(box, SIGNAL(valueChanged(double)),
                 this, SLOT(setEdgeWeightSize(double)));
@@ -56,7 +69,7 @@ void LabelSizeController::deletedSpinBox()
 void LabelSizeController::setEdgeWeightSize(double value)
 {
     if (edge != nullptr || edge != 0)
-        edge->setWeightLabelSize(value);
+        edge->setLabelSize(value);
 }
 
 

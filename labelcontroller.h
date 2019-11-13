@@ -1,3 +1,17 @@
+/*
+ * File:    labelcontroller.h
+ * Author:  Rachel Bood
+ * Date:    2014/11/07 (?)
+ * Version: 1.1
+ *
+ * Purpose: 
+ *
+ * Modification history:
+ * Nov 13, 2019 (JD, V1.1)
+ *  - rename "Weight" to "Label" for edge function names.
+ */
+
+
 #ifndef EDGEWEIGHTCONTROLLER_H
 #define EDGEWEIGHTCONTROLLER_H
 #include "edge.h"
@@ -14,7 +28,7 @@ public:
     LabelController(Node * aNode, QLineEdit * anEdit);
 
 private slots:
-    void setEdgeWeight(QString string);
+    void setEdgeLabel(QString string);
     void setNodeLabel(QString string);
     void deletedLineEdit();
 

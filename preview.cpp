@@ -2,9 +2,15 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.0
+ * Version: 1.2
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
+ *
+ * Modification history:
+ *  Nov 13, 2019 (JD, V1.1):
+ *  - rename setWeightLabelSize() to setLabelSize().
+ *  Nov 13, 2019 (JD, V1.2)
+ *   - rename "Weight" to "Label" for edge function names.
  */
 
 #include "preview.h"
@@ -330,9 +336,9 @@ void PreView::Style_Graph(Graph * graph, int graphType, qreal nodeDiameter,
              edge->setSourceRadius(edge->sourceNode()->getDiameter() / 2.);
              edge->setPenWidth(edgeSize);
              edge->setColour(edgeLineColor);
-             edge->setWeightLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
+             edge->setLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
              if (edgeLabel.length() != 0)
-                edge->setWeight(edgeLabel);
+                edge->setLabel(edgeLabel);
              //edge->adjust();
              edge->setParentItem(graph);
         }

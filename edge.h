@@ -2,13 +2,24 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.1
+ * Version: 1.2
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
  * Nov 13, 2019 (JD, V1.1):
  *  (a) Minor formatting tweaks.
  *  (b) Apply change of name label.h -> html-label.h
+ * Nov 13, 2019 (JD, V1.2):
+ *  (a) Rename (in this order!)
+ *	       label -> htmlLabel,
+ *	       setWeightLabelSize() -> setLabelSize(),
+ *             getWeightLabelSize() -> getLabelSize(),
+ *	       setWeight() -> setLabel(), 
+ *	       getWeight() -> getLabel(),
+ *	       editWeight() -> editLabel(),
+ *	       weight -> label,
+ *	       esize -> labelSize,
+ *     in order to rationalize the naming scheme.
  */
 
 #ifndef EDGE_H
@@ -25,9 +36,8 @@ class Node;
 class CanvasView;
 class PreView;
 
-class Edge :public QGraphicsObject
+class Edge: public QGraphicsObject
 {
-
 public:
     Edge(Node * sourceNode, Node * destNode);
 
@@ -46,14 +56,14 @@ public:
     void setColour(QColor color);
     QColor getColour();
 
-    void setWeightLabelSize(qreal edgeWieghtLabelSize);
-    qreal getWeightLabelSize();
+    void setLabelSize(qreal edgeLabelSize);
+    qreal getLabelSize();
 
     QRectF boundingRect() const;
     QPainterPath shape() const;
 
-    void setWeight(QString aWeight);
-    QString getWeight();
+    void setLabel(QString label);
+    QString getLabel();
 
     void adjust();
     void setDestNode(Node * node);
@@ -65,7 +75,7 @@ public:
     Node * sourceNode() const;
     Node * destNode() const;
 
-    void editWeight(bool edit);
+    void editLabel(bool edit);
     QGraphicsItem * getRootParent();
 
     bool isDigits(const std::string &str);
@@ -86,10 +96,10 @@ private:
     QPolygonF	selectionPolygon;
     qreal	destRadius, sourceRadius, penWidth, rotation;
     QLineF	edgeLine;
-    QString	weight;
-    qreal	eSize, penSize;
+    QString	label;
+    qreal	labelSize, penSize;
     QColor	edgeColour;
-    HTML_Label	* label;
+    HTML_Label	* htmlLabel;
 };
 
 #endif // EDGE_H

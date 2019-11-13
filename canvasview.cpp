@@ -2,19 +2,23 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.3
+ * Version: 1.5
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
  *
  * Modification history:
- * Feb 8, 2016 (JD V1.2):
- *  (a) Change the help text for join (JOIN_DESCRIPTION) to clarify usage.
- *  (b) Drive-by cleanup.
- * Oct 11, 2019 (JD V1.3):
- *  (a) Further clarify JOIN_DESCRIPTION text.
- *  (b) Add the second sentence to EDIT_DESCRIPTION.
- *  (c) Improved a few debug messages.
+ *  Feb 8, 2016 (JD V1.2):
+ *   (a) Change the help text for join (JOIN_DESCRIPTION) to clarify usage.
+ *   (b) Drive-by cleanup.
+ *  Oct 11, 2019 (JD V1.3):
+ *   (a) Further clarify JOIN_DESCRIPTION text.
+ *   (b) Add the second sentence to EDIT_DESCRIPTION.
+ *   (c) Improved a few debug messages.
+ *  Nov 13, 2019 (JD, V1.4):
+ *   - rename setWeightLabelSize() to setLabelSize().
+ *  Nov 13, 2019 (JD, V1.5)
+ *   - rename "Weight" to "Label" for edge function names.
  */
 
 #include "canvasview.h"
@@ -82,7 +86,8 @@ CanvasView::CanvasView(QWidget * parent)
 
 
 
-void CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
+void
+CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
                                  QString label, qreal nodeLabelSize,
                                  QColor nodeFillColor, QColor nodeOutLineColor)
 {
@@ -95,7 +100,8 @@ void CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
 }
 
 
-Node * CanvasView::createNode(QPointF pos)
+Node *
+CanvasView::createNode(QPointF pos)
 {
     Node * node = new Node();
     node->setDiameter(nodeParams->diameter);
@@ -122,14 +128,16 @@ Node * CanvasView::createNode(QPointF pos)
  * Notes:       none
  */
 
-void CanvasView::keyPressEvent(QKeyEvent * event)
+void
+CanvasView::keyPressEvent(QKeyEvent * event)
 {
     QGraphicsView::keyPressEvent(event);
 }
 
 
 
-void CanvasView::setMode(int m)
+void
+CanvasView::setMode(int m)
 {
     modeType = m;
     freestyleGraph = nullptr;
@@ -183,7 +191,8 @@ void CanvasView::setMode(int m)
  * Notes:       none
  */
 
-void CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
+void
+CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
 {
     QPointF pt;
 
@@ -201,7 +210,8 @@ void CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
 
 
 
-void CanvasView::mousePressEvent(QMouseEvent * event)
+void
+CanvasView::mousePressEvent(QMouseEvent * event)
 {
     QList<QGraphicsItem *> itemList = this->scene()->items(
 	this->mapToScene(event->pos()),
@@ -249,7 +259,8 @@ void CanvasView::mousePressEvent(QMouseEvent * event)
 
 
 
-void CanvasView::snapToGrid(bool snap)
+void
+CanvasView::snapToGrid(bool snap)
 {
     aScene->isSnappedToGrid(snap);
     aScene->update();
@@ -257,7 +268,8 @@ void CanvasView::snapToGrid(bool snap)
 
 
 
-void CanvasView::dragEnterEvent(QDragEnterEvent * event)
+void
+CanvasView::dragEnterEvent(QDragEnterEvent * event)
 {
     emit resetNoMode();
     QGraphicsView::dragEnterEvent(event);
@@ -265,7 +277,8 @@ void CanvasView::dragEnterEvent(QDragEnterEvent * event)
 
 
 
-Edge * CanvasView::addEdgeToScene(Node * source, Node * destination)
+Edge *
+CanvasView::addEdgeToScene(Node * source, Node * destination)
 {
     Edge * edge = createEdge(source, destination);
     if (node1->parentItem() == node2->parentItem())
@@ -318,14 +331,15 @@ Edge * CanvasView::addEdgeToScene(Node * source, Node * destination)
 
 
 
-Edge * CanvasView::createEdge(Node * source, Node * destination)
+Edge *
+CanvasView::createEdge(Node * source, Node * destination)
 {
     Edge * edge = new Edge(source, destination);
     edge->setPenWidth(edgeParams->size);
     edge->setColour(edgeParams->color);
-    edge->setWeightLabelSize((edgeParams->LabelSize > 0)
+    edge->setLabelSize((edgeParams->LabelSize > 0)
 			     ? edgeParams->LabelSize : 1);
-    edge->setWeight(edgeParams->label);
+    edge->setLabel(edgeParams->label);
     edge->setDestRadius(node2->getDiameter() / 2.);
     edge->setSourceRadius(node1->getDiameter() / 2.);
     return edge;
@@ -333,7 +347,8 @@ Edge * CanvasView::createEdge(Node * source, Node * destination)
 
 
 
-void CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel,
+void
+CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel,
 				 qreal edgeLabelSize, QColor edgeLineColor)
 {
     if (verbose)
@@ -350,7 +365,8 @@ void CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel,
 
 
 
-int CanvasView::getMode() const
+int
+CanvasView::getMode() const
 {
     return modeType;
 }

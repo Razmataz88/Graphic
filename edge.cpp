@@ -2,9 +2,10 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose: creates an edge for the users graph
+ *
  * Modification history:
  * Feb 8, 2016 (JD):
  *  (a) Fix edge label font (cmmi and cmr were reversed).
@@ -19,6 +20,17 @@
  *  (a) Clean up / add some comments.
  *  (b) Apply change of name Label -> HTML_Label.
  *  (c) Apply change of name setLabel() -> set_Html_Label().
+ * Nov 13, 2019 (JD, V1.5):
+ *  (a) Rename (in this order!)
+ *	       label -> htmlLabel,
+ *	       setWeightLabelSize() -> setLabelSize(),
+ *             getWeightLabelSize() -> getLabelSize(),
+ *	       setWeight() -> setLabel(),
+ *	       getWeight() -> getLabel(),
+ *	       editWeight() -> editLabel(),
+ *	       weight -> label,
+ *	       esize -> labelSize,
+ *     in order to rationalize the naming scheme.
  */
 
 #include "edge.h"
@@ -39,10 +51,6 @@
 static const double Pi = 3.14159265358979323846264338327950288419717;
 static const double offset = 5;		// TO DO: what is this?
 static const bool verbose = false;
-
-// TODO: need a better naming scheme so weights and labels aren't used
-// synonymously.  Perhaps weight can only be for the thickness of
-// edges and label refers to the text of the edge.
 
 
 
@@ -71,15 +79,15 @@ Edge::Edge(Node * sourceNode, Node * destNode)
     adjust();
     penSize = 1;
     rotation = 0;
-    weight = "";
+    label = "";
     destRadius = 1;     // Set arbitrarily
     sourceRadius = 1;
     setHandlesChildEvents(true);
-    label = new HTML_Label(this);
-    label->setPos((edgeLine.p2().rx() + edgeLine.p1().rx()) / 2.
-		  - label->boundingRect().width() / 2.,
-		  (edgeLine.p2().ry() + edgeLine.p1().ry()) / 2.
-		  - label->boundingRect().height() / 2.);
+    htmlLabel = new HTML_Label(this);
+    htmlLabel->setPos((edgeLine.p2().rx() + edgeLine.p1().rx()) / 2.
+		      - htmlLabel->boundingRect().width() / 2.,
+		      (edgeLine.p2().ry() + edgeLine.p1().ry()) / 2.
+		      - htmlLabel->boundingRect().height() / 2.);
 }
 
 
@@ -123,8 +131,8 @@ Node * Edge::destNode() const
 
 
 /*
- * Name:        editWeight()
- * Purpose:     Sets flags so that the label is editable.
+ * Name:        editlabel()
+ * Purpose:     Sets flags so that the htmlLabel is editable.
  * Argument:    Boolean
  * Output:      Nothing.
  * Modifies:    ItemisFocusable flag, ItemIsFocusable flag,
@@ -135,11 +143,11 @@ Node * Edge::destNode() const
  * Notes:       None.
  */
 
-void Edge::editWeight(bool edit)
+void Edge::editLabel(bool edit)
 {
     setHandlesChildEvents(!edit);
-    label->setFlag(QGraphicsItem::ItemIsFocusable, edit);
-    label->setFlag(ItemIsSelectable, edit);
+    htmlLabel->setFlag(QGraphicsItem::ItemIsFocusable, edit);
+    htmlLabel->setFlag(ItemIsSelectable, edit);
 }
 
 
@@ -182,44 +190,44 @@ QGraphicsItem * Edge::getRootParent()
 //    emit edgeDeleted();
 //    this->sourceNode()->removeEdge(this);
 //    this->destNode()->removeEdge(this);
-//    label->setParentItem(nullptr);
-//    delete label;
-//    label = nullptr;
+//    htmlLabel->setParentItem(nullptr);
+//    delete htmlLabel;
+//    htmlLabel = nullptr;
 //    setParentItem(nullptr);
 //}
 
 
 
 /*
- * Name:        setWeight()
- * Purpose:     Set the weight and label of an edge.
+ * Name:        setLabel()
+ * Purpose:     Set the label and htmlLabel of an edge.
  * Argument:    QString
  * Output:      Nothing.
- * Modifies:    label, weight
+ * Modifies:    The edge's label and htmlLabel.
  * Returns:     Nothing.
  * Assumptions: None.
  * Bugs:        None.
  * Notes:       BOGUS ARCHAIC NOTES:
- *		Both the "unadorned" label and the HTML-ized label are
+ *		Both the "unadorned" label and the HTML-ized htmlLabel are
  *		needed.  If the programmer tries to return the text in
- *		the label it will return the text and QML/HTML tags
+ *		the htmlLabel it will return the text and QML/HTML tags
  *		used to style the text.
  */
 
-void Edge::setWeight(QString aWeight)
+void Edge::setLabel(QString aLabel)
 {
-    label->setHtmlLabel(aWeight);
-    weight = aWeight;
+    htmlLabel->setHtmlLabel(aLabel);
+    label = aLabel;
 
 // TODO: why has this been commented out?  It seems we don't need it,
-// at least if we are not using subscripts in edge labels/weights.
+// at least if we are not using subscripts in edge labels/htmlLabels.
 // Perhaps we don't need it for vertices either (in no sub/sup case).
 //    QRegExp re("\\d*");  // A digit (\d), zero or more times (*)
-//    weight = aWeight;
-//    if (re.exactMatch(aWeight))
-//        label->setHtml("<font face=\"cmr10\">" + aWeight + "</font>");
+//    label = aLabel;
+//    if (re.exactMatch(aLabel))
+//        htmlLabel->setHtml("<font face=\"cmr10\">" + aLabel + "</font>");
 //    else
-//        label->setHtml("<font face=\"cmmi10\">" + aWeight + "</font>");
+//        htmlLabel->setHtml("<font face=\"cmmi10\">" + aLabel + "</font>");
 }
 
 
@@ -244,20 +252,20 @@ bool isDigits(const std::string &str)
 
 
 /*
- * Name:        getWeight()
- * Purpose:     Returns the (unadorned) weight of the edge label.
+ * Name:        getLabel()
+ * Purpose:     Returns the (unadorned) edge label.
  * Arguments:   None.
  * Output:      Nothing.
  * Modifies:    None.
- * Returns:     QString weight
+ * Returns:     QString label.
  * Assumptions: None.
  * Bugs:        None.
  * Notes:       None.
  */
 
-QString Edge::getWeight()
+QString Edge::getLabel()
 {
-    return weight;
+    return label;
 }
 
 
@@ -542,43 +550,43 @@ QColor Edge::getColour()
 
 
 /*
- * Name:        setWeightLabelSize()
+ * Name:        setLabelSize()
  * Purpose:     Sets the font size of the edge label.
- * Arguments:   QLineF
- * Output:      void
- * Modifies:    selectionPolygon
- * Returns:     nothing
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Arguments:   A qreal specifying the size, in points.
+ * Output:      Nothing.
+ * Modifies:    Both the attribute labelSize and the htmlLabel's font size.
+ * Returns:     Nothing
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
 
-void Edge::setWeightLabelSize(qreal edgeWeightLabelSize)
+void
+Edge::setLabelSize(qreal edgeLabelSize)
 {
-    QFont font = label->font();
-    font.setPointSize(edgeWeightLabelSize);
-    label->setFont(font);
-    eSize = edgeWeightLabelSize;
+    QFont font = htmlLabel->font();
+    font.setPointSize(edgeLabelSize);
+    htmlLabel->setFont(font);
+    labelSize = edgeLabelSize;
 }
 
 
 
 /*
- * Name:        getWeightLabelSize()
+ * Name:        getLabelSize()
  * Purpose:     Returns the font size of the edge label.
- * Arguments:   none
- * Output:      qreal
- * Modifies:    none
- * Returns:     The font size of the edge weight.
- * Assumptions: none
- * Bugs:        none
- * Notes:       FYI: Edge labels are often referred to as a weight...although
- *              the thickness of an edge is also referred to as a weight...
+ * Arguments:   None
+ * Output:      Nothing.
+ * Modifies:    Nothing.
+ * Returns:     The font size (in points) of the edge label.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None/
  */
 
-qreal Edge::getWeightLabelSize()
+qreal Edge::getLabelSize()
 {
-    return eSize;
+    return labelSize;
 }
 
 
@@ -645,20 +653,21 @@ QPainterPath Edge::shape() const
 /*
  * Name:        paint()
  * Purpose:     Paints an edge between two nodes.
- * Arguments:   QPainter pointer, QStyleOptionGraphicsITem *, QWidget*
+ * Arguments:   QPainter * pointer, QStyleOptionGraphicsITem *,  QWidget *
  * Output:      Renders an edge to canvasScene.
  * Modifies:    QGraphicsScene
- * Returns:     nothing
- * Assumptions: none
- * Bugs:        none
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None.
  * Notes:       QWidget * and QStyleOptionGraphicsItem are not used in my
  *              implementation of this function.
  */
 
-void Edge::paint(QPainter *painter, const QStyleOptionGraphicsItem * option,
-                 QWidget * widget)
+void
+Edge::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
+	    QWidget * widget)
 {
-    //Q_UNUSED is used so compiler warnings won't pop up
+    // Q_UNUSED is used so compiler warnings won't pop up
     Q_UNUSED(option);
     Q_UNUSED(widget);
 
@@ -686,12 +695,12 @@ void Edge::paint(QPainter *painter, const QStyleOptionGraphicsItem * option,
     if (verbose)
         painter->drawPolygon(selectionPolygon);
 
-    if (weight.length() > 0)
+    if (label.length() > 0)
     {
-	label->setPos((line.p2().rx() + line.p1().rx()) / 2.
-                      - label->boundingRect().width() / 2.,
-		      (line.p2().ry() + line.p1().ry()) / 2.
-                      - label->boundingRect().height() / 2.);
+	htmlLabel->setPos((line.p2().rx() + line.p1().rx()) / 2.
+			  - htmlLabel->boundingRect().width() / 2.,
+			  (line.p2().ry() + line.p1().ry()) / 2.
+			  - htmlLabel->boundingRect().height() / 2.);
     }
 }
 
