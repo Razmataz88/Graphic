@@ -2,15 +2,18 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.2
+ * Version: 1.3
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
  * Modification history:
  *  Nov 13, 2019 (JD, V1.1):
- *  - rename setWeightLabelSize() to setLabelSize().
+ *  - Rename setWeightLabelSize() to setLabelSize().
  *  Nov 13, 2019 (JD, V1.2)
- *   - rename "Weight" to "Label" for edge function names.
+ *   - Rename "Weight" to "Label" for edge function names.
+ *  Nov 13, 2019 (JD, V1.3)
+ *   (a) Some formatting and comment tweaks.
+ *   (b) Added Ctrl-= as a way to zoom in the preview pane.
  */
 
 #include "preview.h"
@@ -32,6 +35,7 @@
 
 #define SCALE_FACTOR    1.2
 
+
 /*
  * Name:        PreView
  * Purpose:     Contructor for PreView class
@@ -43,18 +47,21 @@
  * Bugs:        none
  * Notes:       none
  */
-PreView::PreView(QWidget *parent)
+
+PreView::PreView(QWidget * parent)
     : QGraphicsView(parent)
 {
     aScene = new QGraphicsScene();
     aScene->setSceneRect(0, 0, this->width(), this->height());
 
     setCacheMode(CacheBackground);
-    setViewportUpdateMode(BoundingRectViewportUpdate); //updates the canvas
+    setViewportUpdateMode(BoundingRectViewportUpdate); // Updates the canvas
     setRenderHint(QPainter::Antialiasing);
     setTransformationAnchor(AnchorUnderMouse);
     setScene(aScene);
 }
+
+
 
 /*
  * Name:        keyPressEvent
@@ -67,35 +74,42 @@ PreView::PreView(QWidget *parent)
  * Bugs:        none...so far
  * Notes:       none
  */
-void PreView::keyPressEvent(QKeyEvent *event)
+
+void
+PreView::keyPressEvent(QKeyEvent * event)
 {
-    switch (event->key()) {
-    case Qt::Key_Plus:
+    switch (event->key())
+    {
+      case Qt::Key_Plus:
+      case Qt::Key_Equal:
         zoomIn();
         break;
-    case Qt::Key_Minus:
+      case Qt::Key_Minus:
         zoomOut();
         break;
-    case Qt::Key_Delete:
+      case Qt::Key_Delete:
         break;
-    default:
+      default:
         QGraphicsView::keyPressEvent(event);
     }
 }
 
 
+
 /*
- * Name:        scaleView
- * Purpose:     scales the view of the QGraphicsScene
- * Arguments:   a qreal
- * Output:      none
- * Modifies:    the scale view of the QGraphicsScene
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Name:        scaleView()
+ * Purpose:     Scales the view of the QGraphicsScene
+ * Arguments:   A qreal
+ * Output:      Nothing.
+ * Modifies:    The scale view of the QGraphicsScene
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        ?
+ * Notes:       None.
  */
-void PreView::scaleView(qreal scaleFactor)
+
+void
+PreView::scaleView(qreal scaleFactor)
 {
     qreal factor = transform().scale(scaleFactor, scaleFactor)
                 .mapRect(QRectF(0, 0, 1, 1)).width();
@@ -104,7 +118,10 @@ void PreView::scaleView(qreal scaleFactor)
     scale(scaleFactor, scaleFactor);
 }
 
-void PreView::mousePressEvent(QMouseEvent *event)
+
+
+void
+PreView::mousePressEvent(QMouseEvent * event)
 {
     if (event->button() == Qt::LeftButton)
     {
@@ -113,7 +130,7 @@ void PreView::mousePressEvent(QMouseEvent *event)
                     Qt::IntersectsItemShape,
                     Qt::DescendingOrder,QTransform());
 
-        foreach(QGraphicsItem * item, itemList)
+        foreach (QGraphicsItem * item, itemList)
         {
             if (item->type() == Graph::Type)
             {
@@ -148,199 +165,215 @@ void PreView::mousePressEvent(QMouseEvent *event)
     QGraphicsView::mousePressEvent(event);
 }
 
+
+
 /*
- * Name:        zoomIn
- * Purpose:     Zoom in featuture of the QGraphicsScene
- * Arguments:   none
- * Output:      none
- * Modifies:    the scale of the QGraphicsScene
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Name:        zoomIn()
+ * Purpose:     Zoom in the preview pane.
+ * Arguments:   None.
+ * Output:      Nothing..
+ * Modifies:    The scale of the preview QGraphicsScene.
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
-void PreView::zoomIn()
+
+void
+PreView::zoomIn()
 {
     scaleView(qreal(SCALE_FACTOR));
 }
 
+
+
 /*
- * Name:        zoomOut
- * Purpose:     zoom out feature in the QGraphicsScene
- * Arguments:   none
- * Output:      none
- * Modifies:    the scale of the QGraphicsScene
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Name:        zoomOut()
+ * Purpose:     Zoom out the preview pane.
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    The scale of the preview QGraphicsScene.
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
-void PreView::zoomOut()
+
+void
+PreView::zoomOut()
 {
     scaleView(1 / qreal(SCALE_FACTOR));
 }
 
-Graph * PreView::Create_Graph(int graph, int topNodes, int bottomNodes,
-                              qreal height, qreal width, bool complete)
+
+
+Graph *
+PreView::Create_Graph(int graph, int topNodes, int bottomNodes,
+		      qreal height, qreal width, bool complete)
 {
     Graph * graphItem = new Graph();
     BasicGraphs * simpleG = new BasicGraphs();
-    switch (graph) {
-    case BasicGraphs::Bipartite:
+    switch (graph)
+    {
+      case BasicGraphs::Bipartite:
         simpleG->generate_bipartite(graphItem, topNodes, bottomNodes,
                                     height, width, complete);
         break;
 
-    case BasicGraphs::Complete:
+      case BasicGraphs::Complete:
         simpleG->generate_complete(graphItem, width / 2, height / 2, topNodes,
                                    complete);
         break;
 
-    case BasicGraphs::Cycle:
+      case BasicGraphs::Cycle:
         simpleG->generate_cycle(graphItem, width / 2, height / 2, topNodes,
                                 complete);
         break;
-    case BasicGraphs::Star:
+      case BasicGraphs::Star:
         simpleG->generate_star(graphItem, width / 2, height / 2, topNodes,
                                complete);
         break;
 
-    case BasicGraphs::Wheel:
+      case BasicGraphs::Wheel:
         simpleG->generate_wheel(graphItem, width / 2, height / 2, topNodes,
                                 complete);
         break;
 
-    case BasicGraphs::Petersen:
+      case BasicGraphs::Petersen:
         simpleG->generate_petersen(graphItem, width / 2, height / 2,
-                           topNodes, bottomNodes, complete);
+				   topNodes, bottomNodes, complete);
         break;
 
-    case BasicGraphs::BBTree:
+      case BasicGraphs::BBTree:
         simpleG->generate_balanced_binary_tree(graphItem, height, width,
                                                topNodes, complete);
         break;
 
-    case BasicGraphs::Crown:
+      case BasicGraphs::Crown:
         simpleG->generate_crown(graphItem, width / 2, height / 2, topNodes,
                                 complete);
         break;
 
-    case BasicGraphs::Windmill:
+      case BasicGraphs::Windmill:
         simpleG->generate_dutch_windmill(graphItem, height, topNodes,
                                          bottomNodes, complete);
         break;
 
-    case BasicGraphs::Gear:
-            simpleG->generate_gear(graphItem, width / 2, height / 2, topNodes,
-                                   complete);
+      case BasicGraphs::Gear:
+	simpleG->generate_gear(graphItem, width / 2, height / 2, topNodes,
+			       complete);
         break;
 
-    case BasicGraphs::Grid:
+      case BasicGraphs::Grid:
         simpleG->generate_grid(graphItem, height, width, topNodes,bottomNodes,
                                complete);
         break;
 
-    case BasicGraphs::Helm:
+      case BasicGraphs::Helm:
         simpleG->generate_helm(graphItem, width / 2, height / 2, topNodes,
                                complete);
         break;
 
-    case BasicGraphs::Path:
+      case BasicGraphs::Path:
         simpleG->generate_path(graphItem, width, topNodes, complete);
         break;
 
-    case BasicGraphs::Prism:
+      case BasicGraphs::Prism:
         simpleG->generate_prism(graphItem, width / 2, height / 2, topNodes,
                                 complete);
         break;
 
-    case BasicGraphs::Antiprism:
+      case BasicGraphs::Antiprism:
         simpleG->generate_antiprism(graphItem, width / 2, height / 2, topNodes,
                                     complete);
         break;
-    default:
+
+      default:
         break;
     }
     this->scene()->addItem(graphItem);
     return graphItem;
-
 }
 
-void PreView::Style_Graph(Graph * graph, int graphType, qreal nodeDiameter,
-                          QString topNodeLabels, QString bottomNodeLabels,
-                          bool numberedLabels, qreal nodeLabelSize, qreal edgeSize,
-                          QString edgeLabel, qreal edgeLabelSize, qreal rotation,
-                          QColor nodeFillColor, QColor nodeOutlineColor,
-                          QColor edgeLineColor)
+
+
+void
+PreView::Style_Graph(Graph * graph, int graphType,
+		     qreal nodeDiameter,
+		     QString topNodeLabels, QString bottomNodeLabels,
+		     bool numberedLabels, qreal nodeLabelSize,
+		     qreal edgeSize, QString edgeLabel, qreal edgeLabelSize,
+		     qreal rotation,
+		     QColor nodeFillColor, QColor nodeOutlineColor,
+		     QColor edgeLineColor)
 {
+    // printf("preview::Style_Graph() called\n");
     int i = 0, j = 0;
-    //Styling Nodes
-    foreach(QGraphicsItem * item, graph->childItems())
+
+    // Styling Nodes
+    foreach (QGraphicsItem * item, graph->childItems())
     {
         if (item->type() == Node::Type)
         {
-             Node * node = qgraphicsitem_cast<Node *>(item);
-             node->setParentItem(nullptr);
-             node->setDiameter(nodeDiameter);
-             node->setEdgeWeight(edgeSize);
-             node->setFillColour(nodeFillColor);
-             node->setLineColour(nodeOutlineColor);
-             if (numberedLabels)
-             {
-
-                 node->setNodeLabel(i);
-                 node->setNodeLabelSize(nodeLabelSize);
-                 i++;
-             }
-             //Special case for labeling Bipartite Graphs
-             else if (graphType == BasicGraphs::Bipartite)
-             {
-                 if ( bottomNodeLabels.length() != 0
-                      && graph->nodes.bipartite_bottom.contains(node))
-                 {
-
-                     node->setNodeLabel(bottomNodeLabels, j);
-                     node->setNodeLabelSize(nodeLabelSize);
-                     j++;
-
-                 }
-                 else if ( topNodeLabels.length() != 0
-                           && graph->nodes.bipartite_top.contains(node))
-                 {
+	    Node * node = qgraphicsitem_cast<Node *>(item);
+	    node->setParentItem(nullptr);
+	    node->setDiameter(nodeDiameter);
+	    node->setEdgeWeight(edgeSize);
+	    node->setFillColour(nodeFillColor);
+	    node->setLineColour(nodeOutlineColor);
+	    if (numberedLabels)
+	    {
+		node->setNodeLabel(i);
+		node->setNodeLabelSize(nodeLabelSize);
+		i++;
+	    }
+	    // Special case for labeling Bipartite Graphs
+	    else if (graphType == BasicGraphs::Bipartite)
+	    {
+		if (bottomNodeLabels.length() != 0
+		    && graph->nodes.bipartite_bottom.contains(node))
+		{
+		    node->setNodeLabel(bottomNodeLabels, j);
+		    node->setNodeLabelSize(nodeLabelSize);
+		    j++;
+		}
+		else if (topNodeLabels.length() != 0
+			 && graph->nodes.bipartite_top.contains(node))
+		{
                     node->setNodeLabel(topNodeLabels, i);
                     node->setNodeLabelSize(nodeLabelSize);
-                     i++;
-                 }
-                 else if (topNodeLabels.length() != 0
-                          && graph->nodes.bipartite_bottom.contains(node))
-                 {
-                     node->setNodeLabel(topNodeLabels, i);
-                     node->setNodeLabelSize(nodeLabelSize);
-                     i++;
-                 }
-             }
-             else if (topNodeLabels.length() != 0)
-             {
-                 node->setNodeLabel(topNodeLabels, i);
-                 node->setNodeLabelSize(nodeLabelSize);
-                 i++;
-             }
-             node->setParentItem(graph);
+		    i++;
+		}
+		else if (topNodeLabels.length() != 0
+			 && graph->nodes.bipartite_bottom.contains(node))
+		{
+		    node->setNodeLabel(topNodeLabels, i);
+		    node->setNodeLabelSize(nodeLabelSize);
+		    i++;
+		}
+	    }
+	    else if (topNodeLabels.length() != 0)
+	    {
+		node->setNodeLabel(topNodeLabels, i);
+		node->setNodeLabelSize(nodeLabelSize);
+		i++;
+	    }
+	    node->setParentItem(graph);
         }
-        //Styling Edges
+        // Styling Edges
         else if (item->type() == Edge::Type)
         {
-             Edge * edge = qgraphicsitem_cast<Edge *>(item);
-             edge->setParentItem(nullptr);
-             edge->setDestRadius(nodeDiameter / 2.);
-             edge->setSourceRadius(edge->sourceNode()->getDiameter() / 2.);
-             edge->setPenWidth(edgeSize);
-             edge->setColour(edgeLineColor);
-             edge->setLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
-             if (edgeLabel.length() != 0)
+	    Edge * edge = qgraphicsitem_cast<Edge *>(item);
+	    edge->setParentItem(nullptr);
+	    edge->setDestRadius(nodeDiameter / 2.);
+	    edge->setSourceRadius(edge->sourceNode()->getDiameter() / 2.);
+	    edge->setPenWidth(edgeSize);
+	    edge->setColour(edgeLineColor);
+	    edge->setLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
+	    if (edgeLabel.length() != 0)
                 edge->setLabel(edgeLabel);
-             //edge->adjust();
-             edge->setParentItem(graph);
+	    //edge->adjust();
+	    edge->setParentItem(graph);
         }
     }
     graph->setPos(mapToScene(viewport()->rect().center()));
