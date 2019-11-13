@@ -8,7 +8,8 @@
  *
  * Modification history:
  *  Nov 13, 2019 (JD, V1.1):
- *  - rename setWeightLabelSize() to setLabelSize().
+ *   (a) Renamed setWeightLabelSize() -> setEdgeLabelSize().
+ *   (b) Removed apparently redundant "|| edge != 0" in setEdgeLabelSize().
  */
 
 #include "labelsizecontroller.h"
@@ -26,7 +27,7 @@ LabelSizeController::LabelSizeController(Edge *anEdge, QDoubleSpinBox *aBox)
             box->setValue(edge->getLabelSize());
 
         connect(box, SIGNAL(valueChanged(double)),
-                this, SLOT(setEdgeWeightSize(double)));
+                this, SLOT(setEdgeLabelSize(double)));
         connect(anEdge, SIGNAL(destroyed(QObject*)),
                 this, SLOT(deletedSpinBox()));
         connect(anEdge, SIGNAL(destroyed(QObject*)),
@@ -66,10 +67,24 @@ void LabelSizeController::deletedSpinBox()
     delete box;
 }
 
-void LabelSizeController::setEdgeWeightSize(double value)
+
+/*
+ * Name:	setEdgeLabelSize()
+ * Purpose:	Set the size of the edge label.
+ * Arguments:	The size, in points.
+ * Outputs:	Nothing.
+ * Modifies:	The edge label size.
+ * Returns:	Nothing.
+ * Assumptions:	None.
+ * Bugs:	?
+ * Notes:	None.
+ */
+
+void
+LabelSizeController::setEdgeLabelSize(double ptSize)
 {
-    if (edge != nullptr || edge != 0)
-        edge->setLabelSize(value);
+    if (edge != nullptr)
+        edge->setLabelSize(ptSize);
 }
 
 
