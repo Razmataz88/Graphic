@@ -350,37 +350,56 @@ void MainWindow::generate_Combobox_Titles()
 
 /*
  * Name:	save_Graph()
- * Purpose:	Saves an image/tikz/grphc version of the canvas.
+ * Purpose:	Saves an image/tikz/grphc/edgelist version of the canvas.
  * Arguments:	None.
- * Output:	Nothing.
- * Modifies:	An output file.
+ * Output:	A file corresponding to the graph.
+ * Modifies:	Nothing.
  * Returns:	True on file successfully saved, false otherwise.
  * Assumptions: ?
- * Bugs:	none
+ * Bugs:	This function is too long.
  * Notes:	none
  */
 
-bool MainWindow::save_Graph()
+bool
+MainWindow::save_Graph()
 {
     QString fileTypes = "";
 
-    fileTypes += GRAPHICS_SAVE_FILE  ";;"
-	EDGES_SAVE_FILE ";;"
-	TIKZ_SAVE_FILE	";;";
+    fileTypes += GRAPHICS_SAVE_FILE ";;"
+	TIKZ_SAVE_FILE ";;"
+	EDGES_SAVE_FILE	";;";
 
     foreach (QByteArray format, QImageWriter::supportedImageFormats())
     {
 	// Remove offensive and redundant file types.
 	// Even with these, there still may a confusing number of choices.
-	if (QString(format).toUpper() == "BMP")
+	if (QString(format).toUpper() == "BMP")	    // Winblows bitmap
 	    continue;
-	if (QString(format).toUpper() == "WBMP")
+	if (QString(format).toUpper() == "CUR")	    // Winblows cursor
 	    continue;
-	if (QString(format).toUpper() == "DDS")
+	if (QString(format).toUpper() == "DDS")	    // Winblows directdraw sfc
 	    continue;
-	if (QString(format).toUpper() == "TIFF")  // Just list "tif"
+	if (QString(format).toUpper() == "ICO")	    // Winblows icon
 	    continue;
-	if (QString(format).toUpper() == "JPEG")  // Just list "jpg"
+	if (QString(format).toUpper() == "ICNS")    // Apple icon
+	    continue;
+	if (QString(format).toUpper() == "PBM")	    // Portable bitmap
+	    continue;
+	if (QString(format).toUpper() == "PGM")	    // Portable gray map
+	    continue;
+	if (QString(format).toUpper() == "PPM")	    // Portable pixmap
+	    continue;
+	if (QString(format).toUpper() == "XBM")	    // X bitmap 
+	    continue;
+	if (QString(format).toUpper() == "XBM")	    // X bitmap 
+	    continue;
+	if (QString(format).toUpper() == "XPM")	    // X pixmap
+	    continue;
+	if (QString(format).toUpper() == "WBMP")    // wireless bitmap
+	    continue;
+	if (QString(format).toUpper() == "TIFF")    // Just list "tif"
+	    continue;
+	if (QString(format).toUpper() == "JPEG")    // Just list "jpg"
 	    continue;
 	fileTypes += tr("%1 (*.%2);;").arg(QString(format).toUpper(),
 					   QString(format).toLower());
