@@ -72,7 +72,20 @@
  * Nov 10, 2019 (JD V1.8)
  *  (a) Output the label font size before label so that a space before the
  *      label doesn't need to be trimmed.
+ * Nov 10, 2019 (JD V1.9)
+ *  (a) Fix apparently-erroneous use of logicalDotsPerInchX in the Y
+ *	part of Create_Graph() (called in generate_Graph()).
+ *  (b) Add some comments and some qDebug() statements.
+ *  (c) Rename getWeightLabelSize() -> getLabelSize().
+ *  (d) Rename "Weight" to "Label" for edge function names.
+ *  (e) Do not call style_Graph() in generate_Graph() for "library"
+ *	graphs, since doing so removes colour and size info.  This is
+ *	only a partial fix to the problem, since this mod takes away
+ *	the ability to style a library graph.  style_Graph() needs to
+ *	be entirely rethought.
  */
+
+#define     DEBUG
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -602,13 +615,13 @@ bool MainWindow::save_Graph()
 			      << QString::number(edge->getColour().greenF())
 			      << ","
 			      << QString::number(edge->getColour().blueF());
-		    if (edge->getWeight().length() > 0)
+		    if (edge->getLabel().length() > 0)
 		    {
 			// TODO: check for ',' in the label and deal with it.
 			outStream << ", "
-				  << edge->getWeightLabelSize()
+				  << edge->getLabelSize()
 				  << ","
-				  << edge->getWeight();
+				  << edge->getLabel();
 		    }
 		    outStream << "\n";
 		}
@@ -800,13 +813,13 @@ bool MainWindow::save_Graph()
 					  / screen->logicalDotsPerInchX(),
 					  'f', ET_PREC_TIKZ)
 			+ "in]\n\tnode[";
-		    // Output edge weight (and the selected font info)
-		    // if and only if the edge has a weight.
-		    if (edge->getWeight().length() > 0)
+		    // Output edge label (and the selected font info)
+		    // if and only if the edge has a label.
+		    if (edge->getLabel().length() > 0)
 			edgeStyles += "font=\\fontsize{"
-			    + QString::number(edge->getWeightLabelSize())
+			    + QString::number(edge->getLabelSize())
 			    + "}{1}\\selectfont"
-			    + "] {$" + edge->getWeight() + "$}";
+			    + "] {$" + edge->getLabel() + "$}";
 		    else
 			edgeStyles += "] {$$}";
 
@@ -991,7 +1004,7 @@ void MainWindow::select_Custom_Graph(QString graphName)
 		{
 		    QMessageBox::information(0, "Error",
 					     "Node " + QString::number(i)
-					     + "of file "
+					     + " of file "
 					     + graphName
 					     + " has an invalid number of "
 					     "fields.  Thus I can not read "
@@ -1060,8 +1073,8 @@ void MainWindow::select_Custom_Graph(QString graphName)
 		edge->setColour(lineColor);
 		if (fields.count() == 11)
 		{
-		    edge->setWeightLabelSize(fields.at(9).toFloat());
-		    edge->setWeight(fields.at(10));
+		    edge->setLabelSize(fields.at(9).toFloat());
+		    edge->setLabel(fields.at(10));
 		}
 		edge->setParentItem(graph);
 		i++;
@@ -1070,15 +1083,18 @@ void MainWindow::select_Custom_Graph(QString graphName)
 		    for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
 		    {
 			Edge * e = nodes.at(i)->edgeList.at(j);
-			int sourceID = e->sourceNode()->getID();
+			// int sourceID = e->sourceNode()->getID();
 			int destID = e->destNode()->getID();
-			printf("node[%d]'s %d-th edge has src = %d, dst = %d",
-			    i, j, sourceID, destID);
-			QString wt = e->getWeight();
-			QColor col = e->getColour();
-			printf(", wt /%s/, rgb (%.2f,%.2f,%.2f)\n",
-			       wt.toLatin1().data(),
-			       col.redF(), col.greenF(), col.blueF());
+			if (i < destID)
+			{
+			    printf("node[%d]'s %d-th edge has dst = %d",
+				   i, j, destID);
+			    QString wt = e->getLabel();
+			    QColor col = e->getColour();
+			    printf(", wt /%s/, rgb (%.2f,%.2f,%.2f)\n",
+				   wt.toLatin1().data(),
+				   col.redF(), col.greenF(), col.blueF());
+			}
 		    }
 		}
 		printf("\n");
@@ -1098,19 +1114,26 @@ void MainWindow::select_Custom_Graph(QString graphName)
 
 
 /*
- * Name:
+ * Name:	style_Graph()
  * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The graph in the preview scene.
+ * Returns:	Nothing.
+ * Assumptions: ?
+ * Bugs:	?
+ * Notes:	Do not call this on a saved graph, otherwise the
+ *		colours, edge thicknesses and node sizes are lost,
+ *		since everything will be set to the current values of
+ *		the UI boxes/sliders.
  */
 
-void MainWindow::style_Graph()
+void
+MainWindow::style_Graph()
 {
+#ifdef DEBUG
+    printf("style_Graph() called\n");
+#endif
     foreach (QGraphicsItem * item, ui->preview->scene()->items())
     {
 	if (item->type() == Graph::Type)
@@ -1136,54 +1159,64 @@ void MainWindow::style_Graph()
 }
 
 
+
 /*
- * Name:
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Name:	generate_Graph()
+ * Purpose:	Load a new graph into the preview pane.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The preview pane.
+ * Returns:	Nothing.
+ * Assumptions: ?
+ * Bugs:	?
+ * Notes:	?
  */
 
 void MainWindow::generate_Graph()
 {
-    QScreen *screen = QGuiApplication::primaryScreen();
+    QScreen * screen = QGuiApplication::primaryScreen();
+
     ui->preview->scene()->clear();
     if (ui->graphType_ComboBox->currentIndex() < BasicGraphs::Count)
+    {
+	qDebug() << "generate_Graph(): making a basic graph";
 	ui->preview->Create_Graph(ui->graphType_ComboBox->currentIndex(),
 				  ui->numOfNodes1->value(),
 				  ui->numOfNodes2->value(),
 				  ui->graphHeight->value()
 				  * screen->logicalDotsPerInchY()
 				  - ui->nodeSize->value()
-				  * screen->logicalDotsPerInchX(),
+				  * screen->logicalDotsPerInchY(),
 				  ui->graphWidth->value()
 				  * screen->logicalDotsPerInchX()
 				  - ui->nodeSize->value()
 				  * screen->logicalDotsPerInchX(),
 				  ui->complete_checkBox->isChecked());
+	this->style_Graph();
+    }
     else
+    {
+	qDebug() << "generate_Graph() making a "
+	    << ui->graphType_ComboBox->currentText()
+	    << " graph";
 	select_Custom_Graph(fileDirectory + "/"
 			    + ui->graphType_ComboBox->currentText()
 			    + "." + GRAPHICS_FILE_EXTENSION);
-
-    this->style_Graph();
+    }
 }
 
 
+
 /*
- * Name:
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Name:	on_NodeOutlineColor_clicked()
+ * Purpose:	
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	ui->NodeOutlineColor.
+ * Returns:	Nothing.
+ * Assumptions:	???
+ * Bugs:	???
+ * Notes:	???
  */
 
 void MainWindow::on_NodeOutlineColor_clicked()
@@ -1197,21 +1230,23 @@ void MainWindow::on_NodeOutlineColor_clicked()
 	      + QString(color.blue() < 16 ? "0" : "")
 	      + QString::number(color.blue(), 16) + ";"
 	      BUTTON_STYLE);
+    qDebug() << "on_NodeOutlineColor_clicked(): outline colour set to" << s;
     ui->NodeOutlineColor->setStyleSheet(s);
     ui->NodeOutlineColor->update();
 }
 
 
+
 /*
- * Name:
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Name:	on_NodeFillColor_clicked()
+ * Purpose:	
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	ui->NodeFillColor
+ * Returns:	Nothing.
+ * Assumptions: ???
+ * Bugs:	???
+ * Notes:	???
  */
 
 void MainWindow::on_NodeFillColor_clicked()
@@ -1226,21 +1261,23 @@ void MainWindow::on_NodeFillColor_clicked()
 	      + QString(color.blue() < 16 ? "0" : "")
 	      + QString::number(color.blue(), 16) + ";"
 	      BUTTON_STYLE);
+    qDebug() << "on_NodeFillColor_clicked(): fill colour set to" << s;
     ui->NodeFillColor->setStyleSheet(s);
     ui->NodeFillColor->update();
 }
 
 
+
 /*
- * Name:
+ * Name:	on_EdgeLineColor_clicked()
  * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	ui->EdgeLineColor
+ * Returns:	Nothing.
+ * Assumptions: ???
+ * Bugs:	???
+ * Notes:	???
  */
 
 void MainWindow::on_EdgeLineColor_clicked()
@@ -1255,6 +1292,7 @@ void MainWindow::on_EdgeLineColor_clicked()
 	      + QString(color.blue() < 16 ? "0" : "")
 	      + QString::number(color.blue(), 16) + ";"
 	      BUTTON_STYLE);
+    qDebug() << "on_EdgeLineColor_clicked(): edge line colour set to" << s;
     ui->EdgeLineColor->setStyleSheet(s);
     ui->EdgeLineColor->update();
 }
@@ -1383,6 +1421,8 @@ void MainWindow::set_Label_Font_Sizes()
 
 void MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 {
+    qDebug() << "on_graphType_ComboBox_currentIndexChanged("
+	     << index << ") called";
     // Here are the default settings.  Over-ride as needed below.
     ui->numOfNodes1->setSingleStep(1);
     ui->numOfNodes1->setMinimum(1);
@@ -1452,7 +1492,6 @@ void MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 	  ui->numOfNodes2->setValue(2);
 	  ui->numOfNodes2->show();
 	  break;
-
       }
       case BasicGraphs::Windmill:
       {
@@ -1468,7 +1507,7 @@ void MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
       }
       default:
 	// ToDo: may need to change grphc file format to add
-	qDebug() << "on_graphType_ComboBox_currentIndexChanged"
+	qDebug() << "on_graphType_ComboBox_currentIndexChanged()"
 		 << "Unknown index " << index;
 	ui->numOfNodes1->hide();
 	ui->numOfNodes2->hide();
@@ -1481,28 +1520,35 @@ void MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 }
 
 
+
 /*
- * Name:
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Name:	on_numOfNodes2_valueChanged()
+ * Purpose:	
+ * Arguments:	(Unused)
+ * Outputs:	Nothing.
+ * Modifies:	Possibly ui->numOfNodes2.
+ * Returns:	Nothing.
+ * Assumptions:	???
+ * Bugs:	???
+ * Notes:	???
  */
 
 void MainWindow::on_numOfNodes2_valueChanged(int arg1)
 {
+    qDebug() << "on_numOfNodes2_valueChanged() called";
     Q_UNUSED(arg1);
     if (ui->graphType_ComboBox->currentIndex() == BasicGraphs::Petersen)
     {
 	if (ui->numOfNodes2->value()
 	    > floor((ui->numOfNodes1->value() - 1) / 2))
+	{
+	    qDebug() << "\tchanging ui->numOfNodes2 to 1 from "
+		     << ui->numOfNodes2->value();
 	    ui->numOfNodes2->setValue(1);
+	}
     }
 }
+
 
 
 /*
@@ -1519,7 +1565,7 @@ void MainWindow::on_numOfNodes2_valueChanged(int arg1)
 
 void MainWindow::generate_Freestyle_Nodes()
 {
-    //QScreen *screen = QGuiApplication::primaryScreen();
+    //QScreen * screen = QGuiApplication::primaryScreen();
     ui->canvas->setUpNodeParams(
 	ui->nodeSize->value(),
 	ui->NumLabelCheckBox->isChecked(),
@@ -1585,6 +1631,7 @@ void MainWindow::on_freestyleMode_radioButton_clicked()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
+    qDebug() << "on_tabWidget_currentChanged(" << index << ")";
     switch(index)
     {
       case 0:
@@ -1627,8 +1674,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 			  {
 			      if (gItem->type() == Node::Type)
 			      {
-				  Node * node
-				      = qgraphicsitem_cast<Node*>(gItem);
+				  Node * node = qgraphicsitem_cast<Node*>(gItem);
 				  QLineEdit * nodeEdit = new QLineEdit();
 				  nodeEdit->setText("Node\n");
 				  gridLayout->addWidget(nodeEdit);
@@ -1720,6 +1766,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 }
 
 
+
 /*
  * Name:	lookupColour()
  * Purpose:	Given an RGB colour, see if this is a colour known to
@@ -1736,23 +1783,18 @@ void MainWindow::on_tabWidget_currentChanged(int index)
  *		red, green, blue, cyan, magenta, yellow, black,
  *		gray (128,128, 128), darkgray (64,64,64),
  *		lightgray (191,191,191), brown (191,128,64), lime (191,255,0),
- *		olive (150,141,0), orange (255,128,0), pink (255,191,191),
+ *		olive (127,127,0), orange (255,128,0), pink (255,191,191),
  *		purple (191,0,64), teal (0,128,128), violet (128,0,128)
- *		and white.
- *		I got the RGB values by running pdflatex on a file and
- *		using xmag to get the RGB colours.  However, LaTeX
- *		(mostly?) defines the colours using cmyk, and acroread
- *		(as well as evince and xpdf, although they are
- *		different) use some colour mapping from cmyk to RGB
- *		which makes the colours look quite different than the
- *		RGB equivalents found in (for example) X11's rgb.txt.
- *		E.g., olive is 128,128,0 in rgb.txt but LaTeX's olive
- *		shows up as 150,141,0 in acroread (Linux, anyway) but
- *		considerably different in evince and xpdf.
+ *		and white (modulo the fact that 127~=128, 63~=64, and so on).
+ *		To get the RGB values from a PDF file with cmyk colours, I used
+ *		    gs -dUseFastColor file.pdf
+ *		which does a direct mapping of cmyk to RGB without
+ *		using any ICC colour profiles, and then used xmag.
  *		Not knowing what numbers to turn to what names, I will
  *		only map the subset of the above names found in
  *		.../texmf-dist/tex/generic/pgf/utilities/pgfutil-plain.def,
  *		as well as lightgray and darkgray.
+ *		Note that some of these are quite different than X11's rgb.txt.
  */
 
 // Allow a bit of slop in some cases (see noted examples below).
@@ -1775,6 +1817,8 @@ MainWindow::lookupColour(QColor color)
 	    return "blue";
 	if (g == 255 && b == 255)
 	    return "cyan";
+	if (CLOSE(g, 127) && CLOSE(b, 127))
+	    return "teal";
 	return nullptr;
     }
 
@@ -1785,6 +1829,8 @@ MainWindow::lookupColour(QColor color)
     {
 	if (CLOSE(g, 127) && CLOSE(b, 127))
 	    return "gray";
+	if (CLOSE(g, 127) && b == 0)
+	    return "olive";
 	if (g == 0 && CLOSE(b, 127))
 	    return "violet";
 	return nullptr;
@@ -1794,8 +1840,10 @@ MainWindow::lookupColour(QColor color)
     {
 	if (g == 0 && CLOSE(b, 63))	    // 0.25 -> 63.75
 	    return "purple";
-	if (g == 128 && CLOSE(b, 63))
+	if (CLOSE(g, 127) && CLOSE(b, 63))
 	    return "brown";
+	if (g == 255 && b == 0)
+	    return "lime";
 	if (CLOSE(g, 191) && CLOSE(b, 191))
 	    return "lightgray";
 	return nullptr;
@@ -1813,6 +1861,8 @@ MainWindow::lookupColour(QColor color)
 	    return "yellow";
 	if (CLOSE(g, 127) && b == 0)
 	    return "orange";
+	if (CLOSE(g, 191) && CLOSE(b, 191))
+	    return "pink";
 	return nullptr;
     }
     return nullptr;
