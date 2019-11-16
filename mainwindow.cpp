@@ -83,6 +83,7 @@
  *	only a partial fix to the problem, since this mod takes away
  *	the ability to style a library graph.  style_Graph() needs to
  *	be entirely rethought.
+ *  (f) Add the rest of the "named" colours to lookupColour().
  */
 
 #define     DEBUG
