@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.2
+ * Version:	1.3
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -10,6 +10,8 @@
  * Oct 13, 2019 (JD V1.2)
  *  (a) Minor comment & formatting changes.
  *  (b) Add lookupColour() (for TikZ output routine).
+ * Nov 17, 2019 (JD V1.3)
+ *  (a) Remove lookupColour() (now a non-class function).
  */
 
 
@@ -68,8 +70,6 @@ private slots:
     void on_freestyleMode_radioButton_clicked();
 
     void on_tabWidget_currentChanged(int index);
-
-    QString lookupColour(QColor color);
 
 private:
     Ui::MainWindow * ui;

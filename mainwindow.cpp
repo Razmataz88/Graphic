@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.10
+ * Version:	1.11
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -90,6 +90,9 @@
  *  (a) Refactor save_graph() because it is unwieldy large
  *	into itself + saveEdgelist() (step 1 of many!).
  *  (b) Formatting tweaks.
+ * Nov 17, 2019 (JD V1.11)
+ *  (a) Move lookupColour() above where it is used and make it a
+ *	non-class function.
  */
 
 #define     DEBUG
@@ -398,6 +401,109 @@ saveEdgelist(QTextStream &outfile, QVector<Node *> nodes)
     outfile << edges;
 
     return true;
+}
+
+
+
+/*
+ * Name:	lookupColour()
+ * Purpose:	Given an RGB colour, see if this is a colour known to
+ *		TikZ by a human-friendly name; if so, return the name.
+ * Arguments:	A QColor.
+ * Outputs:	Nothing.
+ * Modifies:	Nothing.
+ * Returns:	A TikZ colour name (as a QString) or nullptr.
+ * Assumptions:	None.
+ * Bugs:	This is shamefully unsophisticated.
+ *		The colours known to TikZ may be a moving target.
+ * Notes:	At time of writing (Oct 2019), the following are
+ *		(allegedly) the known colours (in RGB):
+ *		red, green, blue, cyan, magenta, yellow, black,
+ *		gray (128,128, 128), darkgray (64,64,64),
+ *		lightgray (191,191,191), brown (191,128,64), lime (191,255,0),
+ *		olive (127,127,0), orange (255,128,0), pink (255,191,191),
+ *		purple (191,0,64), teal (0,128,128), violet (128,0,128)
+ *		and white (modulo the fact that 127~=128, 63~=64, and so on).
+ *		To get the RGB values from a PDF file with cmyk colours, I used
+ *		    gs -dUseFastColor file.pdf
+ *		which does a direct mapping of cmyk to RGB without
+ *		using any ICC colour profiles, and then used xmag.
+ *		Not knowing what numbers to turn to what names, I will
+ *		only map the subset of the above names found in
+ *		.../texmf-dist/tex/generic/pgf/utilities/pgfutil-plain.def,
+ *		as well as lightgray and darkgray.
+ *		Note that some of these are quite different than X11's rgb.txt.
+ */
+
+// Allow a bit of slop in some cases (see noted examples below).
+#define     CLOSE(x, c)	    (((x) == (c)) || ((x) == ((c) + 1)))
+
+QString
+MainWindow::lookupColour(QColor color)
+{
+    int r = color.red();
+    int g = color.green();
+    int b = color.blue();
+
+    if (r == 0)
+    {
+	if (g == 0 && b == 0)
+	    return "black";
+	if (g == 255 && b == 0)
+	    return "green";
+	if (g == 0 && b == 255)
+	    return "blue";
+	if (g == 255 && b == 255)
+	    return "cyan";
+	if (CLOSE(g, 127) && CLOSE(b, 127))
+	    return "teal";
+	return nullptr;
+    }
+
+    if (CLOSE(r, 63) && CLOSE(g, 63) && CLOSE(b, 63))
+	return "darkgray";
+
+    if (CLOSE(r, 127))			    // 0.5 -> 127.5
+    {
+	if (CLOSE(g, 127) && CLOSE(b, 127))
+	    return "gray";
+	if (CLOSE(g, 127) && b == 0)
+	    return "olive";
+	if (g == 0 && CLOSE(b, 127))
+	    return "violet";
+	return nullptr;
+    }
+
+    if (CLOSE(r, 191))			    // 0.75 -> 191.25
+    {
+	if (g == 0 && CLOSE(b, 63))	    // 0.25 -> 63.75
+	    return "purple";
+	if (CLOSE(g, 127) && CLOSE(b, 63))
+	    return "brown";
+	if (g == 255 && b == 0)
+	    return "lime";
+	if (CLOSE(g, 191) && CLOSE(b, 191))
+	    return "lightgray";
+	return nullptr;
+    }
+
+    if (r == 255)
+    {
+	if (g == 255 && b == 255)
+	    return "white";
+	if (g == 0 && b == 0)
+	    return "red";
+	if (g == 0 && b == 255)
+	    return "magenta";
+	if (g == 255 && b == 0)
+	    return "yellow";
+	if (CLOSE(g, 127) && b == 0)
+	    return "orange";
+	if (CLOSE(g, 191) && CLOSE(b, 191))
+	    return "pink";
+	return nullptr;
+    }
+    return nullptr;
 }
 
 
@@ -1836,107 +1942,4 @@ MainWindow::on_tabWidget_currentChanged(int index)
       default:
 	break;
     }
-}
-
-
-
-/*
- * Name:	lookupColour()
- * Purpose:	Given an RGB colour, see if this is a colour known to
- *		TikZ by a human-friendly name; if so, return the name.
- * Arguments:	A QColor.
- * Outputs:	Nothing.
- * Modifies:	Nothing.
- * Returns:	A TikZ colour name (as a QString) or nullptr.
- * Assumptions:	None.
- * Bugs:	This is shamefully unsophisticated.
- *		The colours known to TikZ may be a moving target.
- * Notes:	At time of writing (Oct 2019), the following are
- *		(allegedly) the known colours (in RGB):
- *		red, green, blue, cyan, magenta, yellow, black,
- *		gray (128,128, 128), darkgray (64,64,64),
- *		lightgray (191,191,191), brown (191,128,64), lime (191,255,0),
- *		olive (127,127,0), orange (255,128,0), pink (255,191,191),
- *		purple (191,0,64), teal (0,128,128), violet (128,0,128)
- *		and white (modulo the fact that 127~=128, 63~=64, and so on).
- *		To get the RGB values from a PDF file with cmyk colours, I used
- *		    gs -dUseFastColor file.pdf
- *		which does a direct mapping of cmyk to RGB without
- *		using any ICC colour profiles, and then used xmag.
- *		Not knowing what numbers to turn to what names, I will
- *		only map the subset of the above names found in
- *		.../texmf-dist/tex/generic/pgf/utilities/pgfutil-plain.def,
- *		as well as lightgray and darkgray.
- *		Note that some of these are quite different than X11's rgb.txt.
- */
-
-// Allow a bit of slop in some cases (see noted examples below).
-#define     CLOSE(x, c)	    (((x) == (c)) || ((x) == ((c) + 1)))
-
-QString
-MainWindow::lookupColour(QColor color)
-{
-    int r = color.red();
-    int g = color.green();
-    int b = color.blue();
-
-    if (r == 0)
-    {
-	if (g == 0 && b == 0)
-	    return "black";
-	if (g == 255 && b == 0)
-	    return "green";
-	if (g == 0 && b == 255)
-	    return "blue";
-	if (g == 255 && b == 255)
-	    return "cyan";
-	if (CLOSE(g, 127) && CLOSE(b, 127))
-	    return "teal";
-	return nullptr;
-    }
-
-    if (CLOSE(r, 63) && CLOSE(g, 63) && CLOSE(b, 63))
-	return "darkgray";
-
-    if (CLOSE(r, 127))			    // 0.5 -> 127.5
-    {
-	if (CLOSE(g, 127) && CLOSE(b, 127))
-	    return "gray";
-	if (CLOSE(g, 127) && b == 0)
-	    return "olive";
-	if (g == 0 && CLOSE(b, 127))
-	    return "violet";
-	return nullptr;
-    }
-
-    if (CLOSE(r, 191))			    // 0.75 -> 191.25
-    {
-	if (g == 0 && CLOSE(b, 63))	    // 0.25 -> 63.75
-	    return "purple";
-	if (CLOSE(g, 127) && CLOSE(b, 63))
-	    return "brown";
-	if (g == 255 && b == 0)
-	    return "lime";
-	if (CLOSE(g, 191) && CLOSE(b, 191))
-	    return "lightgray";
-	return nullptr;
-    }
-
-    if (r == 255)
-    {
-	if (g == 255 && b == 255)
-	    return "white";
-	if (g == 0 && b == 0)
-	    return "red";
-	if (g == 0 && b == 255)
-	    return "magenta";
-	if (g == 255 && b == 0)
-	    return "yellow";
-	if (CLOSE(g, 127) && b == 0)
-	    return "orange";
-	if (CLOSE(g, 191) && CLOSE(b, 191))
-	    return "pink";
-	return nullptr;
-    }
-    return nullptr;
 }
