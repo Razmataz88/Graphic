@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.8
+ * Version:	1.10
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -84,6 +84,12 @@
  *	the ability to style a library graph.  style_Graph() needs to
  *	be entirely rethought.
  *  (f) Add the rest of the "named" colours to lookupColour().
+ *  (g) Remove a bunch of uninteresting output file types from the
+ *	save dialog menu.
+ * Nov 16, 2019 (JD V1.10)
+ *  (a) Refactor save_graph() because it is unwieldy large
+ *	into itself + saveEdgelist() (step 1 of many!).
+ *  (b) Formatting tweaks.
  */
 
 #define     DEBUG
@@ -109,9 +115,9 @@
 #include <QErrorMessage>
 #include <QDate>
 
-#define GRAPHICS_FILE_EXTENSION "grphc"
-#define GRAPHICS_SAVE_FILE	"Graph-ic (*." GRAPHICS_FILE_EXTENSION ")"
-#define GRAPHICS_SAVE_SUBDIR	"graph-ic"
+#define GRAPHiCS_FILE_EXTENSION "grphc"
+#define GRAPHiCS_SAVE_FILE	"Graph-ic (*." GRAPHiCS_FILE_EXTENSION ")"
+#define GRAPHiCS_SAVE_SUBDIR	"graph-ic"
 #define TIKZ_SAVE_FILE		"TikZ (*.tikz)"
 #define EDGES_SAVE_FILE		"Edge list (*.edges)"
 #define SVG_SAVE_FILE		"SVG (*.svg)"
@@ -150,7 +156,7 @@ MainWindow::MainWindow(QWidget * parent) :
 QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    fileDirectory = QDir::currentPath().append("/" GRAPHICS_SAVE_SUBDIR);
+    fileDirectory = QDir::currentPath().append("/" GRAPHiCS_SAVE_SUBDIR);
     QDir dir(fileDirectory);
 
     if (!dir.exists())
@@ -158,7 +164,7 @@ QMainWindow(parent),
 	{
 	    QMessageBox::information(0, "Error", 
 				     "Unable to create the subdirectory ./"
-				     GRAPHICS_SAVE_SUBDIR
+				     GRAPHiCS_SAVE_SUBDIR
 				     " (where the graphs you create are "
 				     "stored); I will boldly carry on anyway.  "
 				     "Perhaps you can fix that problem from "
@@ -312,7 +318,8 @@ MainWindow::~MainWindow()
  * Notes:	Is this a confusing name?
  */
 
-void MainWindow::setKeyStatusLabel(QString text)
+void
+MainWindow::setKeyStatusLabel(QString text)
 {
     ui->keyPressStatus_label->setText(text);
 }
@@ -332,7 +339,8 @@ void MainWindow::setKeyStatusLabel(QString text)
  * Notes:
  */
 
-void MainWindow::generate_Combobox_Titles()
+void
+MainWindow::generate_Combobox_Titles()
 {
     BasicGraphs * simpleG = new BasicGraphs();
     int i = 1;
@@ -344,6 +352,52 @@ void MainWindow::generate_Combobox_Titles()
     }
     ui->graphType_ComboBox->insertSeparator(BasicGraphs::Count);
     this->load_Graphic_Library();
+}
+
+
+
+/*
+ * Name:	saveEdgelist()
+ * Purpose:	Save the current graph as an edgelist.
+ * Arguments:	A file pointer to write to and the node list.
+ * Outputs:	An edge list of the graph to the file.
+ * Modifies:	Nothing.
+ * Returns:	True on success.
+ * Assumptions:	Args are valid.
+ * Bugs:	?!
+ * Notes:	None.
+ */
+
+bool
+saveEdgelist(QTextStream &outfile, QVector<Node *> nodes)
+{
+    QString edges = "";
+
+    for (int i = 0; i < nodes.count(); i++)
+    {
+	for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
+	{
+	    Edge * edge = nodes.at(i)->edgeList.at(j);
+
+	    if (edge->sourceNode()->getID() == i
+		&& edge->destNode()->getID() > i)
+	    {
+		edges += QString::number(edge->sourceNode()->getID()) + ","
+		    + QString::number(edge->destNode()->getID()) + "\n";
+	    }
+	    else if (edge->destNode()->getID() == i
+		     && edge->sourceNode()->getID() > i)
+	    {
+		edges += QString::number(edge->destNode()->getID()) + ","
+		    + QString::number(edge->sourceNode()->getID())
+		    + "\n";
+	    }
+	}
+    }
+    outfile << nodes.count() << "\n";
+    outfile << edges;
+
+    return true;
 }
 
 
@@ -365,7 +419,7 @@ MainWindow::save_Graph()
 {
     QString fileTypes = "";
 
-    fileTypes += GRAPHICS_SAVE_FILE ";;"
+    fileTypes += GRAPHiCS_SAVE_FILE ";;"
 	TIKZ_SAVE_FILE ";;"
 	EDGES_SAVE_FILE	";;";
 
@@ -446,7 +500,7 @@ MainWindow::save_Graph()
     if (saveStatus)
 	ui->canvas->snapToGrid(false);
 
-    if (selectedFilter != GRAPHICS_SAVE_FILE
+    if (selectedFilter != GRAPHiCS_SAVE_FILE
 	&& selectedFilter != TIKZ_SAVE_FILE
 	&& selectedFilter != EDGES_SAVE_FILE
 	&& selectedFilter != SVG_SAVE_FILE)
@@ -507,7 +561,7 @@ MainWindow::save_Graph()
 	}
     }
 
-    if (selectedFilter == GRAPHICS_SAVE_FILE)
+    if (selectedFilter == GRAPHiCS_SAVE_FILE)
     {
 	// Use some painful Qt constructs to output the node and edge
 	// information with a more readable format.
@@ -659,33 +713,11 @@ MainWindow::save_Graph()
 
     if (selectedFilter == EDGES_SAVE_FILE)
     {
-	for (int i = 0; i < nodes.count(); i++)
-	{
-	    for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
-	    {
-		Edge * edge = nodes.at(i)->edgeList.at(j);
-
-		if (edge->sourceNode()->getID() == i
-		    && edge->destNode()->getID() > i)
-		{
-		    edges += QString::number(edge->sourceNode()->getID()) + ","
-			+ QString::number(edge->destNode()->getID()) + "\n";
-		}
-		else if (edge->destNode()->getID() == i
-			 && edge->sourceNode()->getID() > i)
-		{
-		    edges += QString::number(edge->destNode()->getID()) + ","
-			+ QString::number(edge->sourceNode()->getID())
-			+ "\n";
-		}
-	    }
-	}
-	outStream << nodes.count() << "\n";
-	outStream << edges;
+	bool success = saveEdgelist(outStream, nodes);
 	outputFile.close();
 	ui->canvas->snapToGrid(saveStatus);
 	ui->canvas->update();
-	return true;
+	return true && success;
     }
 
     if (selectedFilter == TIKZ_SAVE_FILE)
@@ -900,12 +932,13 @@ MainWindow::save_Graph()
  * Notes:
  */
 
-bool MainWindow::load_Graphic_File()
+bool
+MainWindow::load_Graphic_File()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
 						    "Load Graph-ics File",
 						    fileDirectory,
-						    GRAPHICS_SAVE_FILE);
+						    GRAPHiCS_SAVE_FILE);
     if (! fileName.isNull())
 	select_Custom_Graph(fileName);
 
@@ -923,13 +956,14 @@ bool MainWindow::load_Graphic_File()
  * Modifies:	ui->graphType_ComboBox
  * Returns:	Nothing.
  * Assumptions:	fileDirectory has been initialized.
- *		This assumes that if a file has a GRAPHICS_FILE_EXTENSION
+ *		This assumes that if a file has a GRAPHiCS_FILE_EXTENSION
  *		extension then it is a graph-ic file.
  * Bugs:
  * Notes:
  */
 
-void MainWindow::load_Graphic_Library()
+void
+MainWindow::load_Graphic_Library()
 {
     QDirIterator dirIt(fileDirectory, QDirIterator::Subdirectories);
     while (dirIt.hasNext())
@@ -943,7 +977,7 @@ void MainWindow::load_Graphic_Library()
 		     << QFileInfo(dirIt.filePath()).suffix();
 #endif
 
-	if (QFileInfo(dirIt.filePath()).suffix() == GRAPHICS_FILE_EXTENSION
+	if (QFileInfo(dirIt.filePath()).suffix() == GRAPHiCS_FILE_EXTENSION
 	    && QFileInfo(dirIt.filePath()).isFile())
 	{
 	    QFileInfo fileInfo(dirIt.filePath());
@@ -966,7 +1000,8 @@ void MainWindow::load_Graphic_Library()
  * Notes:	    JD added "comment lines" capability Oct 2019.
  */
 
-void MainWindow::select_Custom_Graph(QString graphName)
+void
+MainWindow::select_Custom_Graph(QString graphName)
 {
     if (!graphName.isNull())
     {
@@ -1192,7 +1227,8 @@ MainWindow::style_Graph()
  * Notes:	?
  */
 
-void MainWindow::generate_Graph()
+void
+MainWindow::generate_Graph()
 {
     QScreen * screen = QGuiApplication::primaryScreen();
 
@@ -1221,7 +1257,7 @@ void MainWindow::generate_Graph()
 	    << " graph";
 	select_Custom_Graph(fileDirectory + "/"
 			    + ui->graphType_ComboBox->currentText()
-			    + "." + GRAPHICS_FILE_EXTENSION);
+			    + "." + GRAPHiCS_FILE_EXTENSION);
     }
 }
 
@@ -1239,7 +1275,8 @@ void MainWindow::generate_Graph()
  * Notes:	???
  */
 
-void MainWindow::on_NodeOutlineColor_clicked()
+void
+MainWindow::on_NodeOutlineColor_clicked()
 {
     QColor color = QColorDialog::getColor();
     QString s("background: #"
@@ -1269,7 +1306,8 @@ void MainWindow::on_NodeOutlineColor_clicked()
  * Notes:	???
  */
 
-void MainWindow::on_NodeFillColor_clicked()
+void
+MainWindow::on_NodeFillColor_clicked()
 {
     QColor color = QColorDialog::getColor();
 
@@ -1300,7 +1338,8 @@ void MainWindow::on_NodeFillColor_clicked()
  * Notes:	???
  */
 
-void MainWindow::on_EdgeLineColor_clicked()
+void
+MainWindow::on_EdgeLineColor_clicked()
 {
     QColor color = QColorDialog::getColor();
 
@@ -1331,7 +1370,8 @@ void MainWindow::on_EdgeLineColor_clicked()
  *		(In honour of Robbie Burns?)
  */
 
-void MainWindow::on_NumLabelCheckBox_clicked(bool checked)
+void
+MainWindow::on_NumLabelCheckBox_clicked(bool checked)
 {
     ui->NodeLabel1->setDisabled(checked);
     ui->NodeLabel2->setDisabled(checked);
@@ -1350,7 +1390,8 @@ void MainWindow::on_NumLabelCheckBox_clicked(bool checked)
  * Notes:
  */
 
-void MainWindow::set_Label_Font_Sizes()
+void
+MainWindow::set_Label_Font_Sizes()
 {
     QFont font;
     font = ui->graphLabel->font();
@@ -1427,6 +1468,7 @@ void MainWindow::set_Label_Font_Sizes()
 }
 
 
+
 /*
  * Name:	MainWindow::on_graphType_ComboBox_currentIndexChanged()
  * Purpose:
@@ -1439,7 +1481,8 @@ void MainWindow::set_Label_Font_Sizes()
  * Notes:
  */
 
-void MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
+void
+MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 {
     qDebug() << "on_graphType_ComboBox_currentIndexChanged("
 	     << index << ") called";
@@ -1553,7 +1596,8 @@ void MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
  * Notes:	???
  */
 
-void MainWindow::on_numOfNodes2_valueChanged(int arg1)
+void
+MainWindow::on_numOfNodes2_valueChanged(int arg1)
 {
     qDebug() << "on_numOfNodes2_valueChanged() called";
     Q_UNUSED(arg1);
@@ -1583,7 +1627,8 @@ void MainWindow::on_numOfNodes2_valueChanged(int arg1)
  * Notes:
  */
 
-void MainWindow::generate_Freestyle_Nodes()
+void
+MainWindow::generate_Freestyle_Nodes()
 {
     //QScreen * screen = QGuiApplication::primaryScreen();
     ui->canvas->setUpNodeParams(
@@ -1594,6 +1639,7 @@ void MainWindow::generate_Freestyle_Nodes()
 	ui->NodeFillColor->palette().background().color(),
 	ui->NodeOutlineColor->palette().background().color());
 }
+
 
 
 /*
@@ -1608,7 +1654,8 @@ void MainWindow::generate_Freestyle_Nodes()
  * Notes:
  */
 
-void MainWindow::generate_Freestyle_Edges()
+void
+MainWindow::generate_Freestyle_Edges()
 {
     ui->canvas->setUpEdgeParams(ui->edgeSize->value(),
 				ui->EdgeLabel->text(),
@@ -1618,38 +1665,44 @@ void MainWindow::generate_Freestyle_Edges()
 }
 
 
-void MainWindow::on_deleteMode_radioButton_clicked()
+void
+MainWindow::on_deleteMode_radioButton_clicked()
 {
     ui->canvas->setMode(CanvasView::del);
 }
 
 
-void MainWindow::on_joinMode_radioButton_clicked()
+void
+MainWindow::on_joinMode_radioButton_clicked()
 {
     ui->canvas->setMode(CanvasView::join);
 
 }
 
 
-void MainWindow::on_editMode_radioButton_clicked()
+void
+MainWindow::on_editMode_radioButton_clicked()
 {
     ui->canvas->setMode(CanvasView::edit);
 }
 
 
-void MainWindow::on_noMode_radioButton_clicked()
+void
+MainWindow::on_noMode_radioButton_clicked()
 {
     ui->canvas->setMode(CanvasView::none);
 }
 
 
-void MainWindow::on_freestyleMode_radioButton_clicked()
+void
+MainWindow::on_freestyleMode_radioButton_clicked()
 {
     ui->canvas->setMode(CanvasView::freestyle);
 }
 
 
-void MainWindow::on_tabWidget_currentChanged(int index)
+void
+MainWindow::on_tabWidget_currentChanged(int index)
 {
     qDebug() << "on_tabWidget_currentChanged(" << index << ")";
     switch(index)
