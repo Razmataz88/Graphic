@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.11
+ * Version:	1.12
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -93,6 +93,12 @@
  * Nov 17, 2019 (JD V1.11)
  *  (a) Move lookupColour() above where it is used and make it a
  *	non-class function.
+ * Nov 18, 2019 (JD V1.11)
+ *  (a) Fixed the edit window so that it looks nicer and behaves
+ *	(vis-a-vis vertical spacing) much nicer (changes in
+ *	on_tabWidget_currentChanged()).
+ *  (b) Change "weight" to "label" in .grphc output edge comment.
+ *  (c) Comment & formatting tweaking.
  */
 
 #define     DEBUG
@@ -147,11 +153,11 @@
  * Name:	MainWindow
  * Purpose:	Main window constructor
  * Arguments:	QWidget *
- * Output:	none
+ * Output:	Nothing.
  * Modifies:	private MainWindow variables
- * Returns:	none
- * Assumptions: none
- * Bugs:	none...so far
+ * Returns:	Nothing.
+ * Assumptions: ?
+ * Bugs:	None known... so far.
  * Notes:	This is a cpp file used with the mainwindow.ui file
  */
 
@@ -368,7 +374,7 @@ MainWindow::generate_Combobox_Titles()
  * Returns:	True on success.
  * Assumptions:	Args are valid.
  * Bugs:	?!
- * Notes:	None.
+ * Notes:	Currently always returns T, but maybe in the future ...
  */
 
 bool
@@ -439,7 +445,7 @@ saveEdgelist(QTextStream &outfile, QVector<Node *> nodes)
 #define     CLOSE(x, c)	    (((x) == (c)) || ((x) == ((c) + 1)))
 
 QString
-MainWindow::lookupColour(QColor color)
+lookupColour(QColor color)
 {
     int r = color.red();
     int g = color.green();
@@ -749,7 +755,7 @@ MainWindow::save_Graph()
 
 	outStream << "\n# Edge descriptions; the format is:\n"
 		  << "# u, v, dest_radius, source_radius, rotation, pen_width,\n"
-		  << "#       line r,g,b[, weight font size, weight]\n";
+		  << "#       line r,g,b[, label font size, label]\n";
 	    
 	for (int i = 0; i < nodes.count(); i++)
 	{
@@ -1004,7 +1010,7 @@ MainWindow::save_Graph()
 	svgGen.setFileName(fileName);
 	svgGen.setSize(ui->canvas->scene()
 		       ->itemsBoundingRect().size().toSize());
-	QPainter painter( &svgGen );
+	QPainter painter(&svgGen);
 	ui->canvas->scene()->render(&painter,
 				    QRectF(0, 0, ui->canvas->scene()
 					   ->itemsBoundingRect().width(),
@@ -1359,8 +1365,8 @@ MainWindow::generate_Graph()
     else
     {
 	qDebug() << "generate_Graph() making a "
-	    << ui->graphType_ComboBox->currentText()
-	    << " graph";
+		 << ui->graphType_ComboBox->currentText()
+		 << " graph";
 	select_Custom_Graph(fileDirectory + "/"
 			    + ui->graphType_ComboBox->currentText()
 			    + "." + GRAPHiCS_FILE_EXTENSION);
@@ -1464,7 +1470,7 @@ MainWindow::on_EdgeLineColor_clicked()
 
 
 /*
- * Name:
+ * Name:	on_NumLabelCheckBox_clicked()
  * Purpose:
  * Arguments:
  * Outputs:
@@ -1485,7 +1491,7 @@ MainWindow::on_NumLabelCheckBox_clicked(bool checked)
 
 
 /*
- * Name:
+ * Name:	MainWindow::set_Label_Font_Sizes()
  * Purpose:
  * Arguments:
  * Outputs:
@@ -1576,7 +1582,7 @@ MainWindow::set_Label_Font_Sizes()
 
 
 /*
- * Name:	MainWindow::on_graphType_ComboBox_currentIndexChanged()
+ * Name:	on_graphType_ComboBox_currentIndexChanged()
  * Purpose:
  * Arguments:	the index of the selected graph from the drop-down list.
  * Outputs:	nothing.
@@ -1722,7 +1728,7 @@ MainWindow::on_numOfNodes2_valueChanged(int arg1)
 
 
 /*
- * Name:
+ * Name:	generate_Freestyle_Nodes()
  * Purpose:
  * Arguments:
  * Outputs:
@@ -1749,7 +1755,7 @@ MainWindow::generate_Freestyle_Nodes()
 
 
 /*
- * Name:
+ * Name:	generate_Freestyle_Edges()
  * Purpose:
  * Arguments:
  * Outputs:
@@ -1807,6 +1813,19 @@ MainWindow::on_freestyleMode_radioButton_clicked()
 }
 
 
+/*
+ * Name:	on_tabWidget_currentChanged()
+ * Purpose:	Redraw the UI for the tabbed section at the left of
+ *		the main UI window.
+ * Arguments:	The tab index.
+ * Outputs:	Nothing.
+ * Modifies:	The user view.
+ * Returns:	Nothing.
+ * Assumptions:	?
+ * Bugs:	?
+ * Notes:	JD Q: what actually draws the UI for tab 0?  ui_mainwindow?
+ */
+
 void
 MainWindow::on_tabWidget_currentChanged(int index)
 {
@@ -1840,12 +1859,16 @@ MainWindow::on_tabWidget_currentChanged(int index)
 		      gridLayout->addWidget(graphLabel, i, 1);
 		      i++;
 
-		      gridLayout->addWidget(new QLabel("size"), i, 2);
-		      gridLayout->addWidget(new QLabel("Text"), i, 3);
-		      gridLayout->addWidget(new QLabel("Text Size"), i , 4);
-		      gridLayout->addWidget(new QLabel("Outline Color"), i, 5);
-		      gridLayout->addWidget(new QLabel("Fill Color"), i, 6);
-		      i++;
+		      gridLayout->addWidget(new QLabel("N Diam"), i, 2);
+		      gridLayout->addWidget(new QLabel("E width"), i+1, 2);
+		      gridLayout->addWidget(new QLabel("Label"), i, 3);
+		      gridLayout->addWidget(new QLabel("Text"), i, 4);
+		      gridLayout->addWidget(new QLabel("Size"), i+1, 4);
+		      gridLayout->addWidget(new QLabel("Line"), i, 5);
+		      gridLayout->addWidget(new QLabel("Color"), i+1, 5);
+		      gridLayout->addWidget(new QLabel("Fill"), i, 6);
+		      gridLayout->addWidget(new QLabel("Color"), i+1, 6);
+		      i += 2;
 
 		      foreach (QGraphicsItem * gItem, graph->childItems())
 		      {
@@ -1855,17 +1878,24 @@ MainWindow::on_tabWidget_currentChanged(int index)
 			      {
 				  Node * node = qgraphicsitem_cast<Node*>(gItem);
 				  QLineEdit * nodeEdit = new QLineEdit();
-				  nodeEdit->setText("Node\n");
-				  gridLayout->addWidget(nodeEdit);
+				  // Q: what was the point of this?
+				  // nodeEdit->setText("Node\n");
+				  // gridLayout->addWidget(nodeEdit);
 
 				  QLabel * label = new QLabel("Node");
+				  // When this node is deleted, also
+				  // delete its label in the edit tab.
+				  connect(node, SIGNAL(destroyed(QObject*)),
+					  label, SLOT(deleteLater()));
+
+				  QDoubleSpinBox * sizeBox
+				      = new QDoubleSpinBox();
+
 				  QPushButton * lineColorButton
 				      = new QPushButton();
 				  QPushButton * fillColorButton
 				      = new QPushButton();
 
-				  QDoubleSpinBox * sizeBox
-				      = new QDoubleSpinBox();
 				  QDoubleSpinBox * fontSizeBox
 				      = new QDoubleSpinBox();
 
@@ -1900,10 +1930,16 @@ MainWindow::on_tabWidget_currentChanged(int index)
 				  Edge * edge
 				      = qgraphicsitem_cast<Edge*>(gItem);
 				  QLineEdit * editEdge = new QLineEdit();
-				  editEdge->setText("Edge\n");
-				  gridLayout->addWidget(editEdge);
+				  // Q: what were these for??
+				  // editEdge->setText("Edge\n");
+				  // gridLayout->addWidget(editEdge);
 
 				  QLabel * label = new QLabel("Edge");
+				  // When this edge is deleted, also
+				  // delete its label in the edit tab.
+				  connect(edge, SIGNAL(destroyed(QObject*)),
+					  label, SLOT(deleteLater()));
+
 				  QPushButton * button = new QPushButton();
 				  QDoubleSpinBox * sizeBox
 				      = new QDoubleSpinBox();
@@ -1922,9 +1958,9 @@ MainWindow::on_tabWidget_currentChanged(int index)
 
 				  gridLayout->addWidget(label, i, 1);
 				  gridLayout->addWidget(sizeBox, i, 2);
-				  gridLayout->addWidget(editEdge,  i, 3);
+				  gridLayout->addWidget(editEdge, i, 3);
 				  gridLayout->addWidget(fontSizeBox, i, 4);
-				  gridLayout->addWidget(button,	 i, 5);
+				  gridLayout->addWidget(button,	i, 5);
 
 				  Q_UNUSED(sizeController);
 				  Q_UNUSED(colorController);
@@ -1936,6 +1972,37 @@ MainWindow::on_tabWidget_currentChanged(int index)
 		      }
 		  }
 	      }
+	  }
+	  // TODO: this was added 2019/11/18 because the extra
+	  // vertical space was being distributed between the rows,
+	  // but it only "works" after something was deleted from the
+	  // graph and then we switch into the edit pane (or out &
+	  // back in).  After that it is OK.  Go figure.
+	  // Dumps core if setRowStretch(i - 1, 40) is called when i == 0.
+	  if (i > 0)
+	  {
+	      // printf("Setting row stretch for row %d to 40\n", i - 1);
+	      // gridLayout->setRowStretch(i - 1, 40);
+	      // TODO: JD could not figure out any way to get a spacer
+	      // in here.
+	      // QSpacerItem * verticalSpacer;
+	      //QSpacerItem verticalSpacer = QSpacerItem(40, 20, QSizePolicy::Minimum, QSizePolicy::Expanding);
+	      //auto widget = new QWidget();
+	      //widget->setLayout( verticalSpacer );
+	      //gridLayout->addWidget(widget, 0, 1);
+	      //QLineEdit * editEdge = new QLineEdit();
+	      //gridLayout->addWidget(editEdge, i, 1);
+	      //gridLayout->addItem(verticalSpacer, i/2, 1, 1, 1, Qt::AlignTop);
+	      //gridLayout->addItem(verticalSpacer);//, 12, 1, 0, 0, 0);
+	      //gridLayout->addItem(verticalSpacer);
+// compile error	      gridLayout->addItem(new QSpacerItem((1, 1, QSizePolicy::Expanding, QSizePolicy::Preferred), 3,1,1,4, Qt::AlignTop);
+	      // This is a horrible kludge that makes the stretch work
+	      // before anything is deleted from the Edit Graph tab.
+	      // With this the setRowStretch() for i-1 is not needed.
+	      // The horror, the horror.
+	      QLabel * label = new QLabel(" ");
+	      gridLayout->addWidget(label, i, 1);
+	      gridLayout->setRowStretch(i, 40);
 	  }
 	  break;
       }
