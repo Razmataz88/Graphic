@@ -2,7 +2,7 @@
  * File:	html-label.cpp	    Formerly label.cpp
  * Author:	Rachel Bood
  * Date:	2014-??-??
- * Version:	1.2
+ * Version:	1.3
  * 
  * Purpose:	Implement the functions relating to node and edge labels.
  *		(Some places in the code use "weight" for "edge label".)
@@ -18,9 +18,14 @@
  *	contain super- and sub-scripts, into this file (from node.cpp).
  *  (c) Various and sundry minor formatting and comment additions.
  * Nov 13, 2019 (JD V1.2)
- *  - in setHtmlLabel() (currently only called for edges) replace the
- *    fontification code with strToHtml() so that edge labels can have
- *    super- and subscripts as well.  Add function comment to setHtmlLabel().
+ *   - in setHtmlLabel() (currently only called for edges) replace the
+ *     fontification code with strToHtml() so that edge labels can have
+ *     super- and subscripts as well.  Add function comment to setHtmlLabel().
+ * Nov 18, 2019 (JD V1.3)
+ *  (a) Set default font size for labels, since up until now vertex labels
+ *      get font size 9 unless they had labels set during the graph creation.
+ *  (b) Remove spurious font variable in HTML_Label().
+ *  (c) Fix some comments.
  */
 
 #include "html-label.h"
@@ -39,16 +44,13 @@ HTML_Label::HTML_Label(QGraphicsItem * parent)
     this->setParentItem(parent);
     htmlLabelText = "";
     setZValue(3);
-    QFont font = this->font();
-    QFont font1;
+    QFont font;
 
-    font1.setFamily(QStringLiteral("cmmi10"));
-    font1.setBold(false);
-    font1.setWeight(50);
-
-
-    this->setFont(font1);
-    font = this->font();
+    font.setFamily(QStringLiteral("cmmi10"));
+    font.setBold(false);
+    font.setWeight(50);
+    font.setPointSize(12);
+    this->setFont(font);
     setTextInteractionFlags(Qt::TextEditorInteraction);
 
     if (parentItem() != nullptr)
@@ -73,7 +75,7 @@ HTML_Label::setTextInteraction(bool on, bool selectAll)
 	// Manually do what a mouse click would do else:
 	setFocus(Qt::MouseFocusReason); // This gives the item keyboard focus
 	setSelected(true); // This ensures that itemChange() gets called when we click out of the item
-	if(selectAll) // Option to select the whole text (e.g. after creation of the TextItem)
+	if (selectAll) // Option to select the whole text (e.g. after creation of the TextItem)
 	{
 	    QTextCursor c = textCursor();
 	    c.select(QTextCursor::Document);
@@ -214,12 +216,7 @@ mathFontify(QString str)
  * Returns:	On success, the HTML text.  On failure, the empty string.
  * Assumptions:	The label string is syntactically valid.
  * Bugs:	Should return a success indication should parsing fail.
- *		Does not correctly fontify parts with letters and digits.
- * Notes:	Unlike in TeX, where digits in formula are printed
- *		using cmr10, in Qt if the font is cmmi10, the digits
- *		are printed in "old-style" digits.  This is a pain to
- *		work around.
- * To Do:	Correctly fontify parts with both letters and digits.
+ * Notes:	Qt doesn't properly display 2nd-level sub/sups.
  */
 
 QString
@@ -231,7 +228,7 @@ HTML_Label::strToHtml(QString str)
     int brCount, pos;
     int firstUnderscore = str.indexOf('_');
     int firstCircumflex = str.indexOf('^');
-    QRegExp re("\\d*");
+    QRegExp digitsRegexp("\\d*");
 
 #ifdef DEBUG
     printf("\nstrToHtml(%s) called\n", str.toLocal8Bit().data());
@@ -269,7 +266,7 @@ HTML_Label::strToHtml(QString str)
     // Use cmr10 iff the base is all digits.
     // TODO: call myself recursively here once I handle mixed
     // digits/letters in the "trivial" case above.
-    if (re.exactMatch(base))
+    if (digitsRegexp.exactMatch(base))
 	base = "<font face=\"cmr10\">" + base + "</font>";
     else
 	base = "<font face=\"cmmi10\">" + base + "</font>";
