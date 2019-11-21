@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>984</width>
-    <height>712</height>
+    <width>1500</width>
+    <height>1500</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -71,13 +71,13 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>0</width>
+          <width>500</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>450</width>
+          <width>600</width>
           <height>16777211</height>
          </size>
         </property>
@@ -93,13 +93,13 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>440</width>
+           <width>500</width>
            <height>0</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>425</width>
+           <width>600</width>
            <height>16777215</height>
           </size>
          </property>
@@ -115,16 +115,22 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="minimumSize">
+             <size>
+              <width>500</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
             <widget class="QWidget" name="scrollAreaWidgetContents_2">
              <property name="geometry">
               <rect>
-               <x>0</x>
+               <x>-140</x>
                <y>0</y>
-               <width>431</width>
-               <height>512</height>
+               <width>704</width>
+               <height>1142</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -802,14 +808,14 @@
               <item row="2" column="1">
                <widget class="PreView" name="preview" native="true">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
+                  <width>500</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -1531,7 +1537,7 @@
                    </font>
                   </property>
                   <property name="text">
-                   <string>inches</string>
+                   <string>inch</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1742,8 +1748,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>418</width>
-               <height>512</height>
+               <width>564</width>
+               <height>1165</height>
               </rect>
              </property>
             </widget>
@@ -1898,8 +1904,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>984</width>
-     <height>22</height>
+     <width>1500</width>
+     <height>29</height>
     </rect>
    </property>
    <property name="sizePolicy">
