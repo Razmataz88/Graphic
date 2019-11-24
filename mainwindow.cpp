@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.13
+ * Version:	1.14
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -114,6 +114,11 @@
  *  (b) Add findDefaults() as a first step to improving the TikZ
  *	output (which will set default styles at the top of each graph
  *	and only output differences for nodes/edges that are different).
+ * Nov 24, 2019 (JD V1.14)
+ *  (a) Add a call on_graphType_ComboBox_currentIndexChanged(-1) the
+ *      mainwindow constructor to initialize the "Create Graph" pane
+ *	to a self-consistent shape.  Modify on_graphType_...() to not
+ *	whine when its arg is < 0.
  */
 
 #define     DEBUG
@@ -309,6 +314,9 @@ QMainWindow(parent),
 
     //ui->editGraph->setLayout(gridLayout);
     ui->scrollAreaWidgetContents->setLayout(gridLayout);
+
+    // Initialize Create Graph pane to default values
+    on_graphType_ComboBox_currentIndexChanged(-1);
 
     // Debug to help with HiDPI issues
     QScreen * screen = QGuiApplication::primaryScreen();
@@ -1939,8 +1947,15 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
       }
       default:
 	// ToDo: may need to change grphc file format to add
-	qDebug() << "on_graphType_ComboBox_currentIndexChanged()"
-		 << "Unknown index " << index;
+	if (index > 0)
+	{
+	    // Calling this with an index <= 0 has the effect of
+	    // setting the pane to its default state.  Before this
+	    // change it started with the bipartite choices there,
+	    // which is sort of confusing/misleading.
+	    qDebug() << "on_graphType_ComboBox_currentIndexChanged()"
+		     << "Unknown index " << index;
+	}
 	ui->numOfNodes1->hide();
 	ui->numOfNodes2->hide();
 	ui->graphHeight->hide();
