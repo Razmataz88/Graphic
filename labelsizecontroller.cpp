@@ -10,21 +10,29 @@
  *  Nov 13, 2019 (JD, V1.1):
  *   (a) Renamed setWeightLabelSize() -> setEdgeLabelSize().
  *   (b) Removed apparently redundant "|| edge != 0" in setEdgeLabelSize().
+ *  Nov 24, 2019 (JD, V1.2):
+ *   (a) Fixed bugs in the (node and edge) constructors which
+ *	 incorrectly set the text size box value.
+ *   (b) Minor formatting tweaks, comment additions.
+ *   (c) Removed apparently redundant "|| box != 0" tests.
  */
 
 #include "labelsizecontroller.h"
 
+#define DEFAULT_EDGE_LABEL_SIZE  12
+#define DEFAULT_NODE_LABEL_SIZE  12
 
-LabelSizeController::LabelSizeController(Edge *anEdge, QDoubleSpinBox *aBox)
+
+LabelSizeController::LabelSizeController(Edge * anEdge, QDoubleSpinBox * aBox)
 {
     edge = anEdge;
     box = aBox;
-    if (box != nullptr || box != 0)
+    if (box != nullptr)
     {
-        if (box->value() == 0)
-            box->setValue(12);
-        else
-            box->setValue(edge->getLabelSize());
+	if (edge->getLabel().length() > 0)
+	    box->setValue(edge->getLabelSize());
+	else
+            box->setValue(DEFAULT_EDGE_LABEL_SIZE);
 
         connect(box, SIGNAL(valueChanged(double)),
                 this, SLOT(setEdgeLabelSize(double)));
@@ -36,16 +44,18 @@ LabelSizeController::LabelSizeController(Edge *anEdge, QDoubleSpinBox *aBox)
     }
 }
 
-LabelSizeController::LabelSizeController(Node * aNode, QDoubleSpinBox *aBox)
+
+
+LabelSizeController::LabelSizeController(Node * aNode, QDoubleSpinBox * aBox)
 {
     node = aNode;
     box = aBox;
-    if (box != nullptr || box != 0)
+    if (box != nullptr)
     {
-        if (box->value() == 0)
-            box->setValue(12);
-        else
+	if (node->getLabel().length() > 0)
             box->setValue(node->getLabelSize());
+	else
+            box->setValue(DEFAULT_NODE_LABEL_SIZE);
 
         connect(box, SIGNAL(valueChanged(double)),
                 this, SLOT(setNodeLabelSize(double)));
@@ -56,16 +66,33 @@ LabelSizeController::LabelSizeController(Node * aNode, QDoubleSpinBox *aBox)
     }
 }
 
-void LabelSizeController::setNodeLabelSize(double value)
+
+
+/*
+ * Name:	setNodeLabelSize()
+ * Purpose:	Set the size of the node label.
+ * Arguments:	The size, in points.
+ * Outputs:	Nothing.
+ * Modifies:	The node label size.
+ * Returns:	Nothing.
+ * Assumptions:	None.
+ * Bugs:	?
+ * Notes:	None.
+ */
+
+void LabelSizeController::setNodeLabelSize(double ptSize)
 {
-    if (node != nullptr || node != 0)
-        node->setNodeLabelSize(value);
+    if (node != nullptr)
+        node->setNodeLabelSize(ptSize);
 }
+
+
 
 void LabelSizeController::deletedSpinBox()
 {
     delete box;
 }
+
 
 
 /*
@@ -86,5 +113,3 @@ LabelSizeController::setEdgeLabelSize(double ptSize)
     if (edge != nullptr)
         edge->setLabelSize(ptSize);
 }
-
-
