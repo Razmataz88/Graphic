@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.15
+ * Version:	1.16
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -133,6 +133,9 @@
  *	only specify differences from the defaults.
  *	Also output things as we go, rather than creating a big
  *	honkin' string and outputting it at the end (can you say O(n^2)?).
+ * Nov 28, 2019 (JD V1.16)
+ *  (a) Factor out saveGraphIc() from save_Graph().
+ *      Use this to implement dumpGraphIc().
  */
 
 #define     DEBUG
@@ -787,17 +790,17 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
  * Assumptions:	Args are valid.
  * Bugs:	This is grotesquely long.
  * Notes:	Currently always returns T, but maybe in the future ...
- * 		Idea: to minimize the amount of TikZ code, find the
- *		most common vertex and edge attributes and create
- *		styles v/.style, e/.style and l/.style with those.
- *		Then when drawing a particular vertex or edge,
- *		over-ride anything not matching the default.
+ * 		Idea: to minimize the amount of TikZ code, the most
+ *		common vertex and edge attributes are found and stored
+ *		in the styles v/.style, e/.style and l/.style.  Then
+ *		when drawing a particular vertex or edge, anything not
+ *		matching the default is output, over-riding the style.
  */
 
 bool
 saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 {
-    printf("\nsaveTikZ() called!\n");
+    printf("saveTikZ() called!\n");
     // TODO: only define a given colour once.
     // (Hash the known colours, and use the name if already defined?)
     QScreen * screen = QGuiApplication::primaryScreen();
@@ -1127,6 +1130,171 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 
 
 /*
+ * Name:	saveGraphIc()
+ * Purpose:	Output the description of the graph in "graph-ic" format.
+ * Arguments:	A file pointer to write to and the node list.
+ * Outputs:	The graph-ic description of the current graph.
+ * Modifies:	Nothing.
+ * Returns:	True on success.
+ * Assumptions:	Args are valid.
+ * Bugs:	
+ * Notes:	Currently always returns T, but maybe in the future ...
+ *		Normally vertex and edge label info is not output if
+ *		the label is empty, but if outputExtra = T these
+ *		are output (this is a debugging aid), as well as some
+ *		extra info.
+ */
+
+bool
+saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
+{
+    printf("saveGraphIc() called!\n");
+    // Use some painful Qt constructs to output the node and edge
+    // information with a more readable format.
+    // Note that tests with explicitly setting the format to 'g'
+    // and the precision to 6 indicate that Qt5.9.8 (on S64-14.2)
+    // will do whatever it damn well pleases, vis-a-vis the number
+    // of chars printed.
+    outfile << "# graph-ic graph definition created ";
+    QDateTime dateTime = dateTime.currentDateTime();
+    outfile << dateTime.toString("yyyy-MM-dd hh:mm:ss") << "\n\n";
+
+    outfile << "# The number of nodes in this graph:\n";
+    outfile << nodes.count() << "\n\n";
+
+    QString nodeInfo = QString::number(nodes.count()) + "\n\n";
+
+    outfile << "# The node descriptions; the format is:\n";
+    outfile << "# x,y, diameter, rotation, fill r,g,b,\n";
+    outfile << "#      outline r,g,b[, label font size,label]\n";
+
+    // In some cases I have created a graph where all the
+    // coordinates are negative and "large", and the graph is not
+    // visible in the preview pane when I load it, which also
+    // means (as of time of writing) that I can't drag it to the
+    // canvas.  Thus the graph is effectively lost.  Avoid this by
+    // centering the graph on (0, 0) when writing it out.
+    qreal minx = 0, maxx = 0, miny = 0, maxy = 0;
+    if (nodes.count() > 0)
+    {
+	Node * node = nodes.at(0);
+	minx = maxx = node->scenePos().rx();
+	miny = maxy = node->scenePos().ry();
+    }
+    for (int i = 1; i < nodes.count(); i++)
+    {
+	Node * node = nodes.at(i);
+	qreal x = node->scenePos().rx();
+	qreal y = node->scenePos().ry();
+	if (x > maxx)
+	    maxx = x;
+	else if (x < minx)
+	    minx = x;
+	if (y > maxy)
+	    maxy = y;
+	else if (y < minx)
+	    miny = y;
+    }
+
+    qreal midx = (maxx + minx) / 2.;
+    qreal midy = (maxy + miny) / 2.;
+    for (int i = 0; i < nodes.count(); i++)
+    {
+	// TODO: s/,/\\/ before writing out label.  Undo this when reading.
+	Node * node = nodes.at(i);
+	outfile << "# Node " + QString::number(i) + ":\n";
+	outfile << QString::number(node->scenePos().rx() - midx,
+				   'f', VP_PREC_GRPHC) << ","
+		<< QString::number(node->scenePos().ry() - midy,
+				   'f', VP_PREC_GRPHC) << ", "
+		<< QString::number(node->getDiameter()) << ", "
+		<< QString::number(node->getRotation()) << ", "
+		<< QString::number(node->getFillColour().redF()) << ","
+		<< QString::number(node->getFillColour().greenF()) << ","
+		<< QString::number(node->getFillColour().blueF()) << ", "
+		<< QString::number(node->getLineColour().redF()) << ","
+		<< QString::number(node->getLineColour().greenF()) << ","
+		<< QString::number(node->getLineColour().blueF());
+	// Output the node label and its font size if and only if
+	// there is a node label.
+	if (node->getLabel().length() > 0 || outputExtra)
+	{
+	    outfile << ", "
+		    << QString::number(node->getLabelSize())
+		    << ","
+		    << node->getLabel();
+	}
+	outfile << "\n";
+    }
+
+    outfile << "\n# Edge descriptions; the format is:\n"
+	    << "# u, v, dest_radius, source_radius, rotation, pen_width,\n"
+	    << "#       line r,g,b[, label font size, label]\n";
+	    
+    for (int i = 0; i < nodes.count(); i++)
+    {
+	for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
+	{
+	    Edge * edge = nodes.at(i)->edgeList.at(j);
+	    if (outputExtra)
+	    {
+		outfile << "# Looking at i, j = "
+			<< QString::number(i) << ", " << QString::number(j)
+			<< "  ->  src, dst = "
+			<< QString::number(edge->sourceNode()->getID())
+			<< ", "
+			<< QString::number(edge->destNode()->getID())
+			<< "\n";
+	    }
+
+	    int printThisOne = 0;
+	    int sourceID = edge->sourceNode()->getID();
+	    int destID = edge->destNode()->getID();
+	    if (sourceID == i && destID > i)
+	    {
+		printThisOne++;
+		outfile << QString("%1").arg(sourceID, 2, 10, QChar(' '))
+			<<  ","
+			<< QString("%1").arg(destID, 2, 10, QChar(' '));
+	    }
+	    else if (destID == i && sourceID > i)
+	    {
+		printThisOne++;
+		outfile << QString("%1").arg(destID, 2, 10, QChar(' '))
+			<<  ","
+			<< QString("%1").arg(sourceID, 2, 10, QChar(' '));
+	    }
+	    if (printThisOne)
+	    {
+		outfile << ", " << QString::number(edge->getDestRadius())
+			<< ", " << QString::number(edge->getSourceRadius())
+			<< ", " << QString::number(edge->getRotation())
+			<< ", " << QString::number(edge->getPenWidth())
+			<< ", "
+			<< QString::number(edge->getColour().redF())
+			<< ","
+			<< QString::number(edge->getColour().greenF())
+			<< ","
+			<< QString::number(edge->getColour().blueF());
+		if (edge->getLabel().length() > 0 || outputExtra)
+		{
+		    // TODO: check for ',' in the label and deal with it.
+		    outfile << ", "
+			    << edge->getLabelSize()
+			    << ","
+			    << edge->getLabel();
+		}
+		outfile << "\n";
+	    }
+	}
+    }
+
+    return true;
+}
+
+
+
+/*
  * Name:	save_Graph()
  * Purpose:	Saves an image/tikz/grphc/edgelist version of the canvas.
  * Arguments:	None.
@@ -1287,152 +1455,14 @@ MainWindow::save_Graph()
 
     if (selectedFilter == GRAPHiCS_SAVE_FILE)
     {
-	// Use some painful Qt constructs to output the node and edge
-	// information with a more readable format.
-	// Note that tests with explicitly setting the format to 'g'
-	// and the precision to 6 indicate that Qt5.9.8 (on S64-14.2)
-	// will do whatever it damn well pleases, vis-a-vis the number
-	// of chars printed.
-	outStream << "# graph-ic graph definition created ";
-	QDateTime dateTime = dateTime.currentDateTime();
-	outStream << dateTime.toString("yyyy-MM-dd hh:mm:ss") << "\n\n";
-
-	outStream << "# The number of nodes in this graph:\n";
-	outStream << nodes.count() << "\n\n";
-
-	QString nodeInfo = QString::number(numOfNodes) + "\n\n";
-
-	outStream << "# The node descriptions; the format is:\n";
-	outStream << "# x,y, diameter, rotation, fill r,g,b,\n";
-	outStream << "#      outline r,g,b[, label font size,label]\n";
-
-	// In some cases I have created a graph where all the
-	// coordinates are negative and "large", and the graph is not
-	// visible in the preview pane when I load it, which also
-	// means (as of time of writing) that I can't drag it to the
-	// canvas.  Thus the graph is effectively lost.  Avoid this by
-	// centering the graph on (0, 0) when writing it out.
-	qreal minx = 0, maxx = 0, miny = 0, maxy = 0;	// Init to silence gcc
-	if (nodes.count() > 0)
-	{
-	    Node * node = nodes.at(0);
-	    minx = maxx = node->scenePos().rx();
-	    miny = maxy = node->scenePos().ry();
-	}
-	for (int i = 1; i < nodes.count(); i++)
-	{
-	    Node * node = nodes.at(i);
-	    qreal x = node->scenePos().rx();
-	    qreal y = node->scenePos().ry();
-	    if (x > maxx)
-		maxx = x;
-	    else if (x < minx)
-		minx = x;
-	    if (y > maxy)
-		maxy = y;
-	    else if (y < minx)
-		miny = y;
-	}
-
-	qreal midx = (maxx + minx) / 2.;
-	qreal midy = (maxy + miny) / 2.;
-	for (int i = 0; i < nodes.count(); i++)
-	{
-	    // TODO: s/,/\\/ before writing out label.  Undo this when reading.
-	    Node * node = nodes.at(i);
-	    outStream << "# Node " + QString::number(i) + ":\n";
-	    outStream << QString::number(node->scenePos().rx() - midx,
-					 'f', VP_PREC_GRPHC) << ","
-		      << QString::number(node->scenePos().ry() - midy,
-					 'f', VP_PREC_GRPHC) << ", "
-		      << QString::number(node->getDiameter()) << ", "
-		      << QString::number(node->getRotation()) << ", "
-		      << QString::number(node->getFillColour().redF()) << ","
-		      << QString::number(node->getFillColour().greenF()) << ","
-		      << QString::number(node->getFillColour().blueF()) << ", "
-		      << QString::number(node->getLineColour().redF()) << ","
-		      << QString::number(node->getLineColour().greenF()) << ","
-		      << QString::number(node->getLineColour().blueF());
-	    // Output the node label and its font size if and only if
-	    // there is a node label.
-	    if (node->getLabel().length() > 0)
-	    {
-		outStream << ", "
-			  << QString::number(node->getLabelSize())
-			  << ","
-			  << node->getLabel();
-	    }
-	    outStream << "\n";
-	}
-
-	outStream << "\n# Edge descriptions; the format is:\n"
-		  << "# u, v, dest_radius, source_radius, rotation, pen_width,\n"
-		  << "#       line r,g,b[, label font size, label]\n";
-	    
-	for (int i = 0; i < nodes.count(); i++)
-	{
-	    for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
-	    {
-		Edge * edge = nodes.at(i)->edgeList.at(j);
-#ifdef DEBUG
-		outStream << "# Looking at i, j = "
-			  << QString::number(i) << ", " << QString::number(j)
-			  << "  ->  src, dst = "
-			  << QString::number(edge->sourceNode()->getID())
-			  << ", "
-			  << QString::number(edge->destNode()->getID())
-			  << "\n";
-#endif
-
-		int printThisOne = 0;
-		int sourceID = edge->sourceNode()->getID();
-		int destID = edge->destNode()->getID();
-		if (sourceID == i && destID > i)
-		{
-		    printThisOne++;
-		    outStream << QString("%1").arg(sourceID, 2, 10, QChar(' '))
-			      <<  ","
-			      << QString("%1").arg(destID, 2, 10, QChar(' '));
-		}
-		else if (destID == i && sourceID > i)
-		{
-		    printThisOne++;
-		    outStream << QString("%1").arg(destID, 2, 10, QChar(' '))
-			      <<  ","
-			      << QString("%1").arg(sourceID, 2, 10, QChar(' '));
-		}
-		if (printThisOne)
-		{
-		    outStream << ", " << QString::number(edge->getDestRadius())
-			      << ", " << QString::number(edge->getSourceRadius())
-			      << ", " << QString::number(edge->getRotation())
-			      << ", " << QString::number(edge->getPenWidth())
-			      << ", "
-			      << QString::number(edge->getColour().redF())
-			      << ","
-			      << QString::number(edge->getColour().greenF())
-			      << ","
-			      << QString::number(edge->getColour().blueF());
-		    if (edge->getLabel().length() > 0)
-		    {
-			// TODO: check for ',' in the label and deal with it.
-			outStream << ", "
-				  << edge->getLabelSize()
-				  << ","
-				  << edge->getLabel();
-		    }
-		    outStream << "\n";
-		}
-	    }
-	}
-
+	bool success = saveGraphIc(outStream, nodes, false);
 	outputFile.close();
 	ui->canvas->snapToGrid(saveStatus);
 	ui->canvas->update();
 	QFileInfo fi(fileName);
 	ui->graphType_ComboBox->insertItem(ui->graphType_ComboBox->count(),
 					   fi.baseName());
-	return true;
+	return true && success;
     }
 
     if (selectedFilter == EDGES_SAVE_FILE)
@@ -2497,4 +2527,20 @@ void
 MainWindow::dumpGraphIc()
 {
     printf("dumpGraphIc() called\n");
+    QVector<Node *> nodes;
+    int numOfNodes = 0;
+
+    foreach (QGraphicsItem * item, ui->canvas->scene()->items())
+    {
+	if (item->type() == Node::Type)
+	{
+	    Node * node = qgraphicsitem_cast<Node *>(item);
+	    node->setID(numOfNodes++);
+	    nodes.append(node);
+	}
+    }
+    
+    printf("%%========= graphIc dump of current graph follows: ===========\n");
+    QTextStream tty(stdout);
+    saveGraphIc(tty, nodes, true);
 }
