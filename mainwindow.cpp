@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.14
+ * Version:	1.15
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -119,6 +119,20 @@
  *      mainwindow constructor to initialize the "Create Graph" pane
  *	to a self-consistent shape.  Modify on_graphType_...() to not
  *	whine when its arg is < 0.
+ * Nov 28, 2019 (JD V1.15)
+ *  (a) Add dumpTikZ() and dumpGraphIc() functions and shortcuts (^T
+ *	and ^G) to call them.  dumpGraphIc() not yet implemented.
+ *  (b) findDefaults(): changed default node diameter from 0.2 to
+ *	(qreal)0.2 to correctly match the data type.  Changed the
+ *	floats to qreals in the hashes for the same reason.
+ *      Also only change struct values from the initial defaults if
+ *	there were actually observations in the corresponding hash table.
+ *  (c) Improve saveTikZ() so that "nicer" TikZ code is output.
+ *      Specifically, output default styles for nodes, edge lines and
+ *	edge labels and when outputting individual nodes and edges
+ *	only specify differences from the defaults.
+ *	Also output things as we go, rather than creating a big
+ *	honkin' string and outputting it at the end (can you say O(n^2)?).
  */
 
 #define     DEBUG
@@ -168,8 +182,6 @@
 #define ET_PREC_TIKZ  4
 // Similar for vertex precision in .grphc output:
 #define VP_PREC_GRPHC  4
-
-
 
 /*
  * Name:	MainWindow
@@ -221,6 +233,13 @@ QMainWindow(parent),
 
     // Save dialog pops up via Ctrl-S.
     new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_S), this, SLOT(save_Graph()));
+
+    // DEBUG HELP:
+    // Dump TikZ to stdout
+    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_T), this, SLOT(dumpTikZ()));
+    // Dump graph-ic code to stdout
+    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_G), this,
+		  SLOT(dumpGraphIc()));
 
     QObject::connect(ui->nodeSize, SIGNAL(valueChanged(double)),
 		     this, SLOT(generate_Graph()));
@@ -579,35 +598,38 @@ void
 findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
 	     edgeInfo * edgeDefaults_p)
 {
-    *nodeDefaults_p = {0, 0, 0, 0, 0, 0, 0.2, 12};
-    *edgeDefaults_p = {0, 0, 0, 1., 12.};
+    // Set the default defaults (sic).
+    // TODO: These values should really be #defines somewhere.
+    *nodeDefaults_p = {255, 255, 255, 0, 0, 0, (qreal)0.2, 12};
+    *edgeDefaults_p = {0, 0, 0, (qreal)1., (qreal)12.};
 
     if (nodes.count() == 0)
 	return;
 
     int max_count, result, colour, R, G, B;
-    float fresult;
+    qreal fresult;
     std::unordered_map<int, int> vFillColour;
     std::unordered_map<int, int> vLineColour;
-    std::unordered_map<float, int> vNodeDiam;
-    std::unordered_map<float, int> vLabelSize;
+    std::unordered_map<qreal, int> vNodeDiam;
+    std::unordered_map<qreal, int> vLabelSize;
     std::unordered_map<int, int> eLineColour;
-    std::unordered_map<float, int> ePenSize;
-    std::unordered_map<float, int> eLabelSize;
+    std::unordered_map<qreal, int> ePenSize;
+    std::unordered_map<qreal, int> eLabelSize;
 
+    // Populate all the node hashes.
     for (int i = 0; i < nodes.count(); i++)
     {
 	Node * node = nodes.at(i);
 	R = node->getFillColour().red();
 	G = node->getFillColour().green();
 	B = node->getFillColour().blue();
-	colour = (R << 16) + (G << 8) + B;
+	colour = R << 16 | G << 8 | B;
 	vFillColour[colour]++;
 
 	R = node->getLineColour().red();
 	G = node->getLineColour().green();
 	B = node->getLineColour().blue();
-	colour = (R << 16) + (G << 8) + B;
+	colour = R << 16 | G << 8 | B;
 	vLineColour[colour]++;
 
 	vNodeDiam[node->getDiameter()]++;
@@ -615,7 +637,8 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
     }
 
     max_count = 0;
-    result = 0;
+    result = nodeDefaults_p->fillR << 16 | nodeDefaults_p->fillG << 8
+	| nodeDefaults_p->fillB;
     for (auto item : vFillColour)
     {
         if (max_count < item.second)
@@ -631,7 +654,8 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
     //   nodeDefaults_p->fillG, nodeDefaults_p->fillB, max_count);
 
     max_count = 0;
-    result = 0;
+    result = nodeDefaults_p->lineR << 16 | nodeDefaults_p->lineG << 8
+	| nodeDefaults_p->lineB;
     for (auto item : vLineColour)
     {
         if (max_count < item.second)
@@ -643,11 +667,12 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
     nodeDefaults_p->lineR = result >> 16;
     nodeDefaults_p->lineG = (result >> 8) & 0xFF;
     nodeDefaults_p->lineB = result & 0xFF;
+
     // printf("nodeLine: (%d,%d,%d) count = %d\n", nodeDefaults_p->lineR,
     //   nodeDefaults_p->lineG, nodeDefaults_p->lineB, max_count);
 
     max_count = 0;
-    fresult = 0.0;
+    fresult = nodeDefaults_p->nodeDiameter;
     for (auto item : vNodeDiam)
     {
         if (max_count < item.second)
@@ -660,7 +685,7 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
     printf("nodeDiam: %.4f count = %d\n", fresult, max_count);
 
     max_count = 0;
-    fresult = 0.0;
+    fresult = nodeDefaults_p->labelSize;
     for (auto item : vLabelSize)
     {
         if (max_count < item.second)
@@ -672,8 +697,10 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
     nodeDefaults_p->labelSize = fresult;
     printf("nodeLabelSize: %.4f count = %d\n", fresult, max_count);
 
+    // printf("nodes.count() = %d\n", nodes.count());
     for (int i = 0; i < nodes.count(); i++)
     {
+	// printf("node %d has %d edges\n", i, nodes.at(i)->edgeList.count());
 	for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
 	{
 	    // TODO: see TODO in Edge section of saveTikZ().
@@ -686,21 +713,27 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
 		R = edge->getColour().red();
 		G = edge->getColour().green();
 		B = edge->getColour().blue();
-		colour = (R << 16) + (G << 8) + B;
+		colour = R << 16 | G << 8 | B;
 		eLineColour[colour]++;
 		// Don't count 0's, they are likely bogus.
 		if (edge->getPenWidth() > 0)
 		    ePenSize[edge->getPenWidth()]++;
-		// If the label is not set, the labelSize is undefined.
+		// Only count the label sizes for edges which have a label.
 		if (edge->getLabel().length() > 0)
+		{
+		    printf("i=%d, j=%d, label=/%s/, size=%.1f\n",
+			   i, j, edge->getLabel().toLatin1().data(),
+			   edge->getLabelSize());
 		    if (edge->getLabelSize() >= 1)
 			eLabelSize[edge->getLabelSize()]++;
+		}
 	    }
 	}
     }
 
     max_count = 0;
-    result = 0;
+    result = edgeDefaults_p->lineR << 16 | edgeDefaults_p->lineG << 8
+	| edgeDefaults_p->lineB;
     for (auto item : eLineColour)
     {
         if (max_count < item.second)
@@ -716,7 +749,7 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
 	   edgeDefaults_p->lineG, edgeDefaults_p->lineB, max_count);
 
     max_count = 0;
-    fresult = 0.0;
+    fresult = edgeDefaults_p->penSize;
     for (auto item : ePenSize)
     {
         if (max_count < item.second)
@@ -729,7 +762,7 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
     printf("edgePenSize: %.4f count = %d\n", fresult, max_count);
 
     max_count = 0;
-    fresult = 0.0;
+    fresult = edgeDefaults_p->labelSize;
     for (auto item : eLabelSize)
     {
         if (max_count < item.second)
@@ -752,14 +785,13 @@ findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
  * Modifies:	Nothing.
  * Returns:	True on success.
  * Assumptions:	Args are valid.
- * Bugs:	Slowly makes one big honkin' string instead of just
- *		outputting stuff as it goes.  (Why did R do this?)
+ * Bugs:	This is grotesquely long.
  * Notes:	Currently always returns T, but maybe in the future ...
- *		Idea: to minimize the amount of code, find the most
- *		common vertex and edge attributes and create styles
- *		v/.style and e/.style with those.  Then when drawing
- *		a particular vertex or edge, over-ride anything not
- *		matching the default.
+ * 		Idea: to minimize the amount of TikZ code, find the
+ *		most common vertex and edge attributes and create
+ *		styles v/.style, e/.style and l/.style with those.
+ *		Then when drawing a particular vertex or edge,
+ *		over-ride anything not matching the default.
  */
 
 bool
@@ -772,12 +804,103 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 
     nodeInfo nodeDefaults;
     edgeInfo edgeDefaults;
+
+    // Output the boilerplate TikZ picture code
+    outfile << "\\begin{tikzpicture}[x=1in, y=1in, xscale=1, yscale=1,\n";
+
+    // Now find and output the default node and edge details
     findDefaults(nodes, &nodeDefaults, &edgeDefaults);
 
-    QString nodeStyles = "";
+    // Define the default styles.
+    // If the line or fill colour is a TikZ "known" colour,
+    // use the name.  Otherwise define a colour.
+    // Q: why did Rachel output in RGB, as opposed to rgb?
+    // Note: drawings may need to be tweaked by hand if they are to be
+    //	     printed, due to the RGB/rgb <-> cmyk conversion nightmare.
+    // Note: TikZ for plain TeX does not support the cmyk colourspace
+    //	     nor (without JD's addition) the RGB colourspace.
+    bool defineDefNodeFillColour = false;
+    QColor defNodeFillColour
+	= QColor(nodeDefaults.fillR, nodeDefaults.fillG, nodeDefaults.fillB);
+    QString defNodeFillColourName = lookupColour(defNodeFillColour);
+    if (defNodeFillColourName == nullptr)
+    {
+	defineDefNodeFillColour = true;
+	outfile << "    n/.style={fill=defNodeFillColour, "; 
+    }
+    else
+	outfile << "    n/.style={fill=" << defNodeFillColourName << ", "; 
+
+    bool defineDefNodeLineColour = false;
+    QColor defNodeLineColour
+	= QColor(nodeDefaults.lineR, nodeDefaults.lineG, nodeDefaults.lineB);
+    QString defNodeLineColourName = lookupColour(defNodeLineColour);
+    if (defNodeLineColourName == nullptr)
+    {
+	defineDefNodeLineColour = true;
+	outfile << "draw=defNodeLineColour, shape=circle,\n";
+    }
+    else
+	outfile << "draw=" << defNodeLineColourName << ", shape=circle,\n"; 
+
+    outfile << "\tminimum size=" << nodeDefaults.nodeDiameter << "in, "
+	    << "inner sep=0, "
+	    << "font=\\fontsize{" << nodeDefaults.labelSize
+	    << "}{1}\\selectfont},\n";
+
+
+    // e style gets 'draw=<colour>' and 'line width=<stroke width>' options
+    // l style gets 'font=<spec>' options.  If we want to change the
+    // label text colour to something else, use 'text=<colour>';
+    // if we want to draw a box around the label text, use 'draw=<colour>'
+    // (and "circle" to get a circle instead of a box).
+    bool defineDefEdgeLineColour = false;
+    QColor defEdgeLineColour
+	= QColor(edgeDefaults.lineR, edgeDefaults.lineG, edgeDefaults.lineB);
+    QString defEdgeLineColourName = lookupColour(defEdgeLineColour);
+    if (defEdgeLineColourName == nullptr)
+    {
+	defineDefEdgeLineColour = true;
+	outfile << "    e/.style={draw=defEdgeLineColour";
+    }
+    else
+	outfile << "    e/.style={draw=" << defEdgeLineColourName;
+
+    outfile << ", line width="
+	    << QString::number(edgeDefaults.penSize
+			       / screen->logicalDotsPerInchX(),
+			       'f', ET_PREC_TIKZ) << "in},\n";
+    outfile << "    l/.style={font=\\fontsize{" << edgeDefaults.labelSize
+	    << "}{1}\\selectfont}]\n";
+
+    // We have now finished the generic style.
+    // Output default colours, if needed.
+    if (defineDefNodeFillColour)
+    {
+	outfile << "\\definecolor{defNodeFillColour} {RGB} {"
+		<< QString::number(defNodeFillColour.red())
+		<< "," << QString::number(defNodeFillColour.green())
+		<< "," << QString::number(defNodeFillColour.blue())
+		<< "}\n";
+    }
+    if (defineDefNodeLineColour)
+    {
+	outfile << "\\definecolor{defNodeLineColour} {RGB} {"
+		<< QString::number(defNodeLineColour.red())
+		<< "," << QString::number(defNodeLineColour.green())
+		<< "," << QString::number(defNodeLineColour.blue())
+		<< "}\n";
+    }
+    if (defineDefEdgeLineColour)
+    {
+	outfile << "\\definecolor{defEdgeLineColour} {RGB} {"
+		<< QString::number(defEdgeLineColour.red())
+		<< "," << QString::number(defEdgeLineColour.green())
+		<< "," << QString::number(defEdgeLineColour.blue())
+		<< "}\n";
+    }
+
     QString edgeStyles = "";
-    QString begin = "\\begin{tikzpicture} "
-	"[x=1in, y=1in, xscale=1, yscale=1]\n";
 
     // Nodes: find center of graph, output graph centered on (0, 0)
     qreal minx = 0, maxx = 0, miny = 0, maxy = 0;
@@ -804,139 +927,201 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     qreal midx = (maxx + minx) / 2.;
     qreal midy = (maxy + miny) / 2.;
 
-    // If the line or fill colour is a TikZ "known" colour,
-    // use the name.  Otherwise define a colour.
-    // TODO: don't define a colour more than once.
-    // Q: why did Rachel output in RGB, as opposed to rgb?
-    // Note that drawings may need to be tweaked by hand if they
-    // are to be printed, due to the RGB/rgb <-> cmyk conversion nightmare.
-    // Note that TikZ for plain TeX does not support the cmyk colourspace
-    // nor (without JD's addition) the RGB colourspace.
+    // Sample output for a node:
+    //  \definecolor{n<n>lineClr} {RGB} {R,G,B}   (if not default)
+    //  \definecolor{n<n>fillClr} {RGB} {R,G,B}   (if not default)
+    //	\node (v<n>) at (x,y) [n ,diffs from defaults] {$<node label>$};
+    // Note that to change the text colour we could add (e.g.) "text=red"
+    // to the \node options (or to the 'n' style above).
+    // Note that TikZ is OK with a spurious ',' at the end of the options;
+    // this fact is used to simplify the code below.
     for (int i = 0; i < nodes.count(); i++)
     {
+	QString fillColour = "";
+	QString lineColour = "";
 	Node * node = nodes.at(i);
-	QString fillColour = lookupColour(node->getFillColour());
-	if (fillColour == nullptr)
+	bool doNewLine = false;
+
+	if (node->getFillColour() != defNodeFillColour)
 	{
-	    fillColour = "node" + QString::number(i) + "fillColour";
-	    nodeStyles += "\\definecolor{" + fillColour + "} {RGB} {"
-			+ QString::number(node->getFillColour().red())
-			+ "," + QString::number(node->getFillColour().green())
-			+ "," + QString::number(node->getFillColour().blue())
-			+ "}\n";
+	    // printf("Node %d: fill colour non-default; ", i);
+	    fillColour = lookupColour(node->getFillColour());
+	    if (fillColour == nullptr)
+	    {
+		// Output the colour defn:
+		fillColour = "n" + QString::number(i) + "fillClr";
+		outfile << "\\definecolor{" << fillColour << "} {RGB} {"
+			<< QString::number(node->getFillColour().red())
+			<< "," << QString::number(node->getFillColour().green())
+			<< "," << QString::number(node->getFillColour().blue())
+			<< "}\n";
+	    }
+	    // Wrap the fillColour with the TikZ syntax for later consumption:
+	    fillColour = ", fill=" + fillColour;
+	    doNewLine = true;
+	    //printf("fillColour = /%s/\n", fillColour.toLatin1().data());
+	}
+	if (node->getLineColour() != defNodeLineColour)
+	{
+	    //printf("Node %d: line colour non-default\n", i);
+	    lineColour = lookupColour(node->getLineColour());
+	    if (lineColour == nullptr)
+	    {
+		lineColour = "n" + QString::number(i) + "lineClr";
+		outfile << "\\definecolor{" << lineColour << "}{RGB}{"
+			<< QString::number(node->getLineColour().red())
+			<< "," << QString::number(node->getLineColour().green())
+			<< "," << QString::number(node->getLineColour().blue())
+			<< "}\n";
+	    }
+	    lineColour = ", draw=" + lineColour;
+	    doNewLine = true;
+	    //printf("SETTING lineColour = /%s/\n", lineColour.toLatin1().data());
+	}
+
+	// Use (x,y) coordinate system for node positions.
+	outfile << "\\node (v" << QString::number(i) << ") at ("
+		<< QString::number((node->scenePos().rx() - midx)
+				   / screen->logicalDotsPerInchX(),
+				   'f', VP_PREC_TIKZ)
+		<< ","
+		<< QString::number((node->scenePos().ry() - midy)
+				   / -screen->logicalDotsPerInchX(),
+				   'f', VP_PREC_TIKZ)
+		<< ") [n";
+//	printf("HERE: lineColour = /%s/\n", lineColour.toLatin1().data());
+	outfile << fillColour << lineColour;
+	if (node->getDiameter() != nodeDefaults.nodeDiameter)
+	{
+	    outfile << ", minimum size=" << QString::number(node->getDiameter())
+		    << "in";
+	    doNewLine = true;
+	}
+
+	// Output the node label and its font size if and only if
+	// there is a node label.
+	if (node->getLabel().length() > 0)
+	{
+	    if (node->getLabelSize() != nodeDefaults.labelSize)
+	    {
+		if (doNewLine)
+		    outfile << ",\n\t";
+		else
+		    outfile << ", ";
+		outfile << "font=\\fontsize{"
+			<< QString::number(node->getLabelSize()) // Font size
+			<< "}{1}\\selectfont";
+	    }
+
+	    QString thisLabel = node->getLabel();
+	    // TODO: this check just checks for a '^', but
+	    // if a subscript itself has a superscript
+	    // and there is no (top-level) superscript, we would
+	    // fail to add the "^{}" text.
+	    // printf("thisLabel = /%s/\n", thisLabel.toLatin1().data());
+	    if (thisLabel.indexOf('^') != -1 || thisLabel.indexOf('_') == -1)
+		outfile << "] {$" << thisLabel << "$};\n";
+	    else
+		outfile << "] {$" << thisLabel << "^{}$};\n";
+	}
+	else
+	    outfile << "] {$$};\n";
+    }
+
+    // Sample output for an edge:
+    //  \definecolor{e<n>_<m>lineClr} {RGB} {R,G,B}   (if not default)
+    //  \path (v<n>) edge[e, diff from defaults] node[l, diff from defaults]
+    //		{$<edge label>} (v_<m>);
+    for (int i = 0; i < nodes.count(); i++)
+    {
+	bool wroteExtra = false;
+	printf("Node %d has %d edges\n", i, nodes.at(i)->edgeList.count());
+	for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
+	{
+	    // TODO: is it possible that with various and sundry
+	    // operations on graphs neither the sourceID nor the
+	    // destID of an edge in nodes.at(i)'s list is equal to
+	    // i, and thus some edge won't be printed?  If so,
+	    // should we just test "sourceID < destID in the if
+	    // test immediately below?
+	    Edge * edge = nodes.at(i)->edgeList.at(j);
+	    int sourceID = edge->sourceNode()->getID();
+	    int destID = edge->destNode()->getID();
+	    if ((sourceID == i && destID > i)
+		|| (destID == i && sourceID > i))
+	    {
+		printf("i %d j %d srcID %d dstID %d", i, j, sourceID, destID);
+		printf("\tlabel = /%s/\n", edge->getLabel().toLatin1().data());
+		QString lineColour = "";
+		if (edge->getColour() != defEdgeLineColour)
+		{
+		    printf("E %d,%d: colour non-default\n", sourceID, destID);
+		    lineColour = lookupColour(edge->getColour());
+		    if (lineColour == nullptr)
+		    {
+			lineColour = "e" + QString::number(sourceID) + "_"
+			    + QString::number(destID) + "lineClr";
+			outfile << "\\definecolor{" << lineColour << "}{RGB}{"
+				<< QString::number(edge->getColour().red())
+				<< ","
+				<< QString::number(edge->getColour().green())
+				<< ","
+				<< QString::number(edge->getColour().blue())
+				<< "}\n";
+		    }
+		    lineColour = ", draw=" + lineColour;
+		    wroteExtra = true;
+		    printf("SETTING lineColour = /%s/\n", lineColour.toLatin1().data());
 		}
 
-		QString lineColour = lookupColour(node->getLineColour());
-		if (lineColour == nullptr)
+		outfile << "\\path (v"
+			<< QString::number(sourceID)
+			<< ") edge[e" << lineColour;
+		if (edge->getPenWidth() != edgeDefaults.penSize)
 		{
-		    lineColour = "node" + QString::number(i) + "lineColour";
-		    nodeStyles += "\\definecolor{" + lineColour + "}{RGB}{"
-			+ QString::number(node->getLineColour().red())
-			+ "," + QString::number(node->getLineColour().green())
-			+ "," + QString::number(node->getLineColour().blue())
-			+ "}\n";
+		    outfile << ", line width="
+			    << QString::number(edge->getPenWidth()
+					       / screen->logicalDotsPerInchX(),
+					       'f', ET_PREC_TIKZ)
+			    << "in";
+		    wroteExtra = true;
 		}
 
-		// Use (x,y) coordinate system for node positions.
-		nodeStyles += "\\node (v" + QString::number(i) + ") at ("
-		    +  QString::number((node->scenePos().rx() - midx)
-				       / screen->logicalDotsPerInchX(),
-				       'f', VP_PREC_TIKZ)
-		    + ","
-		    + QString::number((node->scenePos().ry() - midy)
-				      / -screen->logicalDotsPerInchX(),
-				      'f', VP_PREC_TIKZ)
-		    +  ") " + "[scale=1, inner sep=0,\n\t"
-		    + "shape=circle, minimum size="
-		    + QString::number(node->getDiameter()) // Node size
-		    + "in,\n\t"
-		    + "fill=" + fillColour
-		    + ", draw=" + lineColour;
+		// Output a \n iff we have both a non-default line
+		// width and a non-default label size.
+		if (edge->getLabel().length() > 0
+		    && edge->getLabelSize() != edgeDefaults.labelSize
+		    && wroteExtra)
+		    outfile << "]\n\tnode[l";
+		else
+		    outfile << "] node[l";
 
-		// Output the node label and its font size if and only if
-		// there is a node label.
-		if (node->getLabel().length() > 0)
+		// Output edge label size (and the "select font" info)
+		// if and only if the edge has a label.
+		if (edge->getLabel().length() > 0)
 		{
-		    nodeStyles += ", \n\tfont=\\fontsize{"
-			+ QString::number(node->getLabelSize()) // Font size
-			+ "}{1}\\selectfont";
-
-		    QString thisLabel = node->getLabel();
-		    // TODO: this check just checks for a '^', but
-		    // if a subscript itself has a superscript
-		    // and there is no (top-level) superscript, we would
-		    // fail to add the "^{}" text.
-		    // printf("thisLabel = /%s/\n", thisLabel.toLatin1().data());
-		    if (thisLabel.indexOf('^') != -1)
-			nodeStyles += "] {$" + thisLabel + "$};\n";
-		    else
-			nodeStyles += "] {$" + thisLabel + "^{}$};\n";
+		    if (edge->getLabelSize() != edgeDefaults.labelSize)
+		    {
+			outfile << ", font=\\fontsize{"
+				<< QString::number(edge->getLabelSize())
+				<< "}{1}\\selectfont";
+		    }
+		    outfile << "] {$" << edge->getLabel() << "$}";
 		}
 		else
-		    nodeStyles += "] {$$};\n";
+		    outfile << "] {$$}";
+
+		// Finally, output the other end of the edge:
+		outfile << " (v"
+			<< QString::number(destID)
+			<< ");\n";
 	    }
+	}
+    }
 
-	    // Edges
-	    for (int i = 0; i < nodes.count(); i++)
-	    {
-		for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
-		{
-		    // TODO: is it possible that with various and sundry
-		    // operations on graphs neither the sourceID nor the
-		    // destID of an edge in nodes.at(i)'s list is equal to
-		    // i, and thus some edge won't be printed?  If so,
-		    // should we just test "sourceID < destID in the if
-		    // test immediately below?
-		    Edge * edge = nodes.at(i)->edgeList.at(j);
-		    int sourceID = edge->sourceNode()->getID();
-		    int destID = edge->destNode()->getID();
-		    if ((sourceID == i && destID > i)
-			|| (destID == i && sourceID > i))
-		    {
-			QString edgeColour = lookupColour(edge->getColour());
-			if (edgeColour == nullptr)
-			{
-			    edgeColour = "edge" + QString::number(sourceID)
-				+ "_" + QString::number(destID) + "Colour";
-			    edgeStyles += "\\definecolor{" + edgeColour
-				+ "} {RGB} {"
-				+ QString::number(edge->getColour().red())
-				+ ","
-				+ QString::number(edge->getColour().green())
-				+ "," + QString::number(edge->getColour().blue())
-				+ "}\n";
-			}
+    outfile << "\\end{tikzpicture}\n";
 
-			edgeStyles += "\\path (v"
-			    + QString::number(sourceID)
-			    + ") edge[draw=" + edgeColour
-			    + ", line width="
-			    + QString::number(edge->getPenWidth()
-					      / screen->logicalDotsPerInchX(),
-					      'f', ET_PREC_TIKZ)
-			    + "in]\n\tnode[";
-			// Output edge label (and the selected font info)
-			// if and only if the edge has a label.
-			if (edge->getLabel().length() > 0)
-			    edgeStyles += "font=\\fontsize{"
-				+ QString::number(edge->getLabelSize())
-				+ "}{1}\\selectfont"
-				+ "] {$" + edge->getLabel() + "$}";
-			else
-			    edgeStyles += "] {$$}";
-
-			// Finally, output the other end of the edge:
-			edgeStyles += " (v"
-			    + QString::number(destID)
-			    + ");\n";
-		    }
-		}
-	    }
-
-	    outfile << begin << nodeStyles << edgeStyles
-		    << "\\end{tikzpicture}\n";
-
-	    return true;
+    return true;
 }
 
 
@@ -2178,7 +2363,7 @@ MainWindow::on_tabWidget_currentChanged(int index)
 								lineColorButton);
 				  LabelController * weightController
 				      = new LabelController(node, nodeEdit);
-				  LabelSizeController *weightSizeController
+				  LabelSizeController * weightSizeController
 				      = new LabelSizeController(node,
 								fontSizeBox);
 				  ColorFillController * colorFillController
@@ -2281,4 +2466,35 @@ MainWindow::on_tabWidget_currentChanged(int index)
       default:
 	break;
     }
+}
+
+
+#include <bits/stdc++.h> 
+
+void
+MainWindow::dumpTikZ()
+{
+    QVector<Node *> nodes;
+    int numOfNodes = 0;
+
+    foreach (QGraphicsItem * item, ui->canvas->scene()->items())
+    {
+	if (item->type() == Node::Type)
+	{
+	    Node * node = qgraphicsitem_cast<Node *>(item);
+	    node->setID(numOfNodes++);
+	    nodes.append(node);
+	}
+    }
+    
+    printf("%%========== TikZ dump of current graph follows: ============\n");
+    QTextStream tty(stdout);
+    saveTikZ(tty, nodes);
+}
+
+
+void
+MainWindow::dumpGraphIc()
+{
+    printf("dumpGraphIc() called\n");
 }

@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.3
+ * Version:	1.4
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -12,6 +12,8 @@
  *  (b) Add lookupColour() (for TikZ output routine).
  * Nov 17, 2019 (JD V1.3)
  *  (a) Remove lookupColour() (now a non-class function).
+ * Nov 28, 2019 (JD V1.4)
+ *  (a) Add dumpGraphIc() and dumpTikZ().
  */
 
 
@@ -46,6 +48,8 @@ private slots:
     void generate_Graph();
     void style_Graph();
     void generate_Combobox_Titles();
+    void dumpGraphIc();
+    void dumpTikZ();
 
     void set_Label_Font_Sizes();
     void on_NodeOutlineColor_clicked();
