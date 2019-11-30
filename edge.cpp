@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.5
+ * Version: 1.6
  *
  * Purpose: creates an edge for the users graph
  *
@@ -10,17 +10,17 @@
  * Feb 8, 2016 (JD):
  *  (a) Fix edge label font (cmmi and cmr were reversed).
  *  (b) Drive by formatting/typo/... cleanups.
- * Oct 11, 2019 (JD, V1.2)
+ * Oct 11, 2019 (JD V1.2)
  *  (a) Minor formatting changes.
- * Oct 16, 2019 (JD, V1.3)
+ * Oct 16, 2019 (JD V1.3)
  *  (a) setWeight() used to just set the label, but it also now sets
  *	the weight.  Even though setHtml() is never called, the label
  *	is showing up (on the canvas) in the appropriate font.  (How?)
- * Nov 13, 2019 (JD, V1.4):
+ * Nov 13, 2019 (JD V1.4):
  *  (a) Clean up / add some comments.
  *  (b) Apply change of name Label -> HTML_Label.
  *  (c) Apply change of name setLabel() -> set_Html_Label().
- * Nov 13, 2019 (JD, V1.5):
+ * Nov 13, 2019 (JD V1.5):
  *  (a) Rename (in this order!)
  *	       label -> htmlLabel,
  *	       setWeightLabelSize() -> setLabelSize(),
@@ -31,6 +31,23 @@
  *	       weight -> label,
  *	       esize -> labelSize,
  *     in order to rationalize the naming scheme.
+ * Nov 30, 2019 (JD V1.6):
+ *  (a) Add call to update() in setPenWidth() so that the canvas is
+ *	updated with the new width.
+ *	Ditto for setColour().  (These fix long-standing display bugs!)
+ *  (b) Minor formatting tweaks and comment improvements.
+ *  (c) Added #ifdef and friends so that debugging statement can be
+ *	turned on and off without source code mods; just compile with
+ *	DEBUG defined (e.g., env DEBUG=-DDEBUG make).
+ *	NOTE NOTE NOTE: at this date there is a debug call to painter
+ *	in Edge::paint() that draws a bounding box around edges,
+ *	making it look like there are three edges instead of one.
+ *  (d) Removed unused isDigits() function.
+ *  (e) Made offset1 and offset2 local variables in
+ *	createSelectionPolygon(), rather than having them as private
+ *	class variables.  (Also changed edge.h).
+ *  (f) Added bug notes in adjust() comment.
+ *  (g) Removed some redundant calls to adjust().
  */
 
 #include "edge.h"
@@ -50,7 +67,20 @@
 
 static const double Pi = 3.14159265358979323846264338327950288419717;
 static const double offset = 5;		// TO DO: what is this?
-static const bool verbose = false;
+
+
+// Debugging aids (without editing the source file):
+#ifdef DEBUG
+static const bool debug = true;
+#else
+static const bool debug = false;
+#endif
+
+// Like qDebug(), but a little more literal, and turn-offable:
+#define qDeb if (debug) \
+        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
+                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
+
 
 
 
@@ -68,6 +98,8 @@ static const bool verbose = false;
 
 Edge::Edge(Node * sourceNode, Node * destNode)
 {
+    qDeb() << "Edge:Edge constructor called";
+
     setFlag(ItemIsSelectable);
     setFlag(ItemIsFocusable);
     setFlag(ItemSendsGeometryChanges);
@@ -98,13 +130,14 @@ Edge::Edge(Node * sourceNode, Node * destNode)
  * Arguments:   None.
  * Output:      Nothing.
  * Modifies:    Nothing.
- * Returns:     Node *
+ * Returns:     The "source" node of this edge.
  * Assumptions: None.
  * Bugs:        None.
  * Notes:       None.
  */
 
-Node * Edge::sourceNode() const
+Node *
+Edge::sourceNode() const
 {
     return source;
 }
@@ -112,18 +145,19 @@ Node * Edge::sourceNode() const
 
 
 /*
- * Name:        destNode
- * Purpose:     Getter function for the destNode.
- * Arguments:   none
- * Output:      none
- * Modifies:    none
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Name:        destNode()
+ * Purpose:     Getter function for the destNode of an edge.
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    Nothing.
+ * Returns:     The "destination" node of this edge.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
 
-Node * Edge::destNode() const
+Node *
+Edge::destNode() const
 {
     return dest;
 }
@@ -131,7 +165,7 @@ Node * Edge::destNode() const
 
 
 /*
- * Name:        editlabel()
+ * Name:        editLabel()
  * Purpose:     Sets flags so that the htmlLabel is editable.
  * Argument:    Boolean
  * Output:      Nothing.
@@ -143,8 +177,11 @@ Node * Edge::destNode() const
  * Notes:       None.
  */
 
-void Edge::editLabel(bool edit)
+void
+Edge::editLabel(bool edit)
 {
+    qDeb() << "E::editLabel(" << edit << ") called";
+
     setHandlesChildEvents(!edit);
     htmlLabel->setFlag(QGraphicsItem::ItemIsFocusable, edit);
     htmlLabel->setFlag(ItemIsSelectable, edit);
@@ -155,7 +192,7 @@ void Edge::editLabel(bool edit)
 /*
  * Name:        getRootParent()
  * Purpose:     Returns the root parent of the edge.
- * Arguments:   none
+ * Arguments:   None.
  * Output:      Nothing.
  * Modifies:    Nothing.
  * Returns:     QGraphicsItem *
@@ -164,10 +201,11 @@ void Edge::editLabel(bool edit)
  * Notes:       None.
  */
 
-QGraphicsItem * Edge::getRootParent()
+QGraphicsItem *
+Edge::getRootParent()
 {
     QGraphicsItem * parent = this->parentItem();
-    while (parent != nullptr && parent != 0)
+    while (parent != nullptr)
         parent = parent->parentItem();
     return parent;
 }
@@ -214,7 +252,8 @@ QGraphicsItem * Edge::getRootParent()
  *		used to style the text.
  */
 
-void Edge::setLabel(QString aLabel)
+void
+Edge::setLabel(QString aLabel)
 {
     htmlLabel->setHtmlLabel(aLabel);
     label = aLabel;
@@ -233,25 +272,6 @@ void Edge::setLabel(QString aLabel)
 
 
 /*
- * Name:        isDigits()
- * Purpose:     Checks if the string contains only digits.
- * Arguments:   String
- * Output:      Boolean
- * Modifies:    Nothing.
- * Returns:     True if string contains only digits otherwise false.
- * Assumptions: None.
- * Bugs:        None.
- * Notes:       TODO: IS THIS USED ANYWHERE?
- */
-
-bool isDigits(const std::string &str)
-{
-    return str.find_first_not_of("0123456789") == std::string::npos;
-}
-
-
-
-/*
  * Name:        getLabel()
  * Purpose:     Returns the (unadorned) edge label.
  * Arguments:   None.
@@ -263,7 +283,8 @@ bool isDigits(const std::string &str)
  * Notes:       None.
  */
 
-QString Edge::getLabel()
+QString
+Edge::getLabel()
 {
     return label;
 }
@@ -279,12 +300,27 @@ QString Edge::getLabel()
  * Modifies:    Edge
  * Returns:     Nothing.
  * Assumptions: None.
- * Bugs:        None.
- * Notes:       None.
+ * Bugs:        BUG1?: TODO: Why do we compare length to 2*destRadius
+ *		instead of destRadius + sourceRadius ?
+ *		BUG2?: Debug statements show outputs like
+ *		"l = 144.243 > dR*2 = 0.2"
+ *		which suggests that the units are not the same.
+ *		BUG3?: destRadius (and maybe sourceRadius) are not
+ *		*currently* updated when a node's size is changed via
+ *		the "Edit Graph" tab (and maybe also when a "freestyle"
+ *		edge is added to the graph), so those values may be
+ *		irrelevant to the program anyway.  At least with BUG2
+ *		operational.  Was the purpose of the test to not draw
+ *		an unseen (because it is "under" the nodes) edge?
+ * Notes:       This function seems to get called a lot; thus its
+ *		debug stmts are commented out.
  */
 
-void Edge::adjust()
+void
+Edge::adjust()
 {
+    qDeb() << "E::adjust() called";
+
     if (!source || !dest)
         return;
 
@@ -301,9 +337,14 @@ void Edge::adjust()
                                  (line.dy() * sourceRadius) / length);
         sourcePoint = line.p1() + sourceEdgeOffset;
         destPoint = line.p2() - destEdgeOffset;
+	//qDeb() << "    l = " << length << " > dR*2 = " << destRadius * 2
+	//       << "; sP = " << sourcePoint << ", dP = " << destPoint;
     }
     else
+    {
         sourcePoint = destPoint = line.p1();
+	//qDeb() << "    l <= dR*2; sP = dP =" << sourcePoint;
+    }
     edgeLine = line;
     createSelectionPolygon();
 }
@@ -312,42 +353,50 @@ void Edge::adjust()
 
 /*
  * Name:        setDestNode()
- * Purpose:     Stores the destination node to which the edge is incident.
+ * Purpose:     Stores the destination node to which the edge is incident,
+ *		as well as the radius of that node.
  * Arguments:   Node *
- * Output:      none
- * Modifies:    Node * dest
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Output:      Nothing.
+ * Modifies:    The edge's destination node info.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       None.
  */
 
-void Edge::setDestNode(Node * node)
+void
+Edge::setDestNode(Node * node)
 {
+    qDeb() << "E::setDestNode(node " << node->getLabel()
+	   << ") setting dest rad to " << node->getDiameter() / 2;
+
     dest = node;
     setDestRadius(node->getDiameter() / 2.);
-    adjust();
 }
 
 
 
 /*
  * Name:        setSourceNode()
- * Purpose:     Stores the source Node to which the edge is incident.
+ * Purpose:     Stores the source node to which the edge is incident,
+ *		as well as the radius of that node.
  * Arguments:   Node *
- * Output:      none
- * Modifies:    Node * source
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Output:      Nothing.
+ * Modifies:    The edge's source node info.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       None.
  */
 
-void Edge::setSourceNode(Node * node)
+void
+Edge::setSourceNode(Node * node)
 {
+    qDeb() << "E::setSourceNode(node " << node->getLabel()
+	   << ") setting dest rad to " << node->getDiameter() / 2;
+
     source = node;
     setSourceRadius(node->getDiameter() / 2.);
-    adjust();
 }
 
 
@@ -355,16 +404,17 @@ void Edge::setSourceNode(Node * node)
 /*
  * Name:        setDestRadius()
  * Purpose:     Stores the radius of the destination node.
- * Arguments:   qreal
- * Output:      none
- * Modifies:    qreal destRadius
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Arguments:   A qreal.
+ * Output:      Nothing.
+ * Modifies:    The edge's destination node radius info.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       None.
  */
 
-void Edge::setDestRadius(qreal aRadius)
+void
+Edge::setDestRadius(qreal aRadius)
 {
     destRadius = aRadius;
     adjust();
@@ -375,16 +425,17 @@ void Edge::setDestRadius(qreal aRadius)
 /*
  * Name:        getDestRadius()
  * Purpose:     Returns the radius of the destination node.
- * Arguments:   none
- * Output:      qreal
- * Modifies:    none
- * Returns:     qreal destRadius
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    Nothing.
+ * Returns:     A qreal, the destination node's radius.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       None.
  */
 
-qreal Edge::getDestRadius()
+qreal
+Edge::getDestRadius()
 {
     return destRadius;
 }
@@ -393,17 +444,18 @@ qreal Edge::getDestRadius()
 
 /*
  * Name:        setSourceRadius()
- * Purpose:     Stores the radius of the source node.
- * Arguments:   qreal
- * Output:      none
- * Modifies:    sourceRadius variable
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Purpose:     Stores the radius of the destination node.
+ * Arguments:   A qreal.
+ * Output:      Nothing.
+ * Modifies:    The edge's source node radius info.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       None.
  */
 
-void Edge::setSourceRadius(qreal aRadius)
+void
+Edge::setSourceRadius(qreal aRadius)
 {
     sourceRadius = aRadius;
     adjust();
@@ -414,16 +466,17 @@ void Edge::setSourceRadius(qreal aRadius)
 /*
  * Name:        getSourceRadius()
  * Purpose:     Returns the radius of the source node.
- * Arguments:   none
- * Output:      none
- * Modifies:    nothing
- * Returns:     qreal sourceRadius
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    Nothing.
+ * Returns:     A qreal, the destination node's radius.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       None.
  */
 
-qreal Edge::getSourceRadius()
+qreal
+Edge::getSourceRadius()
 {
     return sourceRadius;
 }
@@ -433,20 +486,22 @@ qreal Edge::getSourceRadius()
 /*
  * Name:        setPenWidth()
  * Purpose:     Sets the width (penSize) of the edge.
- * Arguments:   none
- * Output:      none
- * Modifies:    nothing
- * Returns:     qreal penSize
- * Assumptions: none
- * Bugs:        none
+ * Arguments:   The new width.
+ * Output:      Nothing.
+ * Modifies:    The edge's penSize.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
  * Notes:       The method is labeled setPenWidth and not setEdgeWidth because
  *              penWidth is the naming convention used in Qt to draw a line.
  *              See paint() function for further details and implementation.
  */
 
-void Edge::setPenWidth(qreal aPenWidth)
+void
+Edge::setPenWidth(qreal aPenWidth)
 {
     penSize = aPenWidth;
+    update();
 }
 
 
@@ -454,18 +509,19 @@ void Edge::setPenWidth(qreal aPenWidth)
 /*
  * Name:        getPenWidth()
  * Purpose:     Returns the width (penSize) of the edge.
- * Arguments:   none
- * Output:      none
- * Modifies:    nothing
- * Returns:     qreal penSize
- * Assumptions: none
- * Bugs:        none
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    Nothing.
+ * Returns:     A qreal, the penSize.
+ * Assumptions: None.
+ * Bugs:        None.
  * Notes:       The method is labeled getPenWidth and not getEdgeWidth because
  *              penWidth is the naming convention used in Qt to draw a line.
  *              See paint() function for further details and implementation.
  */
 
-qreal Edge::getPenWidth()
+qreal
+Edge::getPenWidth()
 {
     return penSize;
 }
@@ -474,7 +530,7 @@ qreal Edge::getPenWidth()
 
 /*
  * Name:	setRotation()
- * Purpose:
+ * Purpose:	??
  * Arguments:
  * Output:
  * Modifies:
@@ -484,8 +540,13 @@ qreal Edge::getPenWidth()
  * Notes:
  */
 
-void Edge::setRotation(qreal aRotation)
+void
+Edge::setRotation(qreal aRotation)
 {
+    qDeb() << "E::setRotation(" << aRotation
+	   << ") call on edge(" << source->getLabel() << ", "
+	   << dest->getLabel() << ")";
+
     rotation = aRotation;
     QGraphicsItem::setRotation(aRotation);
 }
@@ -494,7 +555,7 @@ void Edge::setRotation(qreal aRotation)
 
 /*
  * Name:	getRotation()
- * Purpose:
+ * Purpose:	??
  * Arguments:
  * Output:
  * Modifies:
@@ -504,7 +565,8 @@ void Edge::setRotation(qreal aRotation)
  * Notes:
  */
 
-qreal Edge::getRotation()
+qreal
+Edge::getRotation()
 {
     return rotation;
 }
@@ -514,18 +576,20 @@ qreal Edge::getRotation()
 /*
  * Name:        setColour
  * Purpose:     Stores the colour of the edge in a QColor variable.
- * Arguments:   QColor
- * Output:      void
- * Modifies:    QColor edgeColour
- * Returns:     nothing
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Arguments:   A QColor, the desired colour of this edge.
+ * Output:      Nothing.
+ * Modifies:    The node's edgeColour.
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None?
+ * Notes:       None.
  */
 
-void Edge::setColour(QColor colour)
+void
+Edge::setColour(QColor colour)
 {
     edgeColour = colour;
+    update();
 }
 
 
@@ -533,16 +597,17 @@ void Edge::setColour(QColor colour)
 /*
  * Name:        getColour()
  * Purpose:     Returns the colour of an edge.
- * Arguments:   none
- * Output:      none
- * Modifies:    none
- * Returns:     QColor of the edge
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    Nothing.
+ * Returns:     The edge's edgeColour.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       None.
  */
 
-QColor Edge::getColour()
+QColor
+Edge::getColour()
 {
     return edgeColour;
 }
@@ -555,8 +620,8 @@ QColor Edge::getColour()
  * Arguments:   A qreal specifying the size, in points.
  * Output:      Nothing.
  * Modifies:    Both the attribute labelSize and the htmlLabel's font size.
- * Returns:     Nothing
- * Assumptions: None.
+ * Returns:     Nothing.
+ * Assumptions: The font has been defined.
  * Bugs:        None.
  * Notes:       None.
  */
@@ -584,7 +649,8 @@ Edge::setLabelSize(qreal edgeLabelSize)
  * Notes:       None/
  */
 
-qreal Edge::getLabelSize()
+qreal
+Edge::getLabelSize()
 {
     return labelSize;
 }
@@ -598,8 +664,8 @@ qreal Edge::getLabelSize()
  * Output:      none
  * Modifies:    boundingRect
  * Returns:     QRectF
- * Assumptions: none
- * Bugs:        none
+ * Assumptions: ?
+ * Bugs:        ?
  * Notes:       This is a function that MUST be implemented when creating a
  *              custom QGraphicsItem.  The issue with bounding
  *		Rectangles is that they do not rotate with the
@@ -619,7 +685,8 @@ qreal Edge::getLabelSize()
  *              ------             -----
  */
 
-QRectF Edge::boundingRect() const
+QRectF
+Edge::boundingRect() const
 {
     if (!source || !dest)
         return QRectF();
@@ -632,17 +699,27 @@ QRectF Edge::boundingRect() const
 /*
  * Name:        shape()
  * Purpose:     Updates the drawing within the bounding rect.
- * Arguments:   QLineF
- * Output:      nothing
- * Modifies:    The bounding rectangle of the edge.
- * Returns:     QPainterPath
- * Assumptions: none
- * Bugs:        none
- * Notes:       This is an overloaded function provided by Qt
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    Nothing.
+ * Returns:     A QPainterPath containing the selectionPolygon.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       This is an overloaded function provided by Qt.
+ *		Although it is not explicitly called by any graph-ic
+ *		code, it is nonetheless called every time the mouse
+ *		moves within the preview graph's bounding box (as far
+ *		as JD can tell this is the condition).  Not that JD
+ *		sees why every mouse move should call this.
+ *		It also is called sometimes when moving nodes around
+ *		the canvas in "Edit" mode.
  */
 
-QPainterPath Edge::shape() const
+QPainterPath
+Edge::shape() const
 {
+    // qDeb() << "E::shape() called!";  // Way too much noise from this one!
+
     QPainterPath ret;
     ret.addPolygon(selectionPolygon);
     return ret;
@@ -653,13 +730,13 @@ QPainterPath Edge::shape() const
 /*
  * Name:        paint()
  * Purpose:     Paints an edge between two nodes.
- * Arguments:   QPainter * pointer, QStyleOptionGraphicsITem *,  QWidget *
+ * Arguments:   QPainter * pointer, QStyleOptionGraphicsITem *, QWidget *
  * Output:      Renders an edge to canvasScene.
  * Modifies:    QGraphicsScene
  * Returns:     Nothing.
  * Assumptions: None.
  * Bugs:        None.
- * Notes:       QWidget * and QStyleOptionGraphicsItem are not used in my
+ * Notes:       QWidget * and QStyleOptionGraphicsItem * are not used in my
  *              implementation of this function.
  */
 
@@ -692,7 +769,7 @@ Edge::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
     edgeLine = line;
 
     // Debug statement to view the edge's bounding shape.
-    if (verbose)
+    if (debug)
         painter->drawPolygon(selectionPolygon);
 
     if (label.length() > 0)
@@ -722,7 +799,8 @@ Edge::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
  *		TO DO: should there be code here?
  */
 
-void Edge::edgeDeleted()
+void
+Edge::edgeDeleted()
 {
 
 }
@@ -730,7 +808,7 @@ void Edge::edgeDeleted()
 
 
 /*
- * Name:        createSelectionPolygon
+ * Name:        createSelectionPolygon()
  * Purpose:     Constructs a boundingRect for edges where the length
  *              runs parallel and the width runs perpendicular to the edge.
  * Arguments:   QLineF
@@ -739,22 +817,24 @@ void Edge::edgeDeleted()
  * Returns:     Nothing.
  * Assumptions: None.
  * Bugs:        None.
- * Notes:       None.
+ * Notes:       Called from E::adjust().
+ *		Thus it is called so often than I commented out its
+ *		debug output.
  */
 
-void Edge::createSelectionPolygon()
+void
+Edge::createSelectionPolygon()
 {
+    // qDeb() << "E::createSelectionPolygon() called!";
+
     QPolygonF nPolygon;
     qreal radAngle = edgeLine.angle() * Pi / 180;
 
     qreal dx = offset * qSin(radAngle);
     qreal dy = offset * qCos(radAngle);
 
-    // TO DO: should offset1 and offset2 not be local variables here
-    // and removed from edge.h?
-
-    offset1 = QPointF(dx, dy);
-    offset2 = QPointF(-dx, -dy);
+    QPointF offset1 = QPointF(dx, dy);
+    QPointF offset2 = QPointF(-dx, -dy);
     nPolygon << edgeLine.p1() + offset1
              << edgeLine.p1() + offset2
              << edgeLine.p2() + offset2

@@ -2,14 +2,14 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.2
+ * Version: 1.3
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
- * Nov 13, 2019 (JD, V1.1):
+ * Nov 13, 2019 (JD V1.1):
  *  (a) Minor formatting tweaks.
  *  (b) Apply change of name label.h -> html-label.h
- * Nov 13, 2019 (JD, V1.2):
+ * Nov 13, 2019 (JD V1.2):
  *  (a) Rename (in this order!)
  *	       label -> htmlLabel,
  *	       setWeightLabelSize() -> setLabelSize(),
@@ -20,6 +20,11 @@
  *	       weight -> label,
  *	       esize -> labelSize,
  *     in order to rationalize the naming scheme.
+ * Nov 30, 2019 (JD V1.3):
+ *  (a) Made offset1 and offset2 local variables in
+ *	createSelectionPolygon(), rather than having them as private
+ *	class variables.  (Changed edge.cpp accordingly.)
+ *  (b) Removed decl for the unused isDigits() function.
  */
 
 #ifndef EDGE_H
@@ -78,8 +83,6 @@ public:
     void editLabel(bool edit);
     QGraphicsItem * getRootParent();
 
-    bool isDigits(const std::string &str);
-
      //~Edge(); deconstructor a WIP
 protected:
     void paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
@@ -89,9 +92,8 @@ signals:
     void edgeDeleted();
 
 private:
-    void createSelectionPolygon();
+    void	createSelectionPolygon();
     Node	* source, * dest;   // Original names based on directed graphs
-    QPointF	offset1, offset2;
     QPointF	sourcePoint, destPoint;
     QPolygonF	selectionPolygon;
     qreal	destRadius, sourceRadius, penWidth, rotation;
