@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose: creates a node for the users graph
  *
@@ -35,7 +35,14 @@
  *	The code could be better, but it seems to display OK and is
  *	never written out to a file.
  * Nov 13, 2019 (JD V1.4)
- *  - rename HTML_Label text to HTML_Label htmlLabel.
+ *  (a) Rename HTML_Label text to HTML_Label htmlLabel.
+ * Nov 30, 2019 (JD V1.5)
+ *  (a) Remove setNodeLabel(qreal) and replace it with setNodeLabel(int).
+ *	Ditto for setNodeLabel(QString, qreal).
+ *  (b) Simplify all the various setNodeLabel()s to create a string and
+ *	then call setNodeLabel(QString), so that they all do the same things.
+ *  (c) Removed the redundant call to edge->adjust() from addEdge().
+ *  (d) Added in the new and improved qDeb() / DEBUG stuff.
  */
 
 #include "edge.h"
@@ -56,7 +63,18 @@
 #include <QDrag>
 #include <QtCore>
 
-static const bool verbose = false;
+// Debugging aids (without editing the source file):
+#ifdef DEBUG
+static const bool debug = true;
+#else
+static const bool debug = false;
+#endif
+
+// Like qDebug(), but a little more literal, and turn-offable:
+#define qDeb if (debug) \
+        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
+                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
+
 
 
 /*
@@ -105,10 +123,10 @@ Node::Node()
  * Notes:       none
  */
 
-void Node::addEdge(Edge * edge)
+void
+Node::addEdge(Edge * edge)
 {
     edgeList << edge;
-    edge->adjust();
 }
 
 
@@ -155,7 +173,8 @@ bool Node::removeEdge(Edge * edge)
  *              node to be drawn correctly.
  */
 
-void Node::setDiameter(qreal diameter)
+void
+Node::setDiameter(qreal diameter)
 {
     nodeDiameter = diameter * logicalDotsPerInchX;
     update();
@@ -198,7 +217,8 @@ qreal Node::getDiameter()
  * Notes:
  */
 
-void Node::setEdgeWeight(qreal aEdgeWeight)
+void
+Node::setEdgeWeight(qreal aEdgeWeight)
 {
     edgeWeight = aEdgeWeight;
     update();
@@ -218,7 +238,8 @@ void Node::setEdgeWeight(qreal aEdgeWeight)
  * Notes:       none
  */
 
-void Node::setRotation(qreal aRotation)
+void
+Node::setRotation(qreal aRotation)
 {
    rotation = aRotation;
    QGraphicsItem::setRotation(aRotation);
@@ -238,7 +259,8 @@ void Node::setRotation(qreal aRotation)
  * Notes:       none
  */
 
-qreal Node::getRotation()
+qreal
+Node::getRotation()
 {
     return rotation;
 }
@@ -257,7 +279,8 @@ qreal Node::getRotation()
  * Notes:       none
  */
 
-void Node::setFillColour(QColor fColor)
+void
+Node::setFillColour(QColor fColor)
 {
     nodeFill = fColor;
     update();
@@ -277,7 +300,8 @@ void Node::setFillColour(QColor fColor)
  * Notes:       none
  */
 
-QColor Node::getFillColour()
+QColor
+Node::getFillColour()
 {
     return nodeFill;
 }
@@ -296,7 +320,8 @@ QColor Node::getFillColour()
  * Notes:       none
  */
 
-void Node::setLineColour(QColor lColor)
+void
+Node::setLineColour(QColor lColor)
 {
     nodeLine = lColor;
     update();
@@ -316,7 +341,8 @@ void Node::setLineColour(QColor lColor)
  * Notes:       none
  */
 
-QColor Node::getLineColour()
+QColor
+Node::getLineColour()
 {
     return nodeLine;
 }
@@ -335,7 +361,8 @@ QColor Node::getLineColour()
  * Notes:       none
  */
 
-QGraphicsItem * Node::findRootParent()
+QGraphicsItem *
+Node::findRootParent()
 {
     QGraphicsItem * root = this->parentItem();
     while (root->parentItem() != 0 && root->parentItem() != nullptr)
@@ -358,7 +385,8 @@ QGraphicsItem * Node::findRootParent()
  * Notes:       none
  */
 
-void Node::setID(int id)
+void
+Node::setID(int id)
 {
     nodeID = id;
 }
@@ -377,7 +405,8 @@ void Node::setID(int id)
  * Notes:       none
  */
 
-int Node::getID()
+int
+Node::getID()
 {
     return nodeID;
 }
@@ -396,7 +425,8 @@ int Node::getID()
  * Notes:       none
  */
 
-QList<Edge *> Node::edges() const
+QList<Edge *>
+Node::edges() const
 {
     return edgeList;
 }
@@ -405,8 +435,8 @@ QList<Edge *> Node::edges() const
 
 /*
  * Name:        setNodeLabel()
- * Purpose:     Sets the label of the node to a real number.
- * Arguments:   qreal
+ * Purpose:     Sets the label of the node to an integer.
+ * Arguments:   An int, the node label.
  * Output:      Nothing.
  * Modifies:    The text in the node label (both "htmlLabel" and "label" fields).
  * Returns:     Nothing.
@@ -415,21 +445,20 @@ QList<Edge *> Node::edges() const
  * Notes:       None.
  */
 
-void Node::setNodeLabel(qreal number)
+void
+Node::setNodeLabel(int number)
 {
-    label = QString::number(number);
-    Node::labelToHtml();
-    htmlLabel->setHtml("<font face=\"cmr10\">"
-		       + QString::number(number) + "</font>");
+    QString nlabel = QString::number(number);
+    setNodeLabel(nlabel);
 }
 
 
 
 /*
- * Name:        setNodeLabel(QString, qreal)
+ * Name:        setNodeLabel(QString, int)
  * Purpose:     Sets the label of the node in the case where the label
  *		has a numeric subscript.
- * Arguments:   QString, qreal
+ * Arguments:   QString, int
  * Output:      Nothing.
  * Modifies:    The text in the node label (both "htmlLabel" and "label" fields).
  * Returns:     Nothing.
@@ -438,9 +467,10 @@ void Node::setNodeLabel(qreal number)
  * Notes:       none
  */
 
-void Node::setNodeLabel(QString aLabel, qreal number)
+void
+Node::setNodeLabel(QString aLabel, int number)
 {
-    Node::setNodeLabel(aLabel, QString::number(number));
+    setNodeLabel(aLabel, QString::number(number));
 }
 
 
@@ -458,11 +488,11 @@ void Node::setNodeLabel(QString aLabel, qreal number)
  * Notes:       none
  */
 
-void Node::setNodeLabel(QString aLabel, QString subscript)
+void
+Node::setNodeLabel(QString aLabel, QString subscript)
 {
-    label = aLabel + "_{" + subscript + "}";
-    // qDebug() << "\nsetNodeLabel(QS, QS) set label to /" << label << "/";
-    labelToHtml();
+    QString newLabel = aLabel + "_{" + subscript + "}";
+    setNodeLabel(newLabel);
 }
 
 
@@ -482,7 +512,8 @@ void Node::setNodeLabel(QString aLabel, QString subscript)
  *		TODO: eh??
  */
 
-void Node::setNodeLabel(QString aLabel)
+void
+Node::setNodeLabel(QString aLabel)
 {
     label = aLabel;
     labelToHtml();
@@ -508,21 +539,17 @@ void Node::setNodeLabel(QString aLabel)
  *		
  */
 
-void Node::labelToHtml()
+void
+Node::labelToHtml()
 {
-#ifdef DEBUG
-    printf("labelToHtml() looking at node %d with label /%s/\n",
-	   nodeID, label.toLocal8Bit().data());
-#endif
+    qDeb() << "labelToHtml() looking at node " << nodeID
+	   << " with label " << label;
 
     QString html = HTML_Label::strToHtml(label);
     htmlLabel->setHtml(html);
 
-#ifdef DEBUG
-    printf("labelToHtml setting htmlLabel to /%s/ for /%s/\n",
-	   (char *)html.toLocal8Bit().data(),
-	   (char *)label.toLocal8Bit().data());
-#endif
+    qDeb() <<  "labelToHtml setting htmlLabel to /" << html
+	   << "/ for /" << label << "/";
 }
 
 
@@ -568,7 +595,8 @@ void Node::labelToHtml()
  * Notes:       Should this be renamed to be "setNodeFontSize()" ?
  */
 
-void Node::setNodeLabelSize(qreal labelSize)
+void
+Node::setNodeLabelSize(qreal labelSize)
 {
     QFont font = htmlLabel->font();
     font.setPointSize(labelSize);
@@ -589,7 +617,8 @@ void Node::setNodeLabelSize(qreal labelSize)
  * Notes:       none
  */
 
-QString Node::getLabel() const
+QString
+Node::getLabel() const
 {
     return label;
 }
@@ -608,7 +637,8 @@ QString Node::getLabel() const
  * Notes:       none
  */
 
-qreal Node::getLabelSize() const
+qreal
+Node::getLabelSize() const
 {
     return htmlLabel->font().pointSizeF();
 }
@@ -627,7 +657,8 @@ qreal Node::getLabelSize() const
  * Notes:       TODO: Q: Is adjust some empirical fudge factor?
  */
 
-QRectF Node::boundingRect() const
+QRectF
+Node::boundingRect() const
 {
     qreal adjust = 2;
 
@@ -651,7 +682,8 @@ QRectF Node::boundingRect() const
  * Notes:       none.
  */
 
-void Node::chosen(int pen_style)
+void
+Node::chosen(int pen_style)
 {
     penStyle = pen_style;
     update();
@@ -671,7 +703,8 @@ void Node::chosen(int pen_style)
  * Notes:       none
  */
 
-void Node::editLabel(bool edit)
+void
+Node::editLabel(bool edit)
 {
     setHandlesChildEvents(!edit);
     htmlLabel->setFlag(QGraphicsItem::ItemIsFocusable, edit);
@@ -786,7 +819,8 @@ Node::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
  * Notes:       none
  */
 
-QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value)
+QVariant
+Node::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     switch (change)
     {
@@ -801,9 +835,9 @@ QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value)
                 this->setParentItem(nullptr);
                 this->setParentItem(tempGraph);
             }
-            if (verbose)
-                qDebug() << "itemChange(): node does not have a graph "
-			 << "item parent";
+	    else
+		qDeb() << "itemChange(): node does not have a "
+		       << "graph item parent; Very Bad!";
         }
         foreach (Edge * edge, edgeList)
             edge->adjust();
@@ -822,6 +856,7 @@ QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value)
 }
 
 
+
 /*
  * Name:        mousePressEvent()
  * Purpose:
@@ -832,11 +867,13 @@ QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value)
  * Assumptions:
  */
 
-void Node::mousePressEvent(QGraphicsSceneMouseEvent * event)
+void
+Node::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
     select = true;
     QGraphicsItem::mousePressEvent(event);
 }
+
 
 
 /*
@@ -848,7 +885,9 @@ void Node::mousePressEvent(QGraphicsSceneMouseEvent * event)
  * Returns:
  * Assumptions:
  */
-void Node::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
+
+void
+Node::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
     select = false;
     QGraphicsItem::mouseReleaseEvent(event);

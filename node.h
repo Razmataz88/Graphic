@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose: Declare the node class.
  * 
@@ -12,11 +12,14 @@
  *  (b) Minor formatting changes.
  *  (c) renamed "choose" to "penStyle".
  * Nov 13, 2019 (JD V1.2)
- *  - rename Label -> HTML_Label, label-h -> html-label.h,
- *    remove strToHtml() decl.
+ *  (a) rename Label -> HTML_Label, label-h -> html-label.h,
+ *      remove strToHtml() decl.
  * Nov 13, 2019 (JD V1.3)
- *  - rename HTML_Label text to HTML_Label htmlLabel.
- *  - delete cruft.
+ *  (a) rename HTML_Label text to HTML_Label htmlLabel.
+ *  (b) delete cruft.
+ * Nov 30, 2019 (JD V1.4)
+ *  (a) Remove setNodeLabel(qreal) and replace it with setNodeLabel(int).
+ *	Ditto for setNodeLabel(QString, qreal).
  */
 
 
@@ -58,9 +61,9 @@ public:
     void setID(int id);
     int getID();
 
-    void setNodeLabel(qreal number);
+    void setNodeLabel(int number);
     void setNodeLabel(QString aLabel);
-    void setNodeLabel(QString aLabel, qreal number);
+    void setNodeLabel(QString aLabel, int number);
     void setNodeLabel(QString aLabel, QString subscript);
     void setNodeLabelSize(qreal labelSize);
     
