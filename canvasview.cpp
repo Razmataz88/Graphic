@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.6
+ * Version: 1.7
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -30,6 +30,9 @@
  *  (f) Commented out aScene->addItem(edge) for in addEdgeToScene()
  *      which was causing whinage from Qt.
  *  (g) Added getModeName() to help with debugging output.
+ * Nov 30, 2019 (JD V1.7)
+ *  (a) Added the #ifdef DEBUG stuff to set the debug variable.
+ *  (b) Added a TODO note in addEdgeToScene().
  */
 
 #include "canvasview.h"
@@ -44,12 +47,17 @@
 #include <QPointF>
 
 
-// Like qDebug(), but a little more literal, and turn-offable:
-#define qDeb if (verbose) \
-	QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,	\
-		       QT_MESSAGELOG_FUNC).debug().noquote().nospace
+// Debugging aids (without editing the source file):
+#ifdef DEBUG
+static const bool debug = true;
+#else
+static const bool debug = false;
+#endif
 
-static const bool verbose = true;
+// Like qDebug(), but a little more literal, and turn-offable:
+#define qDeb if (debug) \
+        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
+                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
 
 static const QString JOIN_DESCRIPTION =
     "Join mode: Select 1 or 2 nodes from each of 2 graph components "
@@ -377,10 +385,13 @@ CanvasView::addEdgeToScene(Node * source, Node * destination)
     {
 	qDeb() << "\taETS: nodes have different parentItems";
         /*
-	 * Each node has a different parent
+	 * Each node has a different parent.
          * Create a graph that will be the parent of the two
          * graphs that each contain the nodes that the new
-         * edge will be incident to
+         * edge will be incident to.
+	 * TODO: should we amalgamate the graphs rather than having a
+	 * recursive structure?  Joining doesn't currently (Nov 2019)
+	 * work properly when joining two "recursive" graphs.
          */
         Graph * root = new Graph();
         Graph * parent1 = nullptr;
