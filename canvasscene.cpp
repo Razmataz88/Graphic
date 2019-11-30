@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -28,6 +28,9 @@
  *  (b) Rename "none" mode to "drag" mode, for less confusion.
  *  (c) Added some (incomplete) comments to some functions.
  *  (d) Added many, many debug outputs.
+ * Nov 30, 2019 (JD V1.5)
+ *  (a) Tidy up some debug outputs, add some others.
+ *  (b) Add function comment for keyReleaseEvent() and a few other ones.
  */
 
 #include "canvasscene.h"
@@ -49,12 +52,19 @@
 #include <QtGui>
 
 
-// Like qDebug(), but a little more literal, and turn-offable:
-#define qDeb if (verbose) \
-	QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,	\
-		       QT_MESSAGELOG_FUNC).debug().noquote().nospace
+// Debugging aids (without editing the source file):
+#ifdef DEBUG
+static const bool debug = true;
+#else
+static const bool debug = false;
+#endif
 
-static const bool verbose = true;
+// Like qDebug(), but a little more literal, and turn-offable:
+#define qDeb if (debug) \
+        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
+                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
+
+
 
 CanvasScene::CanvasScene()
     :  mCellSize(25, 25)
@@ -83,7 +93,7 @@ CanvasScene::CanvasScene()
 void
 CanvasScene::dragMoveEvent(QGraphicsSceneDragDropEvent * event)
 {
-    qDeb() << "CanvasScene::dragMoveEvent(" << event->screenPos() << ")";
+    qDeb() << "CS::dragMoveEvent(" << event->screenPos() << ")";
 
     Q_UNUSED(event);
 }
@@ -96,7 +106,7 @@ CanvasScene::dragMoveEvent(QGraphicsSceneDragDropEvent * event)
 void
 CanvasScene::dropEvent(QGraphicsSceneDragDropEvent * event)
 {
-    qDeb() << "CanvasScene::dropEvent(" << event->screenPos() << ")";
+    qDeb() << "CS::dropEvent(" << event->screenPos() << ")";
 
     const GraphMimeData * mimeData
 	= qobject_cast<const GraphMimeData *> (event->mimeData());
@@ -140,7 +150,7 @@ CanvasScene::drawBackground(QPainter * painter, const QRectF &rect)
 void
 CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
-    qDeb() << "CanvasScene::mousePressEvent(" << event->screenPos() << ")";
+    qDeb() << "CS::mousePressEvent(" << event->screenPos() << ")";
 
     if (itemAt(event->scenePos(), QTransform()) != nullptr)
     {
@@ -205,15 +215,15 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 	  case CanvasView::del:
 	    foreach (QGraphicsItem * item, itemList)
 	    {
-		if (item != nullptr || item != 0)
+		if (item != nullptr)
 		{
 		    if (item->type() == HTML_Label::Type)
 		    {
-			qDeb() << "mousepress/delete LABEL";
+			qDeb() << "    mousepress/Delete LABEL";
 		    }
 		    else if (item->type() == Node::Type)
 		    {
-			qDeb() << "mousepress/Delete Node";
+			qDeb() << "    mousepress/Delete Node";
 
 			Node * node = qgraphicsitem_cast<Node *>(item);
 
@@ -263,7 +273,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 		    }
 		    else if (item->type() == Edge::Type)
 		    {
-			qDeb() << "mousepress/Delete Edge";
+			qDeb() << "    mousepress/Delete Edge";
 
 			Edge * edge = qgraphicsitem_cast<Edge *>(item);
 			edge->destNode()->removeEdge(edge);
@@ -280,7 +290,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 	    break;
 
 	  case CanvasView::edit:
-	    qDeb() << "\tedit mode...";
+	    qDeb() << "    edit mode...";
 	    undo_Node_Pos * undoPos;
 	    undoPos = new undo_Node_Pos();
 
@@ -298,7 +308,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 			if (snapToGrid)
 			{
 			    mDragOffset = event->scenePos() - mDragged->pos();
-			    qDeb() << "mousepress/edit/node/snap2grid"
+			    qDeb() << "    mousepress/edit/node/snap2grid "
 				   << "offset = " << mDragOffset;
 			}
 		    }
@@ -360,7 +370,7 @@ CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
         else if (mDragged->type() == Node::Type)
         {
 	    qDeb() << "    node drag; event->scenePos = " << event->scenePos();
-	    qDeb() << "\tmDragged->mapFromScene(value above) "
+	    qDeb() << "\tmDragged->mapFromScene(value above) = "
 		   << mDragged->mapFromScene(event->scenePos());
 	    qDeb() << "\tnode pos set to mDragged->mapToParent(above) = "
 		   << mDragged->mapToParent(
@@ -376,7 +386,7 @@ CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 void
 CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
-    qDeb() << "CanvasScene::mouseReleaseEvent(" << event->screenPos() << ")";
+    qDeb() << "CS::mouseReleaseEvent(" << event->screenPos() << ")";
 
     if (mDragged && snapToGrid
 	&& (getMode() == CanvasView::drag || getMode() == CanvasView::edit))
@@ -455,12 +465,39 @@ CanvasScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
 
 
 
+/*
+ * Name:	keyReleaseEvent()
+ * Purpose:	When a key is released execute any known function for
+ *		that key.  Currently "j" (join (identify) nodes) and
+ *		"escape" (undo node move in Edit mode) are the
+ *		possible functions.
+ * Arguments:	The key event.
+ * Outputs:	Nothing.
+ * Modifies:	Possibly the graph in major ways.
+ * Returns:	Nothing.
+ * Assumptions:	?
+ * Bugs:	TODO: (1) when the first node selected in a 2-node
+ *		join has a numeric label, this is supposed to
+ *		re-number all the nodes.  But if n2 is in a graph item
+ *		which itself contains graphs (e.g., it was formed by
+ *		joining two other graphs), the code does not
+ *		recursively delve into the second graph.
+ *		(2) Joining a graph to a graph which is a result of a
+ *		previous join does not do the right thing.  Various
+ *		difficult to describe things happen.
+ *		(3) If somehow connectedNode<x> doesn't have a parentItem,
+ *		root<n> will be nullptr and eventually dereferenced.
+ * Notes:	
+ */
+
 void
 CanvasScene::keyReleaseEvent(QKeyEvent * event)
 {
     switch (event->key())
     {
       case Qt::Key_J:
+	qDeb() << "CS:keyReleaseEvent('j')";
+
 	Graph * item;
 	Graph * root1;
 	Graph * root2;
@@ -473,6 +510,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 	if (connectNode1a != nullptr && connectNode2a != nullptr
 	    && connectNode1b != nullptr && connectNode2b != nullptr)
 	{
+	    qDeb() << "CS:keyReleaseEvent('j'); four selected nodes case";
 	    if (connectNode1a->parentItem() != nullptr
 		&& connectNode2a != nullptr
 		&& connectNode1b != nullptr && connectNode2b != nullptr)
@@ -488,26 +526,27 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 				      cn2b.rx() - cn2a.rx());
 		qreal angle = angle2 - angle1;
 
-		qDeb() << "cn1a" << cn1a;
-		qDeb() << "cn1b" << cn1b;
-		qDeb() << "cn2a" << cn2a;
-		qDeb() << "cn2b" << cn2b;
+		qDeb() << "\tcn1a " << cn1a;
+		qDeb() << "\tcn1b " << cn1b;
+		qDeb() << "\tcn2a " << cn2a;
+		qDeb() << "\tcn2b " << cn2b;
 
-		qDeb() << QString::number(cn1b.ry()) << " - " <<
-		    QString::number(cn1a.ry()) << ", " <<
+		qDeb() << "\ty1 = " << QString::number(cn1b.ry()) << " - " <<
+		    QString::number(cn1a.ry()) << ", x1 = " <<
 		    QString::number(cn1b.rx()) << " - " <<
-		    QString::number(cn1a.rx()) << endl;
+		    QString::number(cn1a.rx());
 
-		qDeb() << QString::number(cn2b.ry()) << " - " <<
-		    QString::number(cn2a.ry()) << ", " <<
+		qDeb() << "\ty2 = " << QString::number(cn2b.ry()) << " - " <<
+		    QString::number(cn2a.ry()) << ", x2 = " <<
 		    QString::number(cn2b.rx()) << " - " <<
-		    QString::number(cn2a.rx()) << endl;
+		    QString::number(cn2a.rx());
 
-		qDeb() << angle1 << endl;
-		qDeb() << angle2 << endl;
-		qDeb() << angle << endl;
-		qDeb() << qRadiansToDegrees(-angle) << endl;
+		qDeb() << "\tangle1 = " << angle1;
+		qDeb() << "\tangle2 = " << angle2;
+		qDeb() << "\tangle = " << angle;
+		qDeb() << "\tangle in degrees = " << qRadiansToDegrees(-angle);
 
+		// Rotate the second graph by the required angle.
 		if (connectNode2a->parentItem() != nullptr)
 		{
 		    root2 = qgraphicsitem_cast<Graph*>(
@@ -555,6 +594,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		    connectNode1b->addEdge(edge);
 		}
 
+		// See comments above about the buggyness of this code.
 		bool check;
 		connectNode1a->getLabel().toInt(&check);
 		if (check)
@@ -605,6 +645,10 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 	}
 	else if (connectNode1a != nullptr && connectNode2a != nullptr)
 	{
+	    qDeb() << "CS:keyReleaseEvent('j'); two selected nodes case";
+	    qDeb() << "\tn1 label /" << connectNode1a->getLabel()
+		   << "/; n2 label /" << connectNode2a->getLabel() << "/";
+
 	    QPointF p1(connectNode1a->scenePos());
 	    QPointF p2(connectNode2a->scenePos());
 
@@ -618,6 +662,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		while (root2->parentItem() != nullptr)
 		    root2 = qgraphicsitem_cast<Graph*>(root2->parentItem());
 		root2->moveBy(deltaX, deltaY);
+		qDeb() << "\tmoving n2 by (" << deltaX << ", " << deltaY << ")";
 	    }
 
 	    if (connectNode1a->parentItem() != nullptr)
@@ -630,40 +675,53 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 
 	    foreach (Edge * edge, connectNode2a->edges())
 	    {
+		qDeb() << "\tlooking at n2's edge ("
+		       << edge->sourceNode()->getLabel() << ", "
+		       << edge->destNode()->getLabel() << ")";
+		// Replace n2 in this edge with n1
 		if (edge->sourceNode() == connectNode2a)
 		    edge->setSourceNode(connectNode1a);
 		else
 		    edge->setDestNode(connectNode1a);
+		// ... and add this edge to n1's list of edges.
 		connectNode1a->addEdge(edge);
 		edge->setZValue(0);
 		connectNode1a->setZValue(3);
 	    }
 
+	    // If n1 has a numeric label, renumber all the nodes from
+	    // 0 on up.
+	    // TODO: something intelligent when n1's label is of the form
+	    //		<letter>{^<anything>}_<number>
 	    bool check;
 	    connectNode1a->getLabel().toInt(&check);
 	    if (check)
 	    {
+		qDeb() << "\tn1 has a numeric label, renumber all nodes";
 		int count = 0;
 		foreach (QGraphicsItem * i, root1->childItems())
 		{
+		    qDeb() << "\ta root1 child of type " << i->type();
 		    if (i->type() == Node::Type)
 		    {
 			Node * node = qgraphicsitem_cast<Node*>(i);
 
-			node->setNodeLabel(count);
-			count++;
+			node->setNodeLabel(count++);
 		    }
 		}
 		foreach (QGraphicsItem * i, root2->childItems())
 		{
-		    if (i->type() == Node::Type && i != connectNode2a )
+		    qDeb() << "\ta root2 child of type " << i->type();
+		    if (i->type() == Node::Type && i != connectNode2a)
 		    {
 			Node * node = qgraphicsitem_cast<Node*>(i);
-			node->setNodeLabel(count);
-			count++;
+			node->setNodeLabel(count++);
 		    }
 		}
 	    }
+	    else
+		qDeb() << "\tn1 has a NON-numeric label, DON'T renumber nodes";
+
 	    root2->setParentItem(item);
 	    root1->setParentItem(item);
 	    addItem(item);
@@ -720,7 +778,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 void
 CanvasScene::setCanvasMode(int mode)
 {
-    qDeb()  << "CanvasScene::setCanvasMode(" << mode << ") called; "
+    qDeb()  << "CS::setCanvasMode(" << mode << ") called; "
 	    << "previous mode was " << modeType;
 
     modeType = mode;
