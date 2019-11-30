@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.16
+ * Version:	1.17
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -136,6 +136,8 @@
  * Nov 28, 2019 (JD V1.16)
  *  (a) Factor out saveGraphIc() from save_Graph().
  *      Use this to implement dumpGraphIc().
+ * Nov 29, 2019 (JD V1.17)
+ *  (a) Rename "none" mode to "drag" mode, for less confusion.
  */
 
 #define     DEBUG
@@ -310,10 +312,10 @@ QMainWindow(parent),
     QObject::connect(ui->canvas, SIGNAL(setKeyStatusLabelText(QString)),
 		     ui->keyPressStatus_label, SLOT(setText(QString)));
 
-    QObject::connect(ui->canvas, SIGNAL(resetNoMode()),
-		     ui->noMode_radioButton, SLOT(click()));
+    QObject::connect(ui->canvas, SIGNAL(resetDragMode()),
+		     ui->dragMode_radioButton, SLOT(click()));
 
-    ui->noMode_radioButton->click();
+    ui->dragMode_radioButton->click();
 
     // Initialize color buttons.
     QString s("background: #000000;" BUTTON_STYLE);
@@ -1713,10 +1715,10 @@ MainWindow::select_Custom_Graph(QString graphName)
 		lineColor.setRedF(fields.at(6).toDouble());
 		lineColor.setGreenF(fields.at(7).toDouble());
 		lineColor.setBlueF(fields.at(8).toDouble());
-		printf("setting edge (%d, %d) colour to %.3f, %.3f, %.3f\n",
-		       fields.at(0).toInt(), fields.at(1).toInt(),
-		       fields.at(6).toDouble(), fields.at(7).toDouble(),
-		       fields.at(8).toDouble());
+		// printf("setting edge (%d, %d) colour to %.3f, %.3f, %.3f\n",
+		   //    fields.at(0).toInt(), fields.at(1).toInt(),
+		   //    fields.at(6).toDouble(), fields.at(7).toDouble(),
+		   //    fields.at(8).toDouble());
 		edge->setColour(lineColor);
 		if (fields.count() == 11)
 		{
@@ -1734,17 +1736,17 @@ MainWindow::select_Custom_Graph(QString graphName)
 			int destID = e->destNode()->getID();
 			if (i < destID)
 			{
-			    printf("node[%d]'s %d-th edge has dst = %d",
-				   i, j, destID);
+			    // printf("node[%d]'s %d-th edge has dst = %d",
+				//   i, j, destID);
 			    QString wt = e->getLabel();
-			    QColor col = e->getColour();
-			    printf(", wt /%s/, rgb (%.2f,%.2f,%.2f)\n",
-				   wt.toLatin1().data(),
-				   col.redF(), col.greenF(), col.blueF());
+			    // QColor col = e->getColour();
+			    // printf(", wt /%s/, rgb (%.2f,%.2f,%.2f)\n",
+				//   wt.toLatin1().data(),
+				//   col.redF(), col.greenF(), col.blueF());
 			}
 		    }
 		}
-		printf("\n");
+		// printf("\n");
 	    }
 	}
 	file.close();
@@ -2287,9 +2289,9 @@ MainWindow::on_editMode_radioButton_clicked()
 
 
 void
-MainWindow::on_noMode_radioButton_clicked()
+MainWindow::on_dragMode_radioButton_clicked()
 {
-    ui->canvas->setMode(CanvasView::none);
+    ui->canvas->setMode(CanvasView::drag);
 }
 
 

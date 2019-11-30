@@ -597,7 +597,7 @@
                    <bool>false</bool>
                   </property>
                   <property name="text">
-                   <string>Complete</string>
+                   <string>Draw edges</string>
                   </property>
                   <property name="checked">
                    <bool>true</bool>
@@ -1823,7 +1823,7 @@
          </widget>
         </item>
         <item row="1" column="6">
-         <widget class="QRadioButton" name="noMode_radioButton">
+         <widget class="QRadioButton" name="dragMode_radioButton">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -2034,7 +2034,7 @@
   <connection>
    <sender>graphType_ComboBox</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2050,7 +2050,7 @@
   <connection>
    <sender>EdgeLabelSize</sender>
    <signal>valueChanged(double)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2066,7 +2066,7 @@
   <connection>
    <sender>graphHeight</sender>
    <signal>valueChanged(double)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2082,7 +2082,7 @@
   <connection>
    <sender>graphWidth</sender>
    <signal>valueChanged(double)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2098,7 +2098,7 @@
   <connection>
    <sender>numOfNodes2</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2114,7 +2114,7 @@
   <connection>
    <sender>numOfNodes1</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2130,7 +2130,7 @@
   <connection>
    <sender>EdgeLabel</sender>
    <signal>textChanged(QString)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2146,7 +2146,7 @@
   <connection>
    <sender>NodeLabel2</sender>
    <signal>textChanged(QString)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2162,7 +2162,7 @@
   <connection>
    <sender>NodeLabel1</sender>
    <signal>textChanged(QString)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2178,7 +2178,7 @@
   <connection>
    <sender>NodeLabelSize</sender>
    <signal>valueChanged(double)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2194,7 +2194,7 @@
   <connection>
    <sender>NodeOutlineColor</sender>
    <signal>clicked()</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2210,7 +2210,7 @@
   <connection>
    <sender>EdgeLineColor</sender>
    <signal>clicked()</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2226,7 +2226,7 @@
   <connection>
    <sender>NumLabelCheckBox</sender>
    <signal>stateChanged(int)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2242,7 +2242,7 @@
   <connection>
    <sender>NodeFillColor</sender>
    <signal>clicked()</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2258,7 +2258,7 @@
   <connection>
    <sender>nodeSize</sender>
    <signal>valueChanged(double)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2274,7 +2274,7 @@
   <connection>
    <sender>edgeSize</sender>
    <signal>valueChanged(double)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2290,7 +2290,7 @@
   <connection>
    <sender>complete_checkBox</sender>
    <signal>stateChanged(int)</signal>
-   <receiver>noMode_radioButton</receiver>
+   <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">

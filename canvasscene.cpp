@@ -2,27 +2,32 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
  *
  * Modification history:
- *  Oct 13, 2019 (JD V1.1)
- *   - no functional code changes: some formatting, some addition of comments,
- *     made some debug statements more verbose, deleted some
- *     long-commented-out-by-Rachel code, and deleted the setting of an
- *     unused variable.
- *     (Note that removing braces from some cases caused errors on
- *     stmts of the form "type var = value;", but, oddly, these go away
- *     if these are replaced with "type var; var = value;".  I took
- *     away the braces before I noticed this because it made the
- *     indentation a bit weird, but perhaps I should have left well
- *     enough alone in this case.)
- *  Nov 13, 2019 (JD V1.2)
- *   - rename Label to HTML_Label, as per changes to the naming scheme.
- *  Nov 13, 2019 (JD, V1.3)
- *   - rename "Weight" to "Label" for edge function names.
+ * Oct 13, 2019 (JD V1.1)
+ *  (a) no functional code changes: some formatting, some addition of comments,
+ *      made some debug statements more verbose, deleted some
+ *      long-commented-out-by-Rachel code, and deleted the setting of an
+ *      unused variable.
+ *      (Note that removing braces from some cases caused errors on
+ *      stmts of the form "type var = value;", but, oddly, these go away
+ *      if these are replaced with "type var; var = value;".  I took
+ *      away the braces before I noticed this because it made the
+ *      indentation a bit weird, but perhaps I should have left well
+ *      enough alone in this case.)
+ * Nov 13, 2019 (JD V1.2)
+ *  (a) rename Label to HTML_Label, as per changes to the naming scheme.
+ * Nov 13, 2019 (JD V1.3)
+ *  (a) rename "Weight" to "Label" for edge function names.
+ * Nov 29, 2019 (JD V1.4)
+ *  (a) Introduce qDeb() macro to get better debug output control.
+ *  (b) Rename "none" mode to "drag" mode, for less confusion.
+ *  (c) Added some (incomplete) comments to some functions.
+ *  (d) Added many, many debug outputs.
  */
 
 #include "canvasscene.h"
@@ -43,7 +48,13 @@
 #include <QtCore>
 #include <QtGui>
 
-static const bool verbose = false;
+
+// Like qDebug(), but a little more literal, and turn-offable:
+#define qDeb if (verbose) \
+	QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,	\
+		       QT_MESSAGELOG_FUNC).debug().noquote().nospace
+
+static const bool verbose = true;
 
 CanvasScene::CanvasScene()
     :  mCellSize(25, 25)
@@ -57,7 +68,7 @@ CanvasScene::CanvasScene()
     connectNode1b = nullptr;
     connectNode2b = nullptr;
 
-    modeType = CanvasView::none;
+    modeType = CanvasView::drag;
     mDragged = nullptr;
     snapToGrid = true;
     undoPositions = QList<undo_Node_Pos*>();
@@ -65,17 +76,28 @@ CanvasScene::CanvasScene()
 
 
 
+// We get many of these events when dragging the graph from the
+// preview window to the main canvas.
+// But we don't get any when dragging (existing) things around the canvas.
+
 void
 CanvasScene::dragMoveEvent(QGraphicsSceneDragDropEvent * event)
 {
+    qDeb() << "CanvasScene::dragMoveEvent(" << event->screenPos() << ")";
+
     Q_UNUSED(event);
 }
 
 
 
+// We get this when we let go of the mouse after dragging something
+// from the preview window to the main canvas.
+
 void
 CanvasScene::dropEvent(QGraphicsSceneDragDropEvent * event)
 {
+    qDeb() << "CanvasScene::dropEvent(" << event->screenPos() << ")";
+
     const GraphMimeData * mimeData
 	= qobject_cast<const GraphMimeData *> (event->mimeData());
     if (mimeData)
@@ -112,9 +134,14 @@ CanvasScene::drawBackground(QPainter * painter, const QRectF &rect)
 
 
 
+/* Apparently not called in Freestyle mode, but is called in the
+ * others */
+
 void
 CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
+    qDeb() << "CanvasScene::mousePressEvent(" << event->screenPos() << ")";
+
     if (itemAt(event->scenePos(), QTransform()) != nullptr)
     {
         QList<QGraphicsItem *> itemList
@@ -182,13 +209,11 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 		{
 		    if (item->type() == HTML_Label::Type)
 		    {
-			if (verbose)
-			    qDebug() << "mousepress/delete LABEL";
+			qDeb() << "mousepress/delete LABEL";
 		    }
 		    else if (item->type() == Node::Type)
 		    {
-			if (verbose)
-			    qDebug() << "mousepress/Delete Node";
+			qDeb() << "mousepress/Delete Node";
 
 			Node * node = qgraphicsitem_cast<Node *>(item);
 
@@ -238,8 +263,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 		    }
 		    else if (item->type() == Edge::Type)
 		    {
-			if (verbose)
-			    qDebug() << "mousepress/Delete Edge";
+			qDeb() << "mousepress/Delete Edge";
 
 			Edge * edge = qgraphicsitem_cast<Edge *>(item);
 			edge->destNode()->removeEdge(edge);
@@ -256,11 +280,13 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 	    break;
 
 	  case CanvasView::edit:
+	    qDeb() << "\tedit mode...";
 	    undo_Node_Pos * undoPos;
 	    undoPos = new undo_Node_Pos();
 
 	    foreach (QGraphicsItem * item, itemList)
 	    {
+		qDeb() << "\titem type is " << item->type();
 		if (item->type() == Node::Type)
 		{
 		    if (event->button() == Qt::LeftButton)
@@ -271,10 +297,9 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 			undoPositions.append(undoPos);
 			if (snapToGrid)
 			{
-			    if (verbose)
-				qDebug() << "mousepress/edit/drag/snap2grid"
-					 << mDragged->type();
 			    mDragOffset = event->scenePos() - mDragged->pos();
+			    qDeb() << "mousepress/edit/node/snap2grid"
+				   << "offset = " << mDragOffset;
 			}
 		    }
 		}
@@ -285,8 +310,8 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 		    QGraphicsScene::mousePressEvent(event);
 	    break;
 
-	  case CanvasView::none:
-	    foreach(QGraphicsItem * item, itemList)
+	  case CanvasView::drag:
+	    foreach (QGraphicsItem * item, itemList)
 	    {
 		if (item != nullptr || item != 0)
 		    if (item->type() == Graph::Type)
@@ -319,19 +344,27 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 void
 CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 {
-    if (verbose)
-        qDebug() << "mosueMove/Mode: " + QString::number(getMode());
     if (mDragged
-	&& (getMode() == CanvasView::none || getMode() == CanvasView::edit))
+	&& (getMode() == CanvasView::drag || getMode() == CanvasView::edit))
     {
+	qDeb() << "CS::mouseMoveEvent: mode is "
+	       << CanvasView::getModeName(getMode());
         if (mDragged->type() == Graph::Type)
         {
             // Ensure that the item's offset from the mouse cursor
 	    // stays the same.
+	    qDeb() << "    graph dragged "
+		   << event->scenePos() - mDragOffset;
             mDragged->setPos(event->scenePos() - mDragOffset);
         }
         else if (mDragged->type() == Node::Type)
         {
+	    qDeb() << "    node drag; event->scenePos = " << event->scenePos();
+	    qDeb() << "\tmDragged->mapFromScene(value above) "
+		   << mDragged->mapFromScene(event->scenePos());
+	    qDeb() << "\tnode pos set to mDragged->mapToParent(above) = "
+		   << mDragged->mapToParent(
+		       mDragged->mapFromScene(event->scenePos()));
             mDragged->setPos(mDragged->mapToParent(
 				 mDragged->mapFromScene(event->scenePos())));
         }
@@ -343,23 +376,27 @@ CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 void
 CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
+    qDeb() << "CanvasScene::mouseReleaseEvent(" << event->screenPos() << ")";
+
     if (mDragged && snapToGrid
-	&& (getMode() == CanvasView::none || getMode() == CanvasView::edit))
+	&& (getMode() == CanvasView::drag || getMode() == CanvasView::edit))
     {
         int x = 0;
         int y = 0;
+
         if (mDragged->type() == Graph::Type)
         {
+	    
+	    qDeb() << "\tsnapToGrid processing a graph";
             x = floor(mDragged->scenePos().x()
                       / mCellSize.width()) * mCellSize.width();
             y = floor(mDragged->scenePos().y()
                       / mCellSize.height()) * mCellSize.height();
             mDragged->setPos(x, y);
         }
-
         else if (mDragged->type() == Node::Type)
         {
-
+	    qDeb() << "\tsnapToGrid processing a node";
             x = round(mDragged->pos().x() / mCellSize.width())
 		* mCellSize.width();
             y = round(mDragged->pos().y() / mCellSize.height())
@@ -379,6 +416,8 @@ CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 void
 CanvasScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
 {
+    qDeb() << "CS::mouseDoubleClickEvent(" << event->screenPos() << ")";
+
     switch (getMode())
     {
       case CanvasView::del:
@@ -449,28 +488,25 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 				      cn2b.rx() - cn2a.rx());
 		qreal angle = angle2 - angle1;
 
-		if (verbose)
-		{
-		    qDebug() << "cn1a" << cn1a;
-		    qDebug() << "cn1b" << cn1b;
-		    qDebug() << "cn2a" << cn2a;
-		    qDebug() << "cn2b" << cn2b;
+		qDeb() << "cn1a" << cn1a;
+		qDeb() << "cn1b" << cn1b;
+		qDeb() << "cn2a" << cn2a;
+		qDeb() << "cn2b" << cn2b;
 
-		    qDebug() << QString::number(cn1b.ry()) << " - " <<
-			QString::number(cn1a.ry()) << ", " <<
-			QString::number(cn1b.rx()) << " - " <<
-			QString::number(cn1a.rx()) << endl;
+		qDeb() << QString::number(cn1b.ry()) << " - " <<
+		    QString::number(cn1a.ry()) << ", " <<
+		    QString::number(cn1b.rx()) << " - " <<
+		    QString::number(cn1a.rx()) << endl;
 
-		    qDebug() << QString::number(cn2b.ry()) << " - " <<
-			QString::number(cn2a.ry()) << ", " <<
-			QString::number(cn2b.rx()) << " - " <<
-			QString::number(cn2a.rx()) << endl;
+		qDeb() << QString::number(cn2b.ry()) << " - " <<
+		    QString::number(cn2a.ry()) << ", " <<
+		    QString::number(cn2b.rx()) << " - " <<
+		    QString::number(cn2a.rx()) << endl;
 
-		    qDebug() << angle1 << endl;
-		    qDebug() << angle2 << endl;
-		    qDebug() << angle << endl;
-		    qDebug() << qRadiansToDegrees(-angle) << endl;
-		}
+		qDeb() << angle1 << endl;
+		qDeb() << angle2 << endl;
+		qDeb() << angle << endl;
+		qDeb() << qRadiansToDegrees(-angle) << endl;
 
 		if (connectNode2a->parentItem() != nullptr)
 		{
@@ -525,7 +561,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		{
 		    int count = 0;
 
-		    foreach(QGraphicsItem * i, root1->childItems())
+		    foreach (QGraphicsItem * i, root1->childItems())
 		    {
 			if (i->type() == Node::Type)
 			{
@@ -608,7 +644,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 	    if (check)
 	    {
 		int count = 0;
-		foreach(QGraphicsItem * i, root1->childItems())
+		foreach (QGraphicsItem * i, root1->childItems())
 		{
 		    if (i->type() == Node::Type)
 		    {
@@ -684,6 +720,9 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 void
 CanvasScene::setCanvasMode(int mode)
 {
+    qDeb()  << "CanvasScene::setCanvasMode(" << mode << ") called; "
+	    << "previous mode was " << modeType;
+
     modeType = mode;
 
     if (connectNode1a)
@@ -714,9 +753,7 @@ CanvasScene::setCanvasMode(int mode)
         {
             Node * node = qgraphicsitem_cast<Node *>(item);
             if (modeType == CanvasView::edit)
-            {
                 node->editLabel(true);
-            }
             else
                 node->editLabel(false);
         }
@@ -724,9 +761,7 @@ CanvasScene::setCanvasMode(int mode)
         {
             Edge * edge = qgraphicsitem_cast<Edge *>(item);
             if (modeType == CanvasView::edit)
-            {
                 edge->editLabel(true);
-            }
             else
                 edge->editLabel(false);
         }

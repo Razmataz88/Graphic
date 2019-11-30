@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.4
+ * Version:	1.5
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -14,6 +14,10 @@
  *  (a) Remove lookupColour() (now a non-class function).
  * Nov 28, 2019 (JD V1.4)
  *  (a) Add dumpGraphIc() and dumpTikZ().
+ * Nov 29, 2019 (JD V1.5)
+ *  (a) Rename "none" mode to "drag" mode, for less confusion.
+ *      This required changes to mainwindow.ui as well.
+ *	(Also changed "Complete" to "Draw edges" there.)
  */
 
 
@@ -69,7 +73,7 @@ private slots:
 
     void on_editMode_radioButton_clicked();
 
-    void on_noMode_radioButton_clicked();
+    void on_dragMode_radioButton_clicked();
 
     void on_freestyleMode_radioButton_clicked();
 
