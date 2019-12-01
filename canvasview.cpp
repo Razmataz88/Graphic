@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.7
+ * Version: 1.8
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -33,6 +33,9 @@
  * Nov 30, 2019 (JD V1.7)
  *  (a) Added the #ifdef DEBUG stuff to set the debug variable.
  *  (b) Added a TODO note in addEdgeToScene().
+ * Nov 30, 2019 (JD V1.8)
+ *  (a) In freestyle mode, when creating a path, show the "current"
+ *	node by drawing it with a dashed line (pen style 1).
  */
 
 #include "canvasview.h"
@@ -111,9 +114,9 @@ CanvasView::CanvasView(QWidget * parent)
     nodeParams = new Node_Params;
     edgeParams = new Edge_Params;
     freestyleGraph = nullptr;
-    setMode(mode::drag);
     node1 = nullptr;
     node2 = nullptr;
+    setMode(mode::drag);     // This must be after 'node1 = nullptr;' !
 }
 
 
@@ -189,6 +192,15 @@ CanvasView::setMode(int m)
 	   << "previous mode was " << modeType
 	   << " == " << getModeName(getMode());
 
+    if (modeType == m)
+    {
+	qDeb() << "\tSame mode as before, returning.";
+	return;
+    }
+
+    if (node1 != nullptr)
+	node1->chosen(0);
+
     modeType = m;
     freestyleGraph = nullptr;
 
@@ -245,7 +257,7 @@ void
 CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
 {
     qDeb() << "CV::mouseDoubleClickEvent("
-	   << event->screenPos() << ")";
+	   << event->screenPos() << ") in mode " << getModeName(getMode());
 
     QPointF pt;
 
@@ -253,12 +265,16 @@ CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
     {
       case mode::freestyle:
 	pt = mapToScene(event->pos());
+	qDeb() << "\tfreestyle mode: create a new node at " << pt;
 	createNode(pt);
+	if (node1 != nullptr)
+	    node1->chosen(0);
 	node1 = nullptr;
 	node2 = nullptr;
 	break;
 
       default:
+	qDeb() << "\tdefault: call QGV:mouseDoubleClickEvent()";
         QGraphicsView::mouseDoubleClickEvent(event);
     }
 }
@@ -295,6 +311,7 @@ CanvasView::mousePressEvent(QMouseEvent * event)
 		    {
 			qDeb() << "\t\tsetting node 1 !";
 			node1 = qgraphicsitem_cast<Node*>(item);
+			node1->chosen(1);
 			node2 = nullptr;	// Redundant?  Be safe!
 		    }
 		    else if (node2 == nullptr)
@@ -326,6 +343,8 @@ CanvasView::mousePressEvent(QMouseEvent * event)
 
 		    // Update vars so that another click on a node
 		    // continues a path.
+		    node1->chosen(0);
+		    node2->chosen(1);
 		    node1 = node2;
 		    node2 = nullptr;
 		    break;
@@ -335,11 +354,16 @@ CanvasView::mousePressEvent(QMouseEvent * event)
 	if (clickedInEmptySpace)
 	{
 	    qDeb() << "\t\tclicked in empty space, clearing node1 & 2";
-	    node1 = node2 = nullptr;	    
+	    if (node1 != nullptr)
+		node1->chosen(0);
+	    node1 = nullptr;
+	    node2 = nullptr;
 	}
 	break;
 
       default:
+	if (node1 != nullptr)
+	    node1->chosen(0);
 	node1 = nullptr;
 	node2 = nullptr;
 	QGraphicsView::mousePressEvent(event);
