@@ -2,7 +2,7 @@
  * File:	html-label.cpp	    Formerly label.cpp
  * Author:	Rachel Bood
  * Date:	2014-??-??
- * Version:	1.3
+ * Version:	1.4
  * 
  * Purpose:	Implement the functions relating to node and edge labels.
  *		(Some places in the code use "weight" for "edge label".)
@@ -26,6 +26,8 @@
  *      get font size 9 unless they had labels set during the graph creation.
  *  (b) Remove spurious font variable in HTML_Label().
  *  (c) Fix some comments.
+ * Nov 30, 2019 (JD V1.4)
+ *  (a) Add qDeb() / #ifdef DEBUG jazz and a few debug outputs.
  */
 
 #include "html-label.h"
@@ -36,11 +38,28 @@
 #include <QInputMethodEvent>
 
 
+// Debugging aids (without editing the source file):
+#ifdef DEBUG
+static const bool debug = true;
+#else
+static const bool debug = false;
+#endif
+
+// Like qDebug(), but a little more literal, and turn-offable:
+#define qDeb if (debug) \
+        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
+                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
+
+
+
+
 //class QEvent;  JD: why was this here??
 
 
 HTML_Label::HTML_Label(QGraphicsItem * parent)
 {
+    qDeb() << "HTML_Label constructor called";
+
     this->setParentItem(parent);
     htmlLabelText = "";
     setZValue(3);
@@ -62,15 +81,19 @@ HTML_Label::HTML_Label(QGraphicsItem * parent)
 
 
 
+// Is this function ever called??
+
 void
 HTML_Label::setTextInteraction(bool on, bool selectAll)
 {
+    qDeb() << "HL::setTextInteraction(" << on << ", " << selectAll << ") called";
+
     if (on && textInteractionFlags() == Qt::NoTextInteraction)
     {
 	// Switch on editor mode:
-        qDebug() << textInteractionFlags();
+        qDeb() << textInteractionFlags();
 	setTextInteractionFlags(Qt::TextEditorInteraction);
-	qDebug() << textInteractionFlags();
+	qDeb() << textInteractionFlags();
 
 	// Manually do what a mouse click would do else:
 	setFocus(Qt::MouseFocusReason); // This gives the item keyboard focus
@@ -111,6 +134,8 @@ HTML_Label::setTextInteraction(bool on, bool selectAll)
 void
 HTML_Label::setHtmlLabel(QString string)
 {
+    qDeb() << "H:setHtmlLabel(" << string << ") called";
+
     this->setHtml(strToHtml(string));
 
     if (parentItem() != nullptr)
@@ -198,10 +223,9 @@ mathFontify(QString str)
     }
 
     htmlMathStr += FONTEND;
-#ifdef DEBUG
-    printf("mathFontify(%s) -> /%s/\n", str.toLatin1().data(),
-	   htmlMathStr.toLatin1().data());
-#endif
+
+    qDeb() << "mathFontify(" << str << " -> /" << htmlMathStr << "/";
+
     return htmlMathStr;
 }
 
@@ -239,9 +263,7 @@ HTML_Label::strToHtml(QString str)
     // Trivial case: no superscript or subscript:
     if (firstUnderscore == -1 && firstCircumflex == -1)
     {
-#ifdef DEBUG
-	printf("\tstrToHtml(): trivial case, returning\n");
-#endif
+	qDeb() <<"\tstrToHtml(): trivial case, returning\n";
 	return mathFontify(str);
     }
 
@@ -252,9 +274,8 @@ HTML_Label::strToHtml(QString str)
     else
 	first = firstUnderscore < firstCircumflex
 	    ? firstUnderscore : firstCircumflex;
-#ifdef DEBUG
-    printf("first sub/sup at index %d\n", first);
-#endif
+
+    qDeb() << "first sub/sup at index " << first;
 
     base = str.left(first);
     rest = str.mid(first + 1);
@@ -291,9 +312,8 @@ HTML_Label::strToHtml(QString str)
 	    brCount--;
 	else if (rest.at(pos) == '{')
 	    brCount++;
-#ifdef DEBUG
-	printf("\trest[%d] = %c\n", pos, (char)rest.at(pos).toLatin1());
-#endif
+
+	qDeb() << "\trest[" << pos << "%d] = " << rest.at(pos);
     }
     // pos is now 1 more than the index of the '}'
 
