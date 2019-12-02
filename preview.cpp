@@ -2,18 +2,27 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
  * Modification history:
- *  Nov 13, 2019 (JD, V1.1):
+ * Nov 13, 2019 (JD, V1.1):
  *  - Rename setWeightLabelSize() to setLabelSize().
- *  Nov 13, 2019 (JD, V1.2)
+ * Nov 13, 2019 (JD, V1.2)
  *   - Rename "Weight" to "Label" for edge function names.
- *  Nov 13, 2019 (JD, V1.3)
+ * Nov 13, 2019 (JD, V1.3)
  *   (a) Some formatting and comment tweaks.
  *   (b) Added Ctrl-= as a way to zoom in the preview pane.
+ * Dec 1, 2019 (JD, V1.4)
+ *  (a) Added qDeb() / DEBUG stuff.
+ *  (b) Set edges' source radius correctly (fwiw) in Style_Graph().
+ *  (c) Added some debug outputs and some comment additions/mods.
+ *  (d) In Style_Graph() call setNodeLabelSize() regardless of
+ *	whether or not the node is getting a label.  Simplify the
+ *	related code in that part of the function.
+ *  (e) Also in Style_Graph() call edge->setSourceRadius() with a value
+ *	which seems to be more sensible to me.
  */
 
 #include "preview.h"
@@ -32,6 +41,20 @@
 #include <QFileDialog>
 #include <QShortcut>
 #include <qmath.h>
+
+// Debugging aids (without editing the source file):
+#ifdef DEBUG
+static const bool debug = true;
+#else
+static const bool debug = false;
+#endif
+
+// Like qDebug(), but a little more literal, and turn-offable:
+#define qDeb if (debug) \
+        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
+                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
+
+
 
 #define SCALE_FACTOR    1.2
 
@@ -65,19 +88,21 @@ PreView::PreView(QWidget * parent)
 
 /*
  * Name:        keyPressEvent
- * Purpose:     user can zoom in or out based on user's use of the keyboard
+ * Purpose:     Perform the appropriate action for known key presses.
  * Arguments:   QKeyEvent
- * Output:      none
- * Modifies:    none
- * Returns:     none
- * Assumptions: none
- * Bugs:        none...so far
- * Notes:       none
+ * Output:      Nothing.
+ * Modifies:    The scale of the preview window for the zoom operations.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       Unhandled key events are passed on to QGraphicsView.
  */
 
 void
 PreView::keyPressEvent(QKeyEvent * event)
 {
+    qDeb() << "PV:keyPressEvent(" << event->key() << ") called.";
+
     switch (event->key())
     {
       case Qt::Key_Plus:
@@ -88,6 +113,7 @@ PreView::keyPressEvent(QKeyEvent * event)
         zoomOut();
         break;
       case Qt::Key_Delete:
+	// TODO: why is this here??
         break;
       default:
         QGraphicsView::keyPressEvent(event);
@@ -111,6 +137,8 @@ PreView::keyPressEvent(QKeyEvent * event)
 void
 PreView::scaleView(qreal scaleFactor)
 {
+    qDeb() << "PV::scaleView(" << scaleFactor << ") called";
+
     qreal factor = transform().scale(scaleFactor, scaleFactor)
                 .mapRect(QRectF(0, 0, 1, 1)).width();
     if (factor < 0.07 || factor > 100)
@@ -120,45 +148,59 @@ PreView::scaleView(qreal scaleFactor)
 
 
 
+/*
+ * Name:	mousePressEvent()
+ * Purpose:	Handle the dragging of the preview graph to the main canvas.
+ * Arguments:	A mouse event.
+ * Outputs:	Nothing.
+ * Modifies:	The canvas and the preview window.
+ * Returns:	Nothing.
+ * Assumptions:	?
+ * Bugs:	?
+ * Notes:	Passes the mouse press on to QGraphicsView() after it is done.
+ */
+
 void
 PreView::mousePressEvent(QMouseEvent * event)
 {
+    qDeb() << "PV::mousePressEvent(" << event << ") called";
+
     if (event->button() == Qt::LeftButton)
     {
         QList<QGraphicsItem *> itemList = this->scene()->items(
-                    this->mapToScene(event->pos()),
-                    Qt::IntersectsItemShape,
-                    Qt::DescendingOrder,QTransform());
+	    this->mapToScene(event->pos()),
+	    Qt::IntersectsItemShape,
+	    Qt::DescendingOrder, QTransform());
 
         foreach (QGraphicsItem * item, itemList)
         {
+	    qDeb() << "\tlooking at a graphics item of type " << item->type();
             if (item->type() == Graph::Type)
             {
                 Graph * graph = qgraphicsitem_cast<Graph *>(item);
-                    GraphMimeData * data = new GraphMimeData(graph);
-                    QDrag * drag = new QDrag(this->scene());
-                    drag->setMimeData(data);
+		GraphMimeData * data = new GraphMimeData(graph);
+		QDrag * drag = new QDrag(this->scene());
+		drag->setMimeData(data);
 
+		QPixmap * image = new QPixmap(
+		    graph->childrenBoundingRect().size().toSize());
+		image->fill(Qt::white);
+		QPainter painter(image);
+		painter.setRenderHints(QPainter::Antialiasing |
+				       QPainter::HighQualityAntialiasing |
+				       QPainter::NonCosmeticDefaultPen,
+				       true);
+		scene()->render(&painter,
+				QRectF(0, 0,
+				       scene()->itemsBoundingRect().width(),
+				       scene()->itemsBoundingRect().height()),
+				scene()->itemsBoundingRect(),
+				Qt::IgnoreAspectRatio);
+		painter.end();
 
-                    QPixmap * image = new QPixmap(
-                                graph->childrenBoundingRect().size().toSize());
-                    image->fill(Qt::white);
-                    QPainter painter(image);
-                    painter.setRenderHints(QPainter::Antialiasing |
-                                           QPainter::HighQualityAntialiasing |
-                                           QPainter::NonCosmeticDefaultPen,
-                                           true);
-                    scene()->render(&painter,QRectF(0,
-                                                    0,
-                                                    scene()->itemsBoundingRect().width(),
-                                                    scene()->itemsBoundingRect().height()),
-                                    scene()->itemsBoundingRect(),
-                                    Qt::IgnoreAspectRatio);
-                    painter.end();
-
-                    drag->setPixmap(*image);
-                    drag->exec();
-                    break;
+		drag->setPixmap(*image);
+		drag->exec();
+		break;
             }
         }
     }
@@ -171,7 +213,7 @@ PreView::mousePressEvent(QMouseEvent * event)
  * Name:        zoomIn()
  * Purpose:     Zoom in the preview pane.
  * Arguments:   None.
- * Output:      Nothing..
+ * Output:      Nothing.
  * Modifies:    The scale of the preview QGraphicsScene.
  * Returns:     Nothing.
  * Assumptions: None.
@@ -202,7 +244,7 @@ PreView::zoomIn()
 void
 PreView::zoomOut()
 {
-    scaleView(1 / qreal(SCALE_FACTOR));
+    scaleView(1. / qreal(SCALE_FACTOR));
 }
 
 
@@ -213,6 +255,7 @@ PreView::Create_Graph(int graph, int topNodes, int bottomNodes,
 {
     Graph * graphItem = new Graph();
     BasicGraphs * simpleG = new BasicGraphs();
+
     switch (graph)
     {
       case BasicGraphs::Bipartite:
@@ -291,6 +334,7 @@ PreView::Create_Graph(int graph, int topNodes, int bottomNodes,
       default:
         break;
     }
+
     this->scene()->addItem(graphItem);
     return graphItem;
 }
@@ -307,10 +351,10 @@ PreView::Style_Graph(Graph * graph, int graphType,
 		     QColor nodeFillColor, QColor nodeOutlineColor,
 		     QColor edgeLineColor)
 {
-    // printf("preview::Style_Graph() called\n");
+    qDeb() << "PV::Style_Graph() called.";
+
     int i = 0, j = 0;
 
-    // Styling Nodes
     foreach (QGraphicsItem * item, graph->childItems())
     {
         if (item->type() == Node::Type)
@@ -321,10 +365,10 @@ PreView::Style_Graph(Graph * graph, int graphType,
 	    node->setEdgeWeight(edgeSize);
 	    node->setFillColour(nodeFillColor);
 	    node->setLineColour(nodeOutlineColor);
+	    node->setNodeLabelSize(nodeLabelSize);
 	    if (numberedLabels)
 	    {
 		node->setNodeLabel(i);
-		node->setNodeLabelSize(nodeLabelSize);
 		i++;
 	    }
 	    // Special case for labeling Bipartite Graphs
@@ -332,47 +376,31 @@ PreView::Style_Graph(Graph * graph, int graphType,
 	    {
 		if (bottomNodeLabels.length() != 0
 		    && graph->nodes.bipartite_bottom.contains(node))
-		{
-		    node->setNodeLabel(bottomNodeLabels, j);
-		    node->setNodeLabelSize(nodeLabelSize);
-		    j++;
-		}
+		    node->setNodeLabel(bottomNodeLabels, j++);
 		else if (topNodeLabels.length() != 0
 			 && graph->nodes.bipartite_top.contains(node))
-		{
-                    node->setNodeLabel(topNodeLabels, i);
-                    node->setNodeLabelSize(nodeLabelSize);
-		    i++;
-		}
+                    node->setNodeLabel(topNodeLabels, i++);
 		else if (topNodeLabels.length() != 0
 			 && graph->nodes.bipartite_bottom.contains(node))
-		{
-		    node->setNodeLabel(topNodeLabels, i);
-		    node->setNodeLabelSize(nodeLabelSize);
-		    i++;
-		}
+		    node->setNodeLabel(topNodeLabels, i++);
 	    }
 	    else if (topNodeLabels.length() != 0)
-	    {
-		node->setNodeLabel(topNodeLabels, i);
-		node->setNodeLabelSize(nodeLabelSize);
-		i++;
-	    }
+		node->setNodeLabel(topNodeLabels, i++);
 	    node->setParentItem(graph);
         }
-        // Styling Edges
         else if (item->type() == Edge::Type)
         {
 	    Edge * edge = qgraphicsitem_cast<Edge *>(item);
 	    edge->setParentItem(nullptr);
-	    edge->setDestRadius(nodeDiameter / 2.);
-	    edge->setSourceRadius(edge->sourceNode()->getDiameter() / 2.);
 	    edge->setPenWidth(edgeSize);
 	    edge->setColour(edgeLineColor);
 	    edge->setLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
 	    if (edgeLabel.length() != 0)
                 edge->setLabel(edgeLabel);
-	    //edge->adjust();
+	    edge->setDestRadius(nodeDiameter / 2.);
+	    // Q: why did RB do this?  It gives a bizarre value.
+	    // edge->setSourceRadius(edge->sourceNode()->getDiameter() / 2.);
+	    edge->setSourceRadius(nodeDiameter / 2.);
 	    edge->setParentItem(graph);
         }
     }

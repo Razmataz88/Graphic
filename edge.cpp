@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.6
+ * Version: 1.7
  *
  * Purpose: creates an edge for the users graph
  *
@@ -48,6 +48,11 @@
  *	class variables.  (Also changed edge.h).
  *  (f) Added bug notes in adjust() comment.
  *  (g) Removed some redundant calls to adjust().
+ * Dec 1, 2019 (JD V1.7):
+ *  (a) In the edge constructor set the radius values according to the
+ *      given nodes.  Call adjust() at the end of the constructor,
+ *	not before setting these (!).
+ *  (b) Update the comment for adjust().
  */
 
 #include "edge.h"
@@ -108,18 +113,18 @@ Edge::Edge(Node * sourceNode, Node * destNode)
     dest = destNode;
     source->addEdge(this);
     dest->addEdge(this);
-    adjust();
     penSize = 1;
     rotation = 0;
     label = "";
-    destRadius = 1;     // Set arbitrarily
-    sourceRadius = 1;
+    destRadius = destNode->getDiameter() / 2.;
+    sourceRadius = destNode->getDiameter() / 2.;
     setHandlesChildEvents(true);
     htmlLabel = new HTML_Label(this);
     htmlLabel->setPos((edgeLine.p2().rx() + edgeLine.p1().rx()) / 2.
 		      - htmlLabel->boundingRect().width() / 2.,
 		      (edgeLine.p2().ry() + edgeLine.p1().ry()) / 2.
 		      - htmlLabel->boundingRect().height() / 2.);
+    adjust();
 }
 
 
@@ -293,8 +298,10 @@ Edge::getLabel()
 
 /*
  * Name:        adjust()
- * Purpose:     Adjusts the QPointFs of the edge so it moves around with
- *              the node when the node is dragged.
+ * Purpose:     Update the edge when (for example) the source or
+ *		destination node changes location or size.  Also
+ *		update its selection polygon, and notify Qt that
+ *		its geometry has changed.
  * Arguments:   None.
  * Output:      Nothing.
  * Modifies:    Edge
@@ -305,15 +312,16 @@ Edge::getLabel()
  *		BUG2?: Debug statements show outputs like
  *		"l = 144.243 > dR*2 = 0.2"
  *		which suggests that the units are not the same.
- *		BUG3?: destRadius (and maybe sourceRadius) are not
- *		*currently* updated when a node's size is changed via
- *		the "Edit Graph" tab (and maybe also when a "freestyle"
- *		edge is added to the graph), so those values may be
- *		irrelevant to the program anyway.  At least with BUG2
- *		operational.  Was the purpose of the test to not draw
- *		an unseen (because it is "under" the nodes) edge?
- * Notes:       This function seems to get called a lot; thus its
- *		debug stmts are commented out.
+ *		NOTE: until Dec 1/2019 destRadius (and maybe
+ *		sourceRadius) were not updated when a node's size is
+ *		changed via the "Edit Graph" tab (and maybe also when
+ *		a "freestyle" edge is added to the graph), so those
+ *		values may be irrelevant to the program anyway.  At
+ *		least with BUG2 operational.  Was the purpose of the
+ *		test to not draw an unseen (because it is "under" the
+ *		nodes) edge?
+ * Notes:       This function gets called a *lot*; thus its debug
+ *		stmts might be mostly or wholly commented out.
  */
 
 void

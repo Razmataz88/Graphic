@@ -127,7 +127,7 @@
             <widget class="QWidget" name="scrollAreaWidgetContents_2">
              <property name="geometry">
               <rect>
-               <x>-140</x>
+               <x>0</x>
                <y>0</y>
                <width>704</width>
                <height>1142</height>
@@ -595,6 +595,9 @@
                   </property>
                   <property name="mouseTracking">
                    <bool>false</bool>
+                  </property>
+                  <property name="toolTip">
+                   <string>Uncheck this to only draw the nodes.</string>
                   </property>
                   <property name="text">
                    <string>Draw edges</string>
@@ -1361,7 +1364,10 @@
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                   </property>
                   <property name="decimals">
-                   <number>1</number>
+                   <number>0</number>
+                  </property>
+                  <property name="minimum">
+                   <double>1.000000000000000</double>
                   </property>
                   <property name="value">
                    <double>12.000000000000000</double>
@@ -1439,7 +1445,10 @@
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                   </property>
                   <property name="decimals">
-                   <number>1</number>
+                   <number>0</number>
+                  </property>
+                  <property name="minimum">
+                   <double>1.000000000000000</double>
                   </property>
                   <property name="value">
                    <double>12.000000000000000</double>
@@ -1470,8 +1479,11 @@
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                   </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
                   <property name="singleStep">
-                   <double>1.000000000000000</double>
+                   <double>0.500000000000000</double>
                   </property>
                   <property name="value">
                    <double>1.000000000000000</double>
@@ -1748,8 +1760,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>564</width>
-               <height>1165</height>
+               <width>98</width>
+               <height>28</height>
               </rect>
              </property>
             </widget>

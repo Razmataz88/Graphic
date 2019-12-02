@@ -2,26 +2,48 @@
  * File:    labelsizecontroller.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.1
+ * Version: 1.3
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
  * Modification history:
- *  Nov 13, 2019 (JD, V1.1):
- *   (a) Renamed setWeightLabelSize() -> setEdgeLabelSize().
- *   (b) Removed apparently redundant "|| edge != 0" in setEdgeLabelSize().
- *  Nov 24, 2019 (JD, V1.2):
- *   (a) Fixed bugs in the (node and edge) constructors which
- *	 incorrectly set the text size box value.
- *   (b) Minor formatting tweaks, comment additions.
- *   (c) Removed apparently redundant "|| box != 0" tests.
+ * Nov 13, 2019 (JD, V1.1):
+ *  (a) Renamed setWeightLabelSize() -> setEdgeLabelSize().
+ *  (b) Removed apparently redundant "|| edge != 0" in setEdgeLabelSize().
+ * Nov 24, 2019 (JD, V1.2):
+ *  (a) Fixed bugs in the (node and edge) constructors which
+ *	incorrectly set the text size box value.
+ *  (b) Minor formatting tweaks, comment additions.
+ *  (c) Removed apparently redundant "|| box != 0" tests.
+ * Dec 1, 2019 (JD, 1.3)
+ *  (a) Previously if there was no label, the label size in the "Edit
+ *	Graph" tab would get sizes of 12, rather than whatever size
+ *	was stored in the edge/node object.  Henceforth recognize the
+ *	size in that field even when there is currently no label.
+ *	(Assumption: the label sizes have been set to meaningful
+ *	values.)
+ *  (b) Make the font sizes integers strictly larger than 0.  See note
+ *	below in LabelSizeController(edge, box) comment.
  */
 
 #include "labelsizecontroller.h"
 
-#define DEFAULT_EDGE_LABEL_SIZE  12
-#define DEFAULT_NODE_LABEL_SIZE  12
 
+/*
+ * Name:	LabelSizeController()
+ * Purpose:	
+ * Arguments:	
+ * Outputs:	
+ * Modifies:	
+ * Returns:	
+ * Assumptions:	
+ * Bugs:	
+ * Notes:	It would seem that, at least in Qt 5.9.8 on Linux,
+ *		fractional parts of font sizes are ignored (or rounded down?)
+ *		and setting a font size of 0 causes Qt to spit out a
+ *		complaint. So make the font size spin boxes show no
+ *		decimal places, and also start at 1 and go up from there.
+ */
 
 LabelSizeController::LabelSizeController(Edge * anEdge, QDoubleSpinBox * aBox)
 {
@@ -29,10 +51,9 @@ LabelSizeController::LabelSizeController(Edge * anEdge, QDoubleSpinBox * aBox)
     box = aBox;
     if (box != nullptr)
     {
-	if (edge->getLabel().length() > 0)
-	    box->setValue(edge->getLabelSize());
-	else
-            box->setValue(DEFAULT_EDGE_LABEL_SIZE);
+	box->setMinimum(1);
+	box->setDecimals(0);
+	box->setValue(edge->getLabelSize());
 
         connect(box, SIGNAL(valueChanged(double)),
                 this, SLOT(setEdgeLabelSize(double)));
@@ -40,7 +61,6 @@ LabelSizeController::LabelSizeController(Edge * anEdge, QDoubleSpinBox * aBox)
                 this, SLOT(deletedSpinBox()));
         connect(anEdge, SIGNAL(destroyed(QObject*)),
                 this, SLOT(deleteLater()));
-
     }
 }
 
@@ -52,10 +72,9 @@ LabelSizeController::LabelSizeController(Node * aNode, QDoubleSpinBox * aBox)
     box = aBox;
     if (box != nullptr)
     {
-	if (node->getLabel().length() > 0)
-            box->setValue(node->getLabelSize());
-	else
-            box->setValue(DEFAULT_NODE_LABEL_SIZE);
+	box->setMinimum(1);
+	box->setDecimals(0);
+	box->setValue(node->getLabelSize());
 
         connect(box, SIGNAL(valueChanged(double)),
                 this, SLOT(setNodeLabelSize(double)));
@@ -77,7 +96,7 @@ LabelSizeController::LabelSizeController(Node * aNode, QDoubleSpinBox * aBox)
  * Returns:	Nothing.
  * Assumptions:	None.
  * Bugs:	?
- * Notes:	None.
+ * Notes:	Can node possibly be null?
  */
 
 void LabelSizeController::setNodeLabelSize(double ptSize)
@@ -104,7 +123,7 @@ void LabelSizeController::deletedSpinBox()
  * Returns:	Nothing.
  * Assumptions:	None.
  * Bugs:	?
- * Notes:	None.
+ * Notes:	Can edge possibly be null?
  */
 
 void

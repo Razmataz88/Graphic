@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.5
+ * Version: 1.6
  *
  * Purpose: creates a node for the users graph
  *
@@ -43,6 +43,13 @@
  *	then call setNodeLabel(QString), so that they all do the same things.
  *  (c) Removed the redundant call to edge->adjust() from addEdge().
  *  (d) Added in the new and improved qDeb() / DEBUG stuff.
+ * Dec 1, 2019 (JD V1.6)
+ *  (a) When a node diameter is changed, also tell its edges about
+ *	this change.  (It may be the case that this is totally
+ *	irrelevant, but until such time that I am convinced the edge's
+ *	sourceRadius and destRadius are meaningless, I will try to
+ *	make them correct.)
+ *  (b) Improved(?) the comment for itemChange().
  */
 
 #include "edge.h"
@@ -162,6 +169,7 @@ bool Node::removeEdge(Edge * edge)
 /*
  * Name:        setDiameter()
  * Purpose:     Sets the size of the diameter of the node in "logical DPI".
+ *		Notifies its edges that one of their nodes changed.
  * Arguments:   qreal
  * Output:      Nothing.
  * Modifies:    nodeDiameter
@@ -177,6 +185,8 @@ void
 Node::setDiameter(qreal diameter)
 {
     nodeDiameter = diameter * logicalDotsPerInchX;
+    foreach (Edge * edge, edgeList)
+	edge->adjust();
     update();
 }
 
@@ -808,20 +818,26 @@ Node::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
 
 /*
  * Name:        itemChange()
- * Purpose:     Send a signal to the edge objects to re-adjust the location
- *              of the edges.
+ * Purpose:     Send a signal to the node's edges to re-adjust their
+ *		geometries when a node is moved or rotated.
  * Arguments:   GraphicsItemChange, QVariant value
  * Output:      Nothing.
- * Modifies:    The node's edge list.
+ * Modifies:    The node's edges' geometries and selection boxes (indirectly).
  * Returns:     A QVariant
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       TODO: what is going on in the parent == graph block?
+ *		If I don't execute that code, I get the whinage from
+ *		the "else qDeb() << does not have parent" message below,
+ *		but in quick tests nothing else seemed to be a problem.
  */
 
 QVariant
 Node::itemChange(GraphicsItemChange change, const QVariant &value)
 {
+    qDeb() << "N::itemChange(" << change << ") called; "
+	   << "node label is /" << label << "/";
+
     switch (change)
     {
       case ItemPositionHasChanged:
