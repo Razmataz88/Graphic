@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.8
+ * Version: 1.9
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -36,6 +36,8 @@
  * Nov 30, 2019 (JD V1.8)
  *  (a) In freestyle mode, when creating a path, show the "current"
  *	node by drawing it with a dashed line (pen style 1).
+ * Dec 4, 2019 (JD V1.9)
+ *  (a) Add some comments to some functions.  Tweak formatting.
  */
 
 #include "canvasview.h"
@@ -61,6 +63,7 @@ static const bool debug = false;
 #define qDeb if (debug) \
         QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
                        QT_MESSAGELOG_FUNC).debug().noquote().nospace
+
 
 static const QString JOIN_DESCRIPTION =
     "Join mode: Select 1 or 2 nodes from each of 2 graph components "
@@ -93,12 +96,12 @@ static const QString DRAG_DESCRIPTION =
  * Name:        Canvas
  * Purpose:     Contructor for Canvas class.
  * Arguments:   QWidget *
- * Output:      none
+ * Output:      Nothing.
  * Modifies:    canvas
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       None.
  */
 
 CanvasView::CanvasView(QWidget * parent)
@@ -121,10 +124,25 @@ CanvasView::CanvasView(QWidget * parent)
 
 
 
+/*
+ * Name:	setUpNodeParams()
+ * Purpose:	Store the node drawing parameters (as defined by the
+ *		"Create Graph" tab) in a struct.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The nodeParams struct.
+ * Returns:	Nothing.
+ * Assumptions:	?
+ * Bugs:	?
+ * Notes:	This is called from MW::generate_Freestyle_Nodes(), which
+ *		itself is connected to UI elements which change node
+ *		drawing parameters.
+ */
+
 void
 CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
-                                 QString label, qreal nodeLabelSize,
-                                 QColor nodeFillColour, QColor nodeOutLineColour)
+			    QString label, qreal nodeLabelSize,
+			    QColor nodeFillColour, QColor nodeOutLineColour)
 {
     nodeParams->diameter = nodeDiameter;
     nodeParams->isNumbered = numberedLabels;
@@ -133,6 +151,7 @@ CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
     nodeParams->fillColour = nodeFillColour;
     nodeParams->outlineColour = nodeOutLineColour;
 }
+
 
 
 Node *
@@ -152,15 +171,15 @@ CanvasView::createNode(QPointF pos)
 
 
 /*
- * Name:        keyPressEvent
- * Purpose:
- * Arguments:   QKeyEvent
- * Output:      none
- * Modifies:    none
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Name:        keyPressEvent()
+ * Purpose:	?
+ * Arguments:   A QKeyEvent.
+ * Output:      Nothing.
+ * Modifies:    Nothing.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       ?
  */
 
 void
@@ -178,7 +197,7 @@ CanvasView::keyPressEvent(QKeyEvent * event)
  * Outputs:	Nothing.
  * Modifies:	The help text and the mode index.
  * Returns:	Nothing.
- * Assumptions:	?
+ * Assumptions:	node1 and modeType have been initialized to meaningful values.
  * Bugs:	?
  * Notes:	Also calls canvasscene's setCanvasMode() function.
  *		Ideally, the mode would be stored in one place, but
@@ -245,12 +264,12 @@ CanvasView::setMode(int m)
  *              when use doubleclicks the mouse.
  *		Otherwise pass the event to QGraphicsView.
  * Arguments:   QMouseEvent
- * Output:      none
+ * Output:      Nothing.
  * Modifies:    CanvasScene
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       None.
  */
 
 void
@@ -470,12 +489,27 @@ CanvasView::createEdge(Node * source, Node * destination)
 
 
 
+/*
+ * Name:	setUpEdgeParams()
+ * Purpose:	Store the edge drawing parameters (as defined by the
+ *		"Create Graph" tab) in a struct.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The edgeParams struct.
+ * Returns:	Nothing.
+ * Assumptions:	?
+ * Bugs:	?
+ * Notes:	This is called from MW::generate_Freestyle_Edges(), which
+ *		itself is connected to UI elements which change edge
+ *		drawing parameters.
+ */
+
 void
 CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel,
 			    qreal edgeLabelSize, QColor edgeLineColour)
 {
     qDeb() << "CV::setUpEdgeParams(): edgeSize = " << edgeSize;
-    qDeb() << "CV::setUpEdgeParams(): edgeLabel = " << edgeLabel;
+    qDeb() << "CV::setUpEdgeParams(): edgeLabel = /" << edgeLabel << "/";
     qDeb() << "CV::setUpEdgeParams(): edgeLabelSize = " << edgeLabelSize;
     qDeb() << "CV::setUpEdgeParams(): edgeLineColour = " << edgeLineColour;
 
