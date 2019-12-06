@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.17
+ * Version:	1.18
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -138,9 +138,11 @@
  *      Use this to implement dumpGraphIc().
  * Nov 29, 2019 (JD V1.17)
  *  (a) Rename "none" mode to "drag" mode, for less confusion.
+ * Dec 1, 2019 (JD V1.18)
+ *  (a) Add qDeb() / DEBUG stuff.
+ *  (b) Print out more screen resolution & size info.
+ *  (c) Add comments, minor code clean-ups.
  */
-
-#define     DEBUG
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -164,6 +166,20 @@
 #include <QtSvg/QSvgGenerator>
 #include <QErrorMessage>
 #include <QDate>
+
+
+// Debugging aids (without editing the source file):
+#ifdef DEBUG
+static const bool debug = true;
+#else
+static const bool debug = false;
+#endif
+
+// Like qDebug(), but a little more literal, and turn-offable:
+#define qDeb if (debug) \
+        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
+                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
+
 
 #define GRAPHiCS_FILE_EXTENSION "grphc"
 #define GRAPHiCS_SAVE_FILE	"Graph-ic (*." GRAPHiCS_FILE_EXTENSION ")"
@@ -342,11 +358,18 @@ QMainWindow(parent),
     // Initialize Create Graph pane to default values
     on_graphType_ComboBox_currentIndexChanged(-1);
 
-    // Debug to help with HiDPI issues
+#ifdef DEBUG
+    // Info to help with dealing with HiDPI issues
     QScreen * screen = QGuiApplication::primaryScreen();
-    printf("DPI:\n\tLogical  (%.3f, %.3f)\n\tPhysical (%.3f, %.3f)\n",
-	   screen->logicalDotsPerInchX(), screen->logicalDotsPerInchX(),
-	   screen->physicalDotsPerInchX(), screen->physicalDotsPerInchX());
+    printf("Logical DPI: (%.3f, %.3f)\nPhysical DPI: (%.3f, %.3f)\n",
+	   screen->logicalDotsPerInchX(), screen->logicalDotsPerInchY(),
+	   screen->physicalDotsPerInchX(), screen->physicalDotsPerInchY());
+    printf("Physical size (mm): ht %.1f, wd %.3f\n",
+	   screen->physicalSize().height(), screen->physicalSize().width());
+    printf("Pixel resolution:  %d, %d\n",
+	   screen->size().height(), screen->size().width());
+    printf("devicePixelRatio: %.3f\n", screen->devicePixelRatio());
+#endif
 }
 
 
@@ -393,14 +416,16 @@ MainWindow::setKeyStatusLabel(QString text)
 /*
  * Name:	generate_Combobox_Titles()
  * Purpose:	Populate the list of graph types with the defined
- *		basic types, then add a separator.
+ *		basic types, then add a separator, then call
+ *		load_Graphic_Library() to load the local graph library
+ *		(if any).
  * Arguments:	None.
  * Outputs:	Nothing.
  * Modifies:	The ui->graphType_ComboBox
  * Returns:	Nothing.
  * Assumptions:	ui->graphType_ComboBox is set up.
- * Bugs:
- * Notes:
+ * Bugs:	?
+ * Notes:	None.
  */
 
 void
@@ -600,8 +625,8 @@ typedef struct
  */
 
 void
-findDefaults(QVector<Node *> nodes, nodeInfo * nodeDefaults_p,
-	     edgeInfo * edgeDefaults_p)
+findDefaults(QVector<Node *> nodes,
+	     nodeInfo * nodeDefaults_p, edgeInfo * edgeDefaults_p)
 {
     // Set the default defaults (sic).
     // TODO: These values should really be #defines somewhere.
@@ -2361,7 +2386,7 @@ MainWindow::on_tabWidget_currentChanged(int index)
 
 		      foreach (QGraphicsItem * gItem, graph->childItems())
 		      {
-			  if (gItem != nullptr || gItem != 0)
+			  if (gItem != nullptr)
 			  {
 			      if (gItem->type() == Node::Type)
 			      {
@@ -2462,12 +2487,15 @@ MainWindow::on_tabWidget_currentChanged(int index)
 		  }
 	      }
 	  }
-	  // TODO: this was added 2019/11/18 because the extra
-	  // vertical space was being distributed between the rows,
-	  // but it only "works" after something was deleted from the
-	  // graph and then we switch into the edit pane (or out &
-	  // back in).  After that it is OK.  Go figure.
+	  // TODO: the setRowStretch() was added 2019/11/18 because
+	  // the extra vertical space was being distributed *between*
+	  // the rows, rather than at the end.
+	  // But by itself it only "works" after something was deleted
+	  // from the graph and then we switch into the edit pane (or
+	  // out & back in).  After that it is OK.  Go figure.
 	  // Dumps core if setRowStretch(i - 1, 40) is called when i == 0.
+	  // So to get it to work I added a label with a blank at the
+	  // end of the section, and then it works.  Kludge.
 	  if (i > 0)
 	  {
 	      // printf("Setting row stretch for row %d to 40\n", i - 1);
@@ -2501,7 +2529,6 @@ MainWindow::on_tabWidget_currentChanged(int index)
 }
 
 
-#include <bits/stdc++.h> 
 
 void
 MainWindow::dumpTikZ()
