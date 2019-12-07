@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.18
+ * Version:	1.19
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -142,6 +142,18 @@
  *  (a) Add qDeb() / DEBUG stuff.
  *  (b) Print out more screen resolution & size info.
  *  (c) Add comments, minor code clean-ups.
+ * Dec 6, 2019 (JD V1.19)
+ *  (a) Rename generate_Freestyle_{Nodes,Edges} to {node,edge}ParamsUpdated
+ *      to better reflect what those functions do.
+ *  (b) Modify generate_Graph(), and the related connect() calls, to
+ *	hand a parameter to generate_Graph() so that it knows which
+ *	widget's change caused it to be called.  This is the first
+ *	step of fixing things so that specific features of library
+ *	graphs can be styled without applying all styles, which
+ *	otherwise destroys much of the content of a library graph.
+ *  (c) Bug fix: nodeParamsUpdated() now passes the NodeLabelSize to
+ *	ui->canvas->setUpNodeParams() where it should, not the nodeSize.
+ *  (d) Clean up debug outputs a bit.  Improve some comments.
  */
 
 #include "mainwindow.h"
@@ -262,78 +274,118 @@ QMainWindow(parent),
     new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_G), this,
 		  SLOT(dumpGraphIc()));
 
-    QObject::connect(ui->nodeSize, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->edgeSize, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->NodeLabel1, SIGNAL(textChanged(QString)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->NodeLabel2, SIGNAL(textChanged(QString)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->EdgeLabel, SIGNAL(textChanged(QString)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->NodeLabelSize, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->NumLabelCheckBox, SIGNAL(clicked(bool)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->NodeFillColor, SIGNAL(clicked(bool)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->NodeOutlineColor, SIGNAL(clicked(bool)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->EdgeLineColor, SIGNAL(clicked(bool)),
-		     this, SLOT(generate_Graph()));
+    // The horrendous calls to connect() below were the simplest ones
+    // I (JD) could find which allow passing information about which
+    // UI widget was changed.  I could have had a separate function for
+    // every widget, which then had just one line to call generate_Graph()
+    // with an appropriate argument, but that is perhaps even more
+    // grotesque.
 
-    QObject::connect(ui->nodeSize, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Freestyle_Nodes()));
-    QObject::connect(ui->edgeSize, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Freestyle_Edges()));
-    QObject::connect(ui->NodeLabel1, SIGNAL(textChanged(QString)),
-		     this, SLOT(generate_Freestyle_Nodes()));
-    QObject::connect(ui->NodeLabel2, SIGNAL(textChanged(QString)),
-		     this, SLOT(generate_Freestyle_Nodes()));
-    QObject::connect(ui->EdgeLabel, SIGNAL(textChanged(QString)),
-		     this, SLOT(generate_Freestyle_Edges()));
-    QObject::connect(ui->NodeLabelSize, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Freestyle_Nodes()));
-    QObject::connect(ui->NumLabelCheckBox, SIGNAL(clicked(bool)),
-		     this, SLOT(generate_Freestyle_Nodes()));
-    QObject::connect(ui->NodeFillColor, SIGNAL(clicked(bool)),
-		     this, SLOT(generate_Freestyle_Nodes()));
-    QObject::connect(ui->NodeOutlineColor, SIGNAL(clicked(bool)),
-		     this, SLOT(generate_Freestyle_Nodes()));
-    QObject::connect(ui->EdgeLineColor, SIGNAL(clicked(bool)),
-		     this, SLOT(generate_Freestyle_Edges()));
+    // Redraw the preview pane graph (if any) when these NODE
+    // parameters are modified:
+    connect(ui->nodeSize,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(nodeSize); });
+    connect(ui->NodeLabel1,
+	    (void(QLineEdit::*)(QString))&QLineEdit::textChanged,
+	    this, [this]() { generate_Graph(nodeLabel1); });
+    connect(ui->NodeLabel2,
+	    (void(QLineEdit::*)(QString))&QLineEdit::textChanged,
+	    this, [this]() { generate_Graph(nodeLabel2); });
+    connect(ui->NodeLabelSize,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(nodeLabelSize); });
+    connect(ui->NumLabelCheckBox,
+	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
+	    this, [this]() { generate_Graph(numLabelCheckBox); });
+    connect(ui->NodeFillColor,
+	    (void(QPushButton::*)(bool))&QPushButton::clicked,
+	    this, [this]() { generate_Graph(nodeFillColour); });
+    connect(ui->NodeOutlineColor,
+	    (void(QPushButton::*)(bool))&QPushButton::clicked,
+	    this, [this]() { generate_Graph(nodeOutlineColour); });
 
-    QObject::connect(ui->graphRotation, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->complete_checkBox, SIGNAL(clicked(bool)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->graphHeight, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->graphWidth, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->numOfNodes1, SIGNAL(valueChanged(int)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->numOfNodes2, SIGNAL(valueChanged(int)),
-		     this, SLOT(generate_Graph()));
-    QObject::connect(ui->graphType_ComboBox, SIGNAL(activated(int)),
-		     this, SLOT(generate_Graph()));
+    // Redraw the preview pane graph (if any) when these EDGE
+    // parameters are modified:
+    connect(ui->edgeSize,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(edgeSize); });
+    connect(ui->EdgeLabel,
+	    (void(QLineEdit::*)(QString))&QLineEdit::textChanged,
+	    this, [this]() { generate_Graph(edgeLabel); });
+    connect(ui->EdgeLabelSize,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(edgeLabelSize); });
+    connect(ui->EdgeLineColor,
+	    (void(QPushButton::*)(bool))&QPushButton::clicked,
+	    this, [this]() { generate_Graph(edgeLineColour); });
 
-    QObject::connect(ui->EdgeLabelSize, SIGNAL(valueChanged(double)),
-		     this, SLOT(generate_Graph()));
+    // Redraw the preview pane graph (if any) when these GRAPH
+    // parameters are modified:
+    connect(ui->graphRotation,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(graphRotation); });
+    connect(ui->complete_checkBox,
+	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
+	    this, [this]() { generate_Graph(completeCheckBox); });
+    connect(ui->graphHeight,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(graphHeight); });
+    connect(ui->graphWidth,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(graphWidth); });
+    connect(ui->numOfNodes1,
+	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(numOfNodes1); });
+    connect(ui->numOfNodes2,
+	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(numOfNodes2); });
+    connect(ui->graphType_ComboBox,
+	    (void(QComboBox::*)(int))&QComboBox::activated,
+	    this, [this]() { generate_Graph(graphTypeComboBox); });
 
-    QObject::connect(ui->snapToGrid_checkBox, SIGNAL(clicked(bool)),
-		     ui->canvas, SLOT(snapToGrid(bool)));
+    // When these NODE and EDGE parameters are changed, the updated
+    // values are passed to the canvas view, so that nodes and edges
+    // drawn in "Freestyle" mode are styled as per the settings in the
+    // "Create Graph" tab.
+    connect(ui->nodeSize, SIGNAL(valueChanged(double)),
+	    this, SLOT(nodeParamsUpdated()));
+    connect(ui->NodeLabel1, SIGNAL(textChanged(QString)),
+	    this, SLOT(nodeParamsUpdated()));
+    connect(ui->NodeLabel2, SIGNAL(textChanged(QString)),
+	    this, SLOT(nodeParamsUpdated()));
+    connect(ui->NodeLabelSize, SIGNAL(valueChanged(double)),
+	    this, SLOT(nodeParamsUpdated()));
+    connect(ui->NumLabelCheckBox, SIGNAL(clicked(bool)),
+	    this, SLOT(nodeParamsUpdated()));
+    connect(ui->NodeFillColor, SIGNAL(clicked(bool)),
+	    this, SLOT(nodeParamsUpdated()));
+    connect(ui->NodeOutlineColor, SIGNAL(clicked(bool)),
+	    this, SLOT(nodeParamsUpdated()));
 
-    QObject::connect(ui->canvas, SIGNAL(setKeyStatusLabelText(QString)),
-		     ui->keyPressStatus_label, SLOT(setText(QString)));
+    connect(ui->edgeSize, SIGNAL(valueChanged(double)),
+	    this, SLOT(edgeParamsUpdated()));
+    connect(ui->EdgeLabel, SIGNAL(textChanged(QString)),
+	    this, SLOT(edgeParamsUpdated()));
+    connect(ui->EdgeLabelSize, SIGNAL(valueChanged(double)),
+	    this, SLOT(edgeParamsUpdated()));
+    connect(ui->EdgeLineColor, SIGNAL(clicked(bool)),
+	    this, SLOT(edgeParamsUpdated()));
 
-    QObject::connect(ui->canvas, SIGNAL(resetDragMode()),
-		     ui->dragMode_radioButton, SLOT(click()));
+    // Yet more connections...
+    connect(ui->snapToGrid_checkBox, SIGNAL(clicked(bool)),
+	    ui->canvas, SLOT(snapToGrid(bool)));
 
+    connect(ui->canvas, SIGNAL(setKeyStatusLabelText(QString)),
+	    ui->keyPressStatus_label, SLOT(setText(QString)));
+
+    connect(ui->canvas, SIGNAL(resetDragMode()),
+	    ui->dragMode_radioButton, SLOT(click()));
+
+    // Initialize the canvas to be in "drag" mode.
     ui->dragMode_radioButton->click();
 
-    // Initialize color buttons.
+    // Initialize colour buttons.
     QString s("background: #000000;" BUTTON_STYLE);
     ui->EdgeLineColor->setStyleSheet(s);
     ui->NodeOutlineColor->setStyleSheet(s);
@@ -341,8 +393,8 @@ QMainWindow(parent),
     s = "background: #ffffff;" BUTTON_STYLE;
     ui->NodeFillColor->setStyleSheet(s);
 
-    generate_Freestyle_Edges();
-    generate_Freestyle_Nodes();
+    edgeParamsUpdated();
+    nodeParamsUpdated();
 
     // Initialize the canvas to enable snapToGrid feature when loaded.
     ui->canvas->snapToGrid(ui->snapToGrid_checkBox->isChecked());
@@ -1590,10 +1642,10 @@ MainWindow::load_Graphic_Library()
 	dirIt.next();
 #ifdef DEBUG2
 	if (QFileInfo(dirIt.filePath()).isFile())
-	    qDebug() << "load_Graphic_Library(): suffix of"
-		     << QFileInfo(dirIt.filePath()).fileName()
-		     << "is"
-		     << QFileInfo(dirIt.filePath()).suffix();
+	    qDeb() << "load_Graphic_Library(): suffix of"
+		   << QFileInfo(dirIt.filePath()).fileName()
+		   << "is"
+		   << QFileInfo(dirIt.filePath()).suffix();
 #endif
 
 	if (QFileInfo(dirIt.filePath()).suffix() == GRAPHiCS_FILE_EXTENSION
@@ -1624,7 +1676,7 @@ MainWindow::select_Custom_Graph(QString graphName)
 {
     if (!graphName.isNull())
     {
-	qDebug() << "select_Custom_Graph(): graphName is" << graphName;
+	qDeb() << "select_Custom_Graph(): graphName is" << graphName;
 
 	QFile file(graphName);
 
@@ -1775,14 +1827,14 @@ MainWindow::select_Custom_Graph(QString graphName)
 	    }
 	}
 	file.close();
-	qDebug() << "select_Custom_Graph: graph->childItems().length() ="
-		 << graph->childItems().length();
+	qDeb() << "select_Custom_Graph: graph->childItems().length() ="
+	       << graph->childItems().length();
 	graph->setRotation(-1 * ui->graphRotation->value());
 	ui->preview->scene()->clear();
 	ui->preview->scene()->addItem(graph);
     }
     else
-	qDebug() << "select_Custom_Graph(): graphName is NULL!! ??";
+	qDeb() << "select_Custom_Graph(): graphName is NULL!! ??";
 }
 
 
@@ -1837,24 +1889,32 @@ MainWindow::style_Graph()
 /*
  * Name:	generate_Graph()
  * Purpose:	Load a new graph into the preview pane.
- * Arguments:	None.
+ * Arguments:	A value indicating which "New Graph" ui element was changed.
  * Outputs:	Nothing.
- * Modifies:	The preview pane.
+ * Modifies:	The drawing in the preview pane.
  * Returns:	Nothing.
  * Assumptions: ?
  * Bugs:	?
- * Notes:	?
+ * Notes:	In the case of a non-"basicGraph", only UI items
+ *		specifically modified should be applied to the graph.
+ *		The tortuous connect() statements in MW's constructor
+ *		call this function with an identifier for the changed
+ *		UI item.  This information is only needed for
+ *		"library" graphs.
  */
 
 void
-MainWindow::generate_Graph()
+MainWindow::generate_Graph(int changed_value)
 {
+    printf("generate_Graph(%d) called...\n", changed_value);
+    qDeb() << "MW::generate_Graph(" << changed_value << ") called.";
+
     QScreen * screen = QGuiApplication::primaryScreen();
 
     ui->preview->scene()->clear();
     if (ui->graphType_ComboBox->currentIndex() < BasicGraphs::Count)
     {
-	qDebug() << "generate_Graph(): making a basic graph";
+	qDeb() << "generate_Graph(): making a basic graph";
 	ui->preview->Create_Graph(ui->graphType_ComboBox->currentIndex(),
 				  ui->numOfNodes1->value(),
 				  ui->numOfNodes2->value(),
@@ -2242,26 +2302,27 @@ MainWindow::on_numOfNodes2_valueChanged(int arg1)
 
 
 /*
- * Name:	generate_Freestyle_Nodes()
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Name:	nodeParamsUpdated()
+ * Purpose:	Tell the canvas that a node param setting has changed.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	Nothing.
+ * Returns:	Nothing.
+ * Assumptions: There are no other node params to tell the canvas about.
+ * Bugs:	?
+ * Notes:	?
  */
 
 void
-MainWindow::generate_Freestyle_Nodes()
+MainWindow::nodeParamsUpdated()
 {
-    //QScreen * screen = QGuiApplication::primaryScreen();
+    qDeb() << "MW::nodeParamsUpdated() called.";
+
     ui->canvas->setUpNodeParams(
 	ui->nodeSize->value(),
 	ui->NumLabelCheckBox->isChecked(),
 	ui->nodeLabel->text(),
-	ui->nodeSize->value(),
+	ui->NodeLabelSize->value(),
 	ui->NodeFillColor->palette().background().color(),
 	ui->NodeOutlineColor->palette().background().color());
 }
@@ -2269,25 +2330,28 @@ MainWindow::generate_Freestyle_Nodes()
 
 
 /*
- * Name:	generate_Freestyle_Edges()
- * Purpose:
- * Arguments:
- * Outputs:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
+ * Name:	edgeParamsUpdated()
+ * Purpose:	Tell the canvas that an edge param setting has changed.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	Nothing.
+ * Returns:	Nothing.
+ * Assumptions: There are no other edge params to tell the canvas about.
+ * Bugs:	?
+ * Notes:	?
  */
 
 void
-MainWindow::generate_Freestyle_Edges()
+MainWindow::edgeParamsUpdated()
 {
-    ui->canvas->setUpEdgeParams(ui->edgeSize->value(),
-				ui->EdgeLabel->text(),
-				ui->EdgeLabelSize->value(),
-				ui->EdgeLineColor->
-				palette().background().color());
+    qDeb() << "MW::edgeParamsUpdated() called; EdgeLabelSize is "
+	   << ui->EdgeLabelSize->value();
+
+    ui->canvas->setUpEdgeParams(
+	ui->edgeSize->value(),
+	ui->EdgeLabel->text(),
+	ui->EdgeLabelSize->value(),
+	ui->EdgeLineColor->palette().background().color());
 }
 
 

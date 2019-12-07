@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.5
+ * Version:	1.6
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -18,6 +18,11 @@
  *  (a) Rename "none" mode to "drag" mode, for less confusion.
  *      This required changes to mainwindow.ui as well.
  *	(Also changed "Complete" to "Draw edges" there.)
+ * Dec 6, 2019 (JD V1.6)
+ *  (a) Rename generate_Freestyle_{Nodes,Edges} to {node,edge}ParamsUpdated
+ *      to better reflect what those functions do.
+ *  (b) Modify generate_Graph() to take a parameter.
+ *  (c) Add the enum widget_num as the parameter values for generate_Graph().
  */
 
 
@@ -39,17 +44,17 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-public:
+  public:
     explicit MainWindow(QWidget * parent = 0);
     ~MainWindow();
     void setKeyStatusLabel(QString text);
 
-private slots:
+  private slots:
     bool save_Graph();
     bool load_Graphic_File();
     void load_Graphic_Library();
     void select_Custom_Graph(QString graphName);
-    void generate_Graph();
+    void generate_Graph(int widget_id);
     void style_Graph();
     void generate_Combobox_Titles();
     void dumpGraphIc();
@@ -64,8 +69,8 @@ private slots:
     void on_graphType_ComboBox_currentIndexChanged(int index);
     void on_numOfNodes2_valueChanged(int arg1);
 
-    void generate_Freestyle_Nodes();
-    void generate_Freestyle_Edges();
+    void nodeParamsUpdated();
+    void edgeParamsUpdated();
 
     void on_deleteMode_radioButton_clicked();
 
@@ -79,12 +84,18 @@ private slots:
 
     void on_tabWidget_currentChanged(int index);
 
-private:
+  private:
     Ui::MainWindow * ui;
     QDir dir;
     QString fileDirectory;
     QGridLayout * gridLayout;
     QScrollArea * scroll;
+    enum widget_num {nodeSize, nodeLabel1, nodeLabel2, nodeLabelSize,
+		     numLabelCheckBox, nodeFillColour, nodeOutlineColour,
+		     edgeSize, edgeLabel, edgeLabelSize, edgeLineColour,
+		     graphRotation, completeCheckBox, graphHeight,
+		     graphWidth, numOfNodes1, numOfNodes2,
+		     graphTypeComboBox};
 };
 
 #endif // MAINWINDOW_H
