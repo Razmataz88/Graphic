@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.9
+ * Version: 1.10
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -38,6 +38,9 @@
  *	node by drawing it with a dashed line (pen style 1).
  * Dec 4, 2019 (JD V1.9)
  *  (a) Add some comments to some functions.  Tweak formatting.
+ * Dec 6, 2019 (JD V1.10)
+ *  (a) Add some debug outputs.
+ *  (b) Bug fix: createNode() now also sets the node label size.
  */
 
 #include "canvasview.h"
@@ -144,6 +147,12 @@ CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
 			    QString label, qreal nodeLabelSize,
 			    QColor nodeFillColour, QColor nodeOutLineColour)
 {
+    qDeb() << "CV::setUpNodeParams(): nodeDiameter = " << nodeDiameter;
+    qDeb() << "CV::setUpNodeParams(): nodeLabel = /" << label << "/";
+    qDeb() << "CV::setUpNodeParams(): nodeLabelSize = " << nodeLabelSize;
+    qDeb() << "CV::setUpNodeParams(): nodeOutLineColour = " << nodeOutLineColour;
+    qDeb() << "CV::setUpNodeParams(): nodeFillColour = " << nodeFillColour;
+
     nodeParams->diameter = nodeDiameter;
     nodeParams->isNumbered = numberedLabels;
     nodeParams->label = label;
@@ -159,7 +168,8 @@ CanvasView::createNode(QPointF pos)
 {
     Node * node = new Node();
     node->setDiameter(nodeParams->diameter);
-    node->setEdgeWeight(edgeParams->size);
+    node->setNodeLabelSize(nodeParams->labelSize);
+    node->setEdgeWeight(edgeParams->size);		// ???
     node->setRotation(0);
     node->setFillColour(nodeParams->fillColour);
     node->setLineColour(nodeParams->outlineColour);
