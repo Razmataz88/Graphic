@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.10
+ * Version: 1.11
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -41,6 +41,8 @@
  * Dec 6, 2019 (JD V1.10)
  *  (a) Add some debug outputs.
  *  (b) Bug fix: createNode() now also sets the node label size.
+ * Dec 8, 2019 (JD V1.11)
+ *  (a) Remove node->edgeWeight, which is used nowhere.
  */
 
 #include "canvasview.h"
@@ -169,7 +171,6 @@ CanvasView::createNode(QPointF pos)
     Node * node = new Node();
     node->setDiameter(nodeParams->diameter);
     node->setNodeLabelSize(nodeParams->labelSize);
-    node->setEdgeWeight(edgeParams->size);		// ???
     node->setRotation(0);
     node->setFillColour(nodeParams->fillColour);
     node->setLineColour(nodeParams->outlineColour);
