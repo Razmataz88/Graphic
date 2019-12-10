@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose: Declare the node class.
  * 
@@ -20,6 +20,9 @@
  * Nov 30, 2019 (JD V1.4)
  *  (a) Remove setNodeLabel(qreal) and replace it with setNodeLabel(int).
  *	Ditto for setNodeLabel(QString, qreal).
+ * Dec 8, 2019 (JD V1.5)
+ *  (a) Add preview X and Y coords and setter/getters.
+ *  (b) Remove edgeWeight, which is used nowhere.
  */
 
 
@@ -37,7 +40,7 @@ class PreView;
 
 class Node : public QGraphicsObject
 {
-public:
+  public:
     Node();
 
     void addEdge(Edge * edge);
@@ -46,8 +49,6 @@ public:
 
     void setDiameter(qreal diameter);
     qreal getDiameter();
-
-    void setEdgeWeight(qreal aEdgeWeight);
 
     void setRotation(qreal aRotation);
     qreal getRotation();
@@ -66,6 +67,10 @@ public:
     void setNodeLabel(QString aLabel, int number);
     void setNodeLabel(QString aLabel, QString subscript);
     void setNodeLabelSize(qreal labelSize);
+
+    void setPreviewCoords(qreal x, qreal y);
+    qreal getPreviewX();
+    qreal getPreviewY();
     
     QString getLabel() const;
     qreal getLabelSize() const;
@@ -81,20 +86,21 @@ public:
     void chosen(int group1);
 
     void editLabel(bool edit);
-   // ~Node();
-protected:
+    // ~Node();
+
+  protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
     void mousePressEvent(QGraphicsSceneMouseEvent * event);  
     void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
     void paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
 	       QWidget * widget);
 
-signals:
+  signals:
     void nodeDeleted();
 
-private:
+  private:
     QPointF	newPos;
-    qreal	nodeDiameter, edgeWeight, rotation;
+    qreal	nodeDiameter, rotation;
     QString	label;
     HTML_Label	* htmlLabel;
     QColor	nodeLine, nodeFill;
@@ -103,7 +109,9 @@ private:
     bool	select;
     qreal	logicalDotsPerInchX;
     qreal	logicalDotsPerInchY;
-    void labelToHtml();
+    void	labelToHtml();
+    qreal	previewX;
+    qreal	previewY;
 };
 
 #endif // NODE_H

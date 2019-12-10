@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.6
+ * Version: 1.7
  *
  * Purpose: creates a node for the users graph
  *
@@ -50,6 +50,9 @@
  *	sourceRadius and destRadius are meaningless, I will try to
  *	make them correct.)
  *  (b) Improved(?) the comment for itemChange().
+ * Dec 1, 2019 (JD V1.7)
+ *  (a) Add preview X and Y coords and setter/getters.
+ *  (b) Remove edgeWeight, which is used nowhere.
  */
 
 #include "edge.h"
@@ -70,18 +73,16 @@
 #include <QDrag>
 #include <QtCore>
 
+
 // Debugging aids (without editing the source file):
 #ifdef DEBUG
 static const bool debug = true;
+#define qDeb() qDebug().nospace().noquote() << fixed \
+    << qSetRealNumberPrecision(4)
 #else
 static const bool debug = false;
+#define qDeb() if (false) qDebug()
 #endif
-
-// Like qDebug(), but a little more literal, and turn-offable:
-#define qDeb if (debug) \
-        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
-                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
-
 
 
 /*
@@ -106,11 +107,10 @@ Node::Node()
     nodeID = -1;
     penStyle = 0;	// What type of pen style to use when drawing outline.
     nodeDiameter = 1;
-    edgeWeight = 1;     // UNUSED IN V 1.1.
     rotation = 0;
     htmlLabel = new HTML_Label(this);
     setHandlesChildEvents(true);
-    select = false;
+    select = false;		    // TODO: is 'select' of any use?
     QScreen * screen = QGuiApplication::primaryScreen();
     logicalDotsPerInchX = screen->logicalDotsPerInchX();
     logicalDotsPerInchY = screen->logicalDotsPerInchY();
@@ -211,27 +211,6 @@ Node::setDiameter(qreal diameter)
 qreal Node::getDiameter()
 {
     return nodeDiameter / logicalDotsPerInchX;
-}
-
-
-
-/*
- * Name:        setEdgeWeight()
- * Purpose:	TODO: ??? Why does a node have an edgeweight?
- * Arguments:
- * Output:
- * Modifies:
- * Returns:
- * Assumptions:
- * Bugs:
- * Notes:
- */
-
-void
-Node::setEdgeWeight(qreal aEdgeWeight)
-{
-    edgeWeight = aEdgeWeight;
-    update();
 }
 
 
@@ -886,6 +865,7 @@ Node::itemChange(GraphicsItemChange change, const QVariant &value)
 void
 Node::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
+    qDeb() << "N::mousePressEvent() setting 'select' to t";
     select = true;
     QGraphicsItem::mousePressEvent(event);
 }
@@ -905,6 +885,47 @@ Node::mousePressEvent(QGraphicsSceneMouseEvent * event)
 void
 Node::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
+    qDeb() << "N::mouseReleaseEvent() setting 'select' to F";
+
     select = false;
     QGraphicsItem::mouseReleaseEvent(event);
+}
+
+
+
+/*
+ * Name:	setPreviewCoords()
+ * Purpose:	Record the location of this node as it would have been
+ *		originally placed in a 1" square.
+ * Arguments:	The X and Y coords.
+ * Outputs:	Nothing.
+ * Modifies:	The node's preview X and Y data.
+ * Returns:	Nothing.
+ * Assumptions:	None.
+ * Bugs:	?
+ * Notes:	These values are used so that when a graph is styled
+ *		multiple times the nodes can be scaled with respect to
+ *		the original coordinates, not wrt previously scaled
+ *		coords.  The latter does not faithfully scale things
+ *		in all circumstances (e.g., a cycle which is scaled in
+ *		X independently of Y, then later vice-versa).
+ */
+
+void
+Node::setPreviewCoords(qreal x, qreal y)
+{
+    previewX = x;
+    previewY = y;
+}
+
+qreal
+Node::getPreviewX()
+{
+    return previewX;
+}
+
+qreal
+Node::getPreviewY()
+{
+    return previewY;
 }

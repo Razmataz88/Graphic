@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.6
+ * Version:	1.7
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -23,6 +23,9 @@
  *      to better reflect what those functions do.
  *  (b) Modify generate_Graph() to take a parameter.
  *  (c) Add the enum widget_num as the parameter values for generate_Graph().
+ * Dec 9, 2019 (JD V1.7)
+ *  (a) Add on_numOfNodes1_valueChanged() to follow the actions of
+ *	on_numOfNodes2_valueChanged().
  */
 
 
@@ -67,6 +70,7 @@ class MainWindow : public QMainWindow
 
     void on_NumLabelCheckBox_clicked(bool checked);
     void on_graphType_ComboBox_currentIndexChanged(int index);
+    void on_numOfNodes1_valueChanged(int arg1);
     void on_numOfNodes2_valueChanged(int arg1);
 
     void nodeParamsUpdated();

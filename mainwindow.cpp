@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.19
+ * Version:	1.20
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -154,6 +154,21 @@
  *  (c) Bug fix: nodeParamsUpdated() now passes the NodeLabelSize to
  *	ui->canvas->setUpNodeParams() where it should, not the nodeSize.
  *  (d) Clean up debug outputs a bit.  Improve some comments.
+ * Dec 9, 2019 (JD V1.20)
+ *  (a) Various comment and debug changes.
+ *  (b) Change generate_Graph() to not pass height and width into to
+ *	PreView::Create_Graph().  This is part of a large set of
+ *	changes which will eventually allow library graphs to be styled.
+ *  (c) Update call sequence to PV::Style_graph() as per changes there.
+ *  (d) Obsessively re-order the cases in
+ *	on_graphType_ComboBox_currentIndexChanged().
+ *	Also set more constraints on the spinboxes so that we can't
+ *	call generate_...() functions with meaningless parameters.
+ *	Show both width and height for Dutch Windmill, in case someone
+ *	wants one with non-unit aspect ratio.
+ *  (e) Add on_numOfNodes1_valueChanged() to follow the actions of
+ *	on_numOfNodes2_valueChanged() to avoid inconsistent parameters
+ *	when numOfNodes1 is changed.
  */
 
 #include "mainwindow.h"
@@ -183,14 +198,12 @@
 // Debugging aids (without editing the source file):
 #ifdef DEBUG
 static const bool debug = true;
+#define qDeb() qDebug().nospace().noquote() << fixed \
+    << qSetRealNumberPrecision(4)
 #else
 static const bool debug = false;
+#define qDeb() if (false) qDebug()
 #endif
-
-// Like qDebug(), but a little more literal, and turn-offable:
-#define qDeb if (debug) \
-        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
-                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
 
 
 #define GRAPHiCS_FILE_EXTENSION "grphc"
@@ -420,7 +433,7 @@ QMainWindow(parent),
 	   screen->physicalSize().height(), screen->physicalSize().width());
     printf("Pixel resolution:  %d, %d\n",
 	   screen->size().height(), screen->size().width());
-    printf("devicePixelRatio: %.3f\n", screen->devicePixelRatio());
+    printf("screen->devicePixelRatio: %.3f\n", screen->devicePixelRatio());
 #endif
 }
 
@@ -1857,9 +1870,8 @@ MainWindow::select_Custom_Graph(QString graphName)
 void
 MainWindow::style_Graph()
 {
-#ifdef DEBUG
-    printf("style_Graph() called\n");
-#endif
+    qDeb() << "MW:style_Graph() called";
+
     foreach (QGraphicsItem * item, ui->preview->scene()->items())
     {
 	if (item->type() == Graph::Type)
@@ -1872,13 +1884,15 @@ MainWindow::style_Graph()
 				     ui->NodeLabel2->text(),
 				     ui->NumLabelCheckBox->isChecked(),
 				     ui->NodeLabelSize->value(),
+				     ui->NodeFillColor->palette().background().color(),
+				     ui->NodeOutlineColor->palette().background().color(),
 				     ui->edgeSize->value(),
 				     ui->EdgeLabel->text(),
 				     ui->EdgeLabelSize->value(),
-				     ui->graphRotation->value(),
-				     ui->NodeFillColor->palette().background().color(),
-				     ui->NodeOutlineColor->palette().background().color(),
-				     ui->EdgeLineColor->palette().background().color());
+				     ui->EdgeLineColor->palette().background().color(),
+				     ui->graphWidth->value(),
+				     ui->graphHeight->value(), 
+				     ui->graphRotation->value());
 
 	}
     }
@@ -1906,26 +1920,14 @@ MainWindow::style_Graph()
 void
 MainWindow::generate_Graph(int changed_value)
 {
-    printf("generate_Graph(%d) called...\n", changed_value);
-    qDeb() << "MW::generate_Graph(" << changed_value << ") called.";
+    qDeb() << "MW::generate_Graph(widget " << changed_value << ") called.";
 
-    QScreen * screen = QGuiApplication::primaryScreen();
-
-    ui->preview->scene()->clear();
     if (ui->graphType_ComboBox->currentIndex() < BasicGraphs::Count)
     {
 	qDeb() << "generate_Graph(): making a basic graph";
 	ui->preview->Create_Graph(ui->graphType_ComboBox->currentIndex(),
 				  ui->numOfNodes1->value(),
 				  ui->numOfNodes2->value(),
-				  ui->graphHeight->value()
-				  * screen->logicalDotsPerInchY()
-				  - ui->nodeSize->value()
-				  * screen->logicalDotsPerInchY(),
-				  ui->graphWidth->value()
-				  * screen->logicalDotsPerInchX()
-				  - ui->nodeSize->value()
-				  * screen->logicalDotsPerInchX(),
 				  ui->complete_checkBox->isChecked());
 	this->style_Graph();
     }
@@ -2185,68 +2187,72 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 
     switch (index)
     {
-      case BasicGraphs::Crown:
+      case BasicGraphs::Antiprism:
+	ui->numOfNodes1->setMinimum(6);
+	if (ui->numOfNodes1->value() % 2 == 1)
+	    ui->numOfNodes1->setValue(ui->numOfNodes1->value() - 1);
+	ui->numOfNodes1->setSingleStep(2);
+	break;
+
+      case BasicGraphs::BBTree:
+      case BasicGraphs::Complete:
+	break;
+
+      case BasicGraphs::Bipartite:
+	ui->partitionLabel->setText("Partitions");
+	ui->numOfNodes2->show();
+	break;
+
       case BasicGraphs::Cycle:
+      case BasicGraphs::Crown:
       case BasicGraphs::Helm:
       case BasicGraphs::Prism:
-      case BasicGraphs::Complete:
+	ui->numOfNodes1->setMinimum(3);
+	break;
+
+      case BasicGraphs::Dutch_Windmill:
+	ui->partitionLabel->setText("Blades & Nodes");
+	ui->numOfNodes1->setMinimum(2);
+	ui->numOfNodes2->show();
+	ui->numOfNodes2->setMinimum(3);
+	if (ui->numOfNodes2->value() < 3)
+	    ui->numOfNodes2->setValue(3);
+	// If someone really wants to scale this, why not?
+	// ui->graphWidth->hide();
+	// ui->widthLabel->hide();
+	// But start them off with a square drawing area:
+	ui->graphWidth->setValue(ui->graphHeight->value());
+	break;
+
+      case BasicGraphs::Gear:
+	ui->numOfNodes1->setMinimum(6);
+	break;
+
+      case BasicGraphs::Grid:
+	ui->partitionLabel->setText("Columns & Rows");
+	ui->numOfNodes2->show();
+	break;
+
+      case BasicGraphs::Path:
+	ui->graphHeight->hide();
+	ui->heightLabel->hide();
+	break;
+
+      case BasicGraphs::Petersen:
+	ui->partitionLabel->setText("Nodes & Step");
+	ui->numOfNodes1->setMinimum(3);
+	ui->numOfNodes2->setValue(2);
+	ui->numOfNodes2->show();
+	// If someone really wants to scale this, why not?
+	// But start them off with a square drawing area:
+	ui->graphWidth->setValue(ui->graphHeight->value());
+	break;
+
       case BasicGraphs::Star:
       case BasicGraphs::Wheel:
-      case BasicGraphs::BBTree:
-      {
-	  break;
-      }
-      case BasicGraphs::Antiprism:
-      {
-	  ui->numOfNodes1->setMinimum(6);
-	  if (ui->numOfNodes1->value() % 2 == 1)
-	      ui->numOfNodes1->setValue(ui->numOfNodes1->value() - 1);
-	  ui->numOfNodes1->setSingleStep(2);
-	  break;
-      }
-      case BasicGraphs::Bipartite:
-      {
-	  ui->partitionLabel->setText("Partitions");
-	  ui->numOfNodes2->show();
-	  break;
-      }
-      case BasicGraphs::Gear:
-      {
-	  ui->numOfNodes1->setMinimum(6);
-	  break;
-      }
-      case BasicGraphs::Grid:
-      {
-	  ui->partitionLabel->setText("Rows & Cols");
-	  ui->numOfNodes2->show();
-	  break;
-      }
-      case BasicGraphs::Path:
-      {
-	  ui->graphHeight->hide();
-	  ui->heightLabel->hide();
-	  break;
-      }
-      case BasicGraphs::Petersen:
-      {
-	  ui->partitionLabel->setText("Nodes & Step");
-	  ui->numOfNodes1->setMinimum(3);
-	  ui->numOfNodes2->setValue(2);
-	  ui->numOfNodes2->show();
-	  break;
-      }
-      case BasicGraphs::Windmill:
-      {
-	  ui->partitionLabel->setText("Nodes & Blades");
-	  ui->numOfNodes1->setMinimum(2);
-	  ui->numOfNodes2->show();
-	  ui->numOfNodes2->setMinimum(3);
-	  if (ui->numOfNodes2->value() < 3)
-	      ui->numOfNodes2->setValue(3);
-	  ui->graphWidth->hide();
-	  ui->widthLabel->hide();
-	  break;
-      }
+	ui->numOfNodes1->setMinimum(4);
+	break;
+
       default:
 	// ToDo: may need to change grphc file format to add
 	if (index > 0)
@@ -2260,10 +2266,10 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 	}
 	ui->numOfNodes1->hide();
 	ui->numOfNodes2->hide();
-	ui->graphHeight->hide();
-	ui->graphWidth->hide();
-	ui->heightLabel->hide();
-	ui->widthLabel->hide();
+	// ui->graphHeight->hide();
+	// ui->graphWidth->hide();
+	// ui->heightLabel->hide();
+	// ui->widthLabel->hide();
 	ui->complete_checkBox->hide();
     }
 }
@@ -2271,15 +2277,53 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 
 
 /*
+ * Name:	on_numOfNodes1_valueChanged()
+ * Purpose:	Ensure that the new value of the numOfNodes1 spinbox
+ *		does not cause some non-meaningful combination of
+ *		parameters.
+ * Arguments:	(Unused)
+ * Outputs:	Nothing.
+ * Modifies:	Possibly ui->numOfNodes1.
+ * Returns:	Nothing.
+ * Assumptions:	???
+ * Bugs:	???
+ * Notes:	At time of writing, magically connected to the
+ *		ui->numOfNodes1 QSpinBox.
+ */
+
+void
+MainWindow::on_numOfNodes1_valueChanged(int arg1)
+{
+    qDebug() << "on_numOfNodes1_valueChanged() called";
+    Q_UNUSED(arg1);
+
+    if (ui->graphType_ComboBox->currentIndex() == BasicGraphs::Petersen)
+    {
+	if (ui->numOfNodes2->value()
+	    > floor((ui->numOfNodes1->value() - 1) / 2))
+	{
+	    qDebug() << "\tchanging ui->numOfNodes2 to 1 from "
+		     << ui->numOfNodes2->value();
+	    ui->numOfNodes2->setValue(1);
+	}
+    }
+}
+
+
+
+/*
  * Name:	on_numOfNodes2_valueChanged()
- * Purpose:	
+ * Purpose:	Ensure that the new value of the numOfNodes2 spinbox
+ *		does not cause some non-meaningful combination of
+ *		parameters.
  * Arguments:	(Unused)
  * Outputs:	Nothing.
  * Modifies:	Possibly ui->numOfNodes2.
  * Returns:	Nothing.
  * Assumptions:	???
  * Bugs:	???
- * Notes:	???
+ * Notes:	At time of writing, magically connected to the
+ *		ui->numOfNodes2 QSpinBox.
  */
 
 void
@@ -2287,6 +2331,7 @@ MainWindow::on_numOfNodes2_valueChanged(int arg1)
 {
     qDebug() << "on_numOfNodes2_valueChanged() called";
     Q_UNUSED(arg1);
+
     if (ui->graphType_ComboBox->currentIndex() == BasicGraphs::Petersen)
     {
 	if (ui->numOfNodes2->value()
@@ -2320,8 +2365,8 @@ MainWindow::nodeParamsUpdated()
 
     ui->canvas->setUpNodeParams(
 	ui->nodeSize->value(),
-	ui->NumLabelCheckBox->isChecked(),
-	ui->nodeLabel->text(),
+	ui->NumLabelCheckBox->isChecked(),  // Useful?
+	ui->NodeLabel1->text(),		    // Useful?
 	ui->NodeLabelSize->value(),
 	ui->NodeFillColor->palette().background().color(),
 	ui->NodeOutlineColor->palette().background().color());

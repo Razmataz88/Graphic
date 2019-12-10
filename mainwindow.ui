@@ -156,15 +156,18 @@
                  </widget>
                 </item>
                 <item row="4" column="4" rowspan="2">
-                 <widget class="QSpinBox" name="numOfNodes1">
+                 <widget class="QSpinBox" name="numOfNodes2">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="toolTip">
+                   <string/>
+                  </property>
                   <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                   </property>
                   <property name="buttonSymbols">
                    <enum>QAbstractSpinBox::PlusMinus</enum>
@@ -673,12 +676,15 @@
                  </widget>
                 </item>
                 <item row="4" column="3" rowspan="2">
-                 <widget class="QSpinBox" name="numOfNodes2">
+                 <widget class="QSpinBox" name="numOfNodes1">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>For most graph types, the number of nodes.</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1760,8 +1766,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>98</width>
-               <height>28</height>
+               <width>564</width>
+               <height>1165</height>
               </rect>
              </property>
             </widget>
@@ -2108,7 +2114,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>numOfNodes2</sender>
+   <sender>numOfNodes1</sender>
    <signal>valueChanged(int)</signal>
    <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
@@ -2124,7 +2130,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>numOfNodes1</sender>
+   <sender>numOfNodes2</sender>
    <signal>valueChanged(int)</signal>
    <receiver>dragMode_radioButton</receiver>
    <slot>click()</slot>
