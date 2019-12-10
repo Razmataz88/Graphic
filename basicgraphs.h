@@ -2,7 +2,7 @@
  * File:	basicgraphs.h
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.1
+ * Version:	1.2
  *
  * Purpose:	Declare the basicgraphs class.
  *
@@ -11,6 +11,9 @@
  *  (a) Reorder the function declarations.
  *  (b) Rename some variables.
  *  (c) Remove width and height from almost all functions.
+ * Dec 10, 2019 (JD V1.2):
+ *  (a) Change decls of Graph_Type_Name and getGraphName() to static so
+ *	that I can access getGraphName() from other classes.
  */
 
 
@@ -51,10 +54,10 @@ class BasicGraphs
     enum Graph_Type {Antiprism = 1, BBTree, Bipartite, Complete, Crown,
 		     Cycle, Dutch_Windmill, Gear, Grid, Helm, Path,
 		     Petersen, Prism, Star, Wheel, Count};
-    QString getGraphName(int enumValue);
+    static QString getGraphName(int enumValue);
 
   private:
-    QVector<QString> Graph_Type_Name;
+    static QVector<QString> Graph_Type_Name;
 };
 
 #endif // BASICGRAPHS_H

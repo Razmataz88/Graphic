@@ -2,7 +2,7 @@
  * File:	basicgraphs.cpp
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.2
+ * Version:	1.3
  *
  * Purpose:	Implement functions which draw all the "known" graph types.
  *
@@ -29,6 +29,9 @@
  *	graphs other than bipartite.
  *  (f) In a fit of obsessiveness re-order the generate_...() functions
  *	into alphabetical order.  Other sundry tidying.
+ * Dec 10, 2019 (JD V1.3):
+ *  (a) Add decl of Graph_Type_Name so that I can access getGraphName()
+ *      from other classes.
  */
 
 #include "basicgraphs.h"
@@ -55,6 +58,8 @@ static const double PI = 3.14159265358979323846264338327950288419717;
 // TODO: Use golden ratio in graphs with two cycles
 // TODO: make create_cycle() better honour height and width.  Some
 //	 trigonometric thinking will be required.
+
+QVector<QString> BasicGraphs::Graph_Type_Name;
 
 BasicGraphs::BasicGraphs()
 {
@@ -873,5 +878,8 @@ BasicGraphs::generate_wheel(Graph * g, int numOfNodes, bool drawEdges)
 QString
 BasicGraphs::getGraphName(int enumValue)
 {
-    return Graph_Type_Name[enumValue];
+    if (enumValue > 0 && enumValue < Count)
+	return Graph_Type_Name[enumValue];
+
+    return "NOT A BASIC GRAPH";
 }
