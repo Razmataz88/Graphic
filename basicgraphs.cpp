@@ -2,7 +2,7 @@
  * File:	basicgraphs.cpp
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.3
+ * Version:	1.4
  *
  * Purpose:	Implement functions which draw all the "known" graph types.
  *
@@ -32,6 +32,9 @@
  * Dec 10, 2019 (JD V1.3):
  *  (a) Add decl of Graph_Type_Name so that I can access getGraphName()
  *      from other classes.
+ * Dec 10, 2019 (JD V1.4):
+ *  (a) Having put the debug defns in defuns.h (included by basicgraphs.h),
+ *      remove them from here.
  */
 
 #include "basicgraphs.h"
@@ -40,17 +43,6 @@
 #include "node.h"
 #include "edge.h"
 #include <QDebug>
-
-
-// Debugging aids (without editing the source file):
-#ifdef DEBUG
-static const bool debug = true;
-#define qDeb() qDebug().nospace().noquote() << fixed \
-    << qSetRealNumberPrecision(4)
-#else
-static const bool debug = false;
-#define qDeb() if (false) qDebug()
-#endif
 
 
 static const double PI = 3.14159265358979323846264338327950288419717;

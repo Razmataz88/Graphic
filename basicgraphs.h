@@ -2,7 +2,7 @@
  * File:	basicgraphs.h
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.2
+ * Version:	1.3
  *
  * Purpose:	Declare the basicgraphs class.
  *
@@ -14,12 +14,16 @@
  * Dec 10, 2019 (JD V1.2):
  *  (a) Change decls of Graph_Type_Name and getGraphName() to static so
  *	that I can access getGraphName() from other classes.
+ * Dec 12, 2019 (JD V1.3):
+ *  (b) Add "None" to enum Graph_Type, to match the index when no
+ *	graph type is selected.
  */
 
 
 #ifndef BASICGRAPHS_H
 #define BASICGRAPHS_H
 
+#include <defuns.h>
 #include <graph.h>
 
 class BasicGraphs
@@ -51,8 +55,8 @@ class BasicGraphs
     void generate_wheel(Graph * g, int numOfNodes, bool drawEdges);
 
     // This must agree with Graph_Type_Name set in the BG constructor.
-    enum Graph_Type {Antiprism = 1, BBTree, Bipartite, Complete, Crown,
-		     Cycle, Dutch_Windmill, Gear, Grid, Helm, Path,
+    enum Graph_Type {Nothing = 0, Antiprism, BBTree, Bipartite, Complete,
+		     Crown, Cycle, Dutch_Windmill, Gear, Grid, Helm, Path,
 		     Petersen, Prism, Star, Wheel, Count};
     static QString getGraphName(int enumValue);
 
