@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -25,11 +25,14 @@
  *	createSelectionPolygon(), rather than having them as private
  *	class variables.  (Changed edge.cpp accordingly.)
  *  (b) Removed decl for the unused isDigits() function.
+ * Dec 12, 2019 (JD V1.4):
+ *  (a) Include defuns.h.
  */
 
 #ifndef EDGE_H
 #define EDGE_H
 
+#include "defuns.h"
 #include "html-label.h"
 #include <QGraphicsItem>
 #include <QGraphicsObject>

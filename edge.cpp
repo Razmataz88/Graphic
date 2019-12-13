@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.7
+ * Version: 1.8
  *
  * Purpose: creates an edge for the users graph
  *
@@ -53,6 +53,9 @@
  *      given nodes.  Call adjust() at the end of the constructor,
  *	not before setting these (!).
  *  (b) Update the comment for adjust().
+ * Dec 12, 2019 (JD V1.8):
+ *  (a) The debug defns have now moved to defuns.h, which is now
+ *	included by edge.h.
  */
 
 #include "edge.h"
@@ -72,19 +75,6 @@
 
 static const double Pi = 3.14159265358979323846264338327950288419717;
 static const double offset = 5;		// TO DO: what is this?
-
-
-// Debugging aids (without editing the source file):
-#ifdef DEBUG
-static const bool debug = true;
-#else
-static const bool debug = false;
-#endif
-
-// Like qDebug(), but a little more literal, and turn-offable:
-#define qDeb if (debug) \
-        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
-                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
 
 
 
