@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.11
+ * Version: 1.12
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -43,31 +43,21 @@
  *  (b) Bug fix: createNode() now also sets the node label size.
  * Dec 8, 2019 (JD V1.11)
  *  (a) Remove node->edgeWeight, which is used nowhere.
+ * Dec 13, 2019 (JD V1.12)
+ *  (a) Added defuns.h, removed debug #defines.
  */
 
 #include "canvasview.h"
+#include "defuns.h"
 #include "edge.h"
-#include "node.h"
 #include "graph.h"
+#include "node.h"
 
 #include <math.h>
 #include <QKeyEvent>
 #include <QDebug>
 #include <QGraphicsSceneMouseEvent>
 #include <QPointF>
-
-
-// Debugging aids (without editing the source file):
-#ifdef DEBUG
-static const bool debug = true;
-#else
-static const bool debug = false;
-#endif
-
-// Like qDebug(), but a little more literal, and turn-offable:
-#define qDeb if (debug) \
-        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
-                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
 
 
 static const QString JOIN_DESCRIPTION =
