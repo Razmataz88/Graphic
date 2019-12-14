@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.20
+ * Version:	1.21
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -169,6 +169,22 @@
  *  (e) Add on_numOfNodes1_valueChanged() to follow the actions of
  *	on_numOfNodes2_valueChanged() to avoid inconsistent parameters
  *	when numOfNodes1 is changed.
+ * Dec 12, 2019 (JD V1.21)
+ *  (a) Save the screen DPI in a couple of static global vars & get it
+ *	over with, rather than repeatedly calling the Qt functions.
+ *  (b) Modify saveGraphIc() so that the coords in the .grphc file are
+ *	in inches, not in pixels.  (It should have been this way from
+ *	day 1!)
+ *  (c) Allow commas in labels.
+ *  (d) Close the file descriptor upon discovering an error when
+ *      reading a .grphc file.
+ *  (e) (Re-)Implement the ability to style library graphs (with
+ *	changes to preview.cpp).  As of this version, the graph
+ *	drawing widgets visible when a library graph is chosen do not
+ *	have values related to the graph in the preview window.  This
+ *	needs to be dealt with in the fullness of time.
+ *  (f) Show nodeLabel2 iff showing numOfNodes2.
+ *  (g) The usual collection of debug statement improvements.
  */
 
 #include "mainwindow.h"
@@ -195,17 +211,6 @@
 #include <QDate>
 
 
-// Debugging aids (without editing the source file):
-#ifdef DEBUG
-static const bool debug = true;
-#define qDeb() qDebug().nospace().noquote() << fixed \
-    << qSetRealNumberPrecision(4)
-#else
-static const bool debug = false;
-#define qDeb() if (false) qDebug()
-#endif
-
-
 #define GRAPHiCS_FILE_EXTENSION "grphc"
 #define GRAPHiCS_SAVE_FILE	"Graph-ic (*." GRAPHiCS_FILE_EXTENSION ")"
 #define GRAPHiCS_SAVE_SUBDIR	"graph-ic"
@@ -228,6 +233,8 @@ static const bool debug = false;
 #define ET_PREC_TIKZ  4
 // Similar for vertex precision in .grphc output:
 #define VP_PREC_GRPHC  4
+
+static qreal screenLogicalDPI_X, screenLogicalDPI_Y;
 
 /*
  * Name:	MainWindow
@@ -298,64 +305,64 @@ QMainWindow(parent),
     // parameters are modified:
     connect(ui->nodeSize,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(nodeSize); });
+	    this, [this]() { generate_Graph(nodeSize_WGT); });
     connect(ui->NodeLabel1,
 	    (void(QLineEdit::*)(QString))&QLineEdit::textChanged,
-	    this, [this]() { generate_Graph(nodeLabel1); });
+	    this, [this]() { generate_Graph(nodeLabel1_WGT); });
     connect(ui->NodeLabel2,
 	    (void(QLineEdit::*)(QString))&QLineEdit::textChanged,
-	    this, [this]() { generate_Graph(nodeLabel2); });
+	    this, [this]() { generate_Graph(nodeLabel2_WGT); });
     connect(ui->NodeLabelSize,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(nodeLabelSize); });
+	    this, [this]() { generate_Graph(nodeLabelSize_WGT); });
     connect(ui->NumLabelCheckBox,
 	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
-	    this, [this]() { generate_Graph(numLabelCheckBox); });
+	    this, [this]() { generate_Graph(numLabelCheckBox_WGT); });
     connect(ui->NodeFillColor,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
-	    this, [this]() { generate_Graph(nodeFillColour); });
+	    this, [this]() { generate_Graph(nodeFillColour_WGT); });
     connect(ui->NodeOutlineColor,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
-	    this, [this]() { generate_Graph(nodeOutlineColour); });
+	    this, [this]() { generate_Graph(nodeOutlineColour_WGT); });
 
     // Redraw the preview pane graph (if any) when these EDGE
     // parameters are modified:
     connect(ui->edgeSize,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(edgeSize); });
+	    this, [this]() { generate_Graph(edgeSize_WGT); });
     connect(ui->EdgeLabel,
 	    (void(QLineEdit::*)(QString))&QLineEdit::textChanged,
-	    this, [this]() { generate_Graph(edgeLabel); });
+	    this, [this]() { generate_Graph(edgeLabel_WGT); });
     connect(ui->EdgeLabelSize,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(edgeLabelSize); });
+	    this, [this]() { generate_Graph(edgeLabelSize_WGT); });
     connect(ui->EdgeLineColor,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
-	    this, [this]() { generate_Graph(edgeLineColour); });
+	    this, [this]() { generate_Graph(edgeLineColour_WGT); });
 
     // Redraw the preview pane graph (if any) when these GRAPH
     // parameters are modified:
     connect(ui->graphRotation,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(graphRotation); });
+	    this, [this]() { generate_Graph(graphRotation_WGT); });
     connect(ui->complete_checkBox,
 	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
-	    this, [this]() { generate_Graph(completeCheckBox); });
+	    this, [this]() { generate_Graph(completeCheckBox_WGT); });
     connect(ui->graphHeight,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(graphHeight); });
+	    this, [this]() { generate_Graph(graphHeight_WGT); });
     connect(ui->graphWidth,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(graphWidth); });
+	    this, [this]() { generate_Graph(graphWidth_WGT); });
     connect(ui->numOfNodes1,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(numOfNodes1); });
+	    this, [this]() { generate_Graph(numOfNodes1_WGT); });
     connect(ui->numOfNodes2,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(numOfNodes2); });
+	    this, [this]() { generate_Graph(numOfNodes2_WGT); });
     connect(ui->graphType_ComboBox,
 	    (void(QComboBox::*)(int))&QComboBox::activated,
-	    this, [this]() { generate_Graph(graphTypeComboBox); });
+	    this, [this]() { generate_Graph(graphTypeComboBox_WGT); });
 
     // When these NODE and EDGE parameters are changed, the updated
     // values are passed to the canvas view, so that nodes and edges
@@ -423,11 +430,14 @@ QMainWindow(parent),
     // Initialize Create Graph pane to default values
     on_graphType_ComboBox_currentIndexChanged(-1);
 
+    QScreen * screen = QGuiApplication::primaryScreen();
+    screenLogicalDPI_X = screen->logicalDotsPerInchX();
+    screenLogicalDPI_Y = screen->logicalDotsPerInchY();
+
 #ifdef DEBUG
     // Info to help with dealing with HiDPI issues
-    QScreen * screen = QGuiApplication::primaryScreen();
     printf("Logical DPI: (%.3f, %.3f)\nPhysical DPI: (%.3f, %.3f)\n",
-	   screen->logicalDotsPerInchX(), screen->logicalDotsPerInchY(),
+	   screenLogicalDPI_X, screenLogicalDPI_Y,
 	   screen->physicalDotsPerInchX(), screen->physicalDotsPerInchY());
     printf("Physical size (mm): ht %.1f, wd %.3f\n",
 	   screen->physicalSize().height(), screen->physicalSize().width());
@@ -496,14 +506,12 @@ MainWindow::setKeyStatusLabel(QString text)
 void
 MainWindow::generate_Combobox_Titles()
 {
-    BasicGraphs * simpleG = new BasicGraphs();
+    BasicGraphs * basicG = new BasicGraphs();
     int i = 1;
 
     while (i < BasicGraphs::Count)
-    {
-	ui->graphType_ComboBox->addItem(simpleG->getGraphName(i));
-	i++;
-    }
+	ui->graphType_ComboBox->addItem(basicG->getGraphName(i++));
+
     ui->graphType_ComboBox->insertSeparator(BasicGraphs::Count);
     this->load_Graphic_Library();
 }
@@ -895,7 +903,6 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     printf("saveTikZ() called!\n");
     // TODO: only define a given colour once.
     // (Hash the known colours, and use the name if already defined?)
-    QScreen * screen = QGuiApplication::primaryScreen();
 
     nodeInfo nodeDefaults;
     edgeInfo edgeDefaults;
@@ -962,8 +969,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	outfile << "    e/.style={draw=" << defEdgeLineColourName;
 
     outfile << ", line width="
-	    << QString::number(edgeDefaults.penSize
-			       / screen->logicalDotsPerInchX(),
+	    << QString::number(edgeDefaults.penSize / screenLogicalDPI_X,
 			       'f', ET_PREC_TIKZ) << "in},\n";
     outfile << "    l/.style={font=\\fontsize{" << edgeDefaults.labelSize
 	    << "}{1}\\selectfont}]\n";
@@ -1077,11 +1083,11 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	// Use (x,y) coordinate system for node positions.
 	outfile << "\\node (v" << QString::number(i) << ") at ("
 		<< QString::number((node->scenePos().rx() - midx)
-				   / screen->logicalDotsPerInchX(),
+				   / screenLogicalDPI_X,
 				   'f', VP_PREC_TIKZ)
 		<< ","
 		<< QString::number((node->scenePos().ry() - midy)
-				   / -screen->logicalDotsPerInchX(),
+				   / -screenLogicalDPI_Y,
 				   'f', VP_PREC_TIKZ)
 		<< ") [n";
 //	printf("HERE: lineColour = /%s/\n", lineColour.toLatin1().data());
@@ -1176,7 +1182,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 		{
 		    outfile << ", line width="
 			    << QString::number(edge->getPenWidth()
-					       / screen->logicalDotsPerInchX(),
+					       / screenLogicalDPI_X,
 					       'f', ET_PREC_TIKZ)
 			    << "in";
 		    wroteExtra = true;
@@ -1240,7 +1246,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 bool
 saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
 {
-    printf("saveGraphIc() called!\n");
+    qDeb() << "MW::saveGraphIc() called!";
     // Use some painful Qt constructs to output the node and edge
     // information with a more readable format.
     // Note that tests with explicitly setting the format to 'g'
@@ -1288,16 +1294,18 @@ saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
 	    miny = y;
     }
 
-    qreal midx = (maxx + minx) / 2.;
-    qreal midy = (maxy + miny) / 2.;
+    qreal midxInch = (maxx + minx) / (screenLogicalDPI_X * 2.);
+    qreal midyInch = (maxy + miny) / (screenLogicalDPI_Y * 2.);
     for (int i = 0; i < nodes.count(); i++)
     {
 	// TODO: s/,/\\/ before writing out label.  Undo this when reading.
 	Node * node = nodes.at(i);
 	outfile << "# Node " + QString::number(i) + ":\n";
-	outfile << QString::number(node->scenePos().rx() - midx,
+	outfile << QString::number(node->scenePos().rx() / screenLogicalDPI_X
+				   - midxInch,
 				   'f', VP_PREC_GRPHC) << ","
-		<< QString::number(node->scenePos().ry() - midy,
+		<< QString::number(node->scenePos().ry() / screenLogicalDPI_Y
+				   - midyInch,
 				   'f', VP_PREC_GRPHC) << ", "
 		<< QString::number(node->getDiameter()) << ", "
 		<< QString::number(node->getRotation()) << ", "
@@ -1471,9 +1479,9 @@ MainWindow::save_Graph()
 	}
 
 	QString extension = selectedFilter.mid(start, end - start);
-	qDebug() << "save_Graph(): computed extension is" << extension;
+	qDeb() << "save_Graph(): computed extension is" << extension;
 	fileName += extension;
-	qDebug() << "save_Graph(): computed filename is" << fileName;
+	qDeb() << "save_Graph(): computed filename is" << fileName;
     }
 #endif
 
@@ -1655,7 +1663,7 @@ MainWindow::load_Graphic_Library()
 	dirIt.next();
 #ifdef DEBUG2
 	if (QFileInfo(dirIt.filePath()).isFile())
-	    qDeb() << "load_Graphic_Library(): suffix of"
+	    qDeb() << "MW::load_Graphic_Library(): suffix of"
 		   << QFileInfo(dirIt.filePath()).fileName()
 		   << "is"
 		   << QFileInfo(dirIt.filePath()).suffix();
@@ -1675,179 +1683,282 @@ MainWindow::load_Graphic_Library()
 /*
  * Name:	    select_Custom_Graph()
  * Purpose:	    Read in a graph-ic file.
- * Arguments:	    The name of the file to read from.
- * Outputs:	    None.
- * Modifies:	    Creates a graph object.
+ * Argument:	    The name of the file to read from.
+ * Outputs:	    Nothing.
+ * Modifies:	    Clears the preview scene and then adds the created
+ *		    graph to the preview.
  * Returns:	    Nothing.
  * Assumptions:	    The input file is valid.
- * Bugs:	    May (almost certainly will) crash and burn on invalid input.
+ * Bugs:	    May crash and burn on invalid input.
  * Notes:	    JD added "comment lines" capability Oct 2019.
+ *		    Arguably this function should be in preview.cpp.
  */
 
 void
 MainWindow::select_Custom_Graph(QString graphName)
 {
-    if (!graphName.isNull())
+    if (graphName.isNull())
     {
-	qDeb() << "select_Custom_Graph(): graphName is" << graphName;
+	qDebug() << "MW::select_Custom_Graph(): graphName is NULL!! ??";
+	return;
+    }
 
-	QFile file(graphName);
+    qDeb() << "MW::select_Custom_Graph(): graphName is\n\t" << graphName;
 
-	if (!file.open(QIODevice::ReadOnly))
-	    QMessageBox::information(0,
-				     "Error",
-				     "File: " + graphName
-				     + ": " + file.errorString());
+    QFile file(graphName);
 
-	QTextStream in(&file);
-	int i = 0;
-	QVector<Node *> nodes;
-	int numOfNodes = -1;		// < 0 ==> haven't read it yet
-	Graph * graph = new Graph();
+    if (!file.open(QIODevice::ReadOnly))
+    {
+	QMessageBox::information(0,
+				 "Error",
+				 "File: " + graphName
+				 + ": " + file.errorString());
+	// Reset the combo box to the "Select Graph Type" item (#0).
+	ui->graphType_ComboBox->setCurrentIndex(BasicGraphs::Nothing);
+	return;
+    }
 
-	while (!in.atEnd())
+    QTextStream in(&file);
+    int i = 0;
+    QVector<Node *> nodes;
+    int numOfNodes = -1;		// < 0 ==> haven't read numOfNodes yet
+    Graph * graph = new Graph();
+    // The following 4 variables hold the extremal positions actually drawn,
+    // so they take into account both the node center location and the
+    // node diameter.  (These are the two values stored in the .grphc file.)
+    qreal minX = 1E10, maxX = -1E10, minY = 1E10, maxY = -1E10;
+    // These 4 variables hold the radii of the vertices which give the 
+    // extremal positions stored above.
+    qreal minXr = 0, maxXr = 0, minYr = 0, maxYr = 0;
+
+    while (!in.atEnd())
+    {
+	QString line = in.readLine();
+	QString simpLine = line.simplified();
+	if (simpLine.isEmpty())
 	{
-	    QString line = in.readLine();
-	    QString simpLine = line.simplified();
-	    if (simpLine.isEmpty())
+	    // Allow visually blank lines
+	}
+	else if (simpLine.at(0).toLatin1() == '#')
+	{
+	    // Allow comments where first non-white is '#'.
+	    // TODO: Should we save these comments somewhere?
+	}
+	else if (numOfNodes < 0)
+	{
+	    bool ok;
+	    numOfNodes = line.toInt(&ok);
+	    // TODO: do we want to allow 0-node graphs?
+	    // Theoretically yes, but practically, no.
+	    if (! ok || numOfNodes < 0)
 	    {
-		// Allow visually blank lines
-	    }
-	    else if (simpLine.at(0).toLatin1() == '#')
-	    {
-		// Allow comments where first non-white is '#'.
-		// TODO: Should we save these comments somewhere?
-	    }
-	    else if (numOfNodes < 0)
-	    {
-		bool ok;
-		numOfNodes = line.toInt(&ok);
-		// TODO: do we want to allow 0-node graphs?
-		// Theoretically yes, but practically, no.
-		if (! ok || numOfNodes < 0)
-		{
-		    QMessageBox::information(0, "Error",
-					     "The file " + graphName
-					     + " has an invalid number of "
-					     "nodes.  Thus I can not read "
-					     "this file.");
-		    return;
-		}
-	    }
-	    else if (i < numOfNodes)
-	    {
-		QStringList fields = line.split(",");
-
-		// Nodes may or may not have label info.  Accept both.
-		if (fields.count() != 10 && fields.count() != 12)
-		{
-		    QMessageBox::information(0, "Error",
-					     "Node " + QString::number(i)
-					     + " of file "
-					     + graphName
-					     + " has an invalid number of "
-					     "fields.  Thus I can not read "
-					     "this file.");
-		    // TODO: do I need to free any storage?
-		    return;
-		}
-
-		Node * node = new Node();
-		node->setPos(fields.at(0).toDouble(),
-			     fields.at(1).toDouble());
-		node->setID(i);
-		node->setDiameter(fields.at(2).toDouble());
-		node->setRotation(fields.at(3).toDouble());
-		QColor fillColor;
-		fillColor.setRedF(fields.at(4).toDouble());
-		fillColor.setGreenF(fields.at(5).toDouble());
-		fillColor.setBlueF(fields.at(6).toDouble());
-		node->setFillColour(fillColor);
-		QColor lineColor;
-		lineColor.setRedF(fields.at(7).toDouble());
-		lineColor.setGreenF(fields.at(8).toDouble());
-		lineColor.setBlueF(fields.at(9).toDouble());
-		node->setLineColour(lineColor);
-		if (fields.count() == 12)
-		{
-		    node->setNodeLabelSize(fields.at(10).toFloat());
-		    node->setNodeLabel(fields.at(11));
-		}
-		nodes.append(node);
-		node->setParentItem(graph);
-		i++;
-	    }
-	    else
-	    {
-		QStringList fields = line.split(",");
-
-		// Edges may or may not have label info.  Accept both.
-		if (fields.count() != 9 && fields.count() != 11)
-		{
-		    QMessageBox::information(0, "Error",
-					     "Edge "
-					     + QString::number(i - numOfNodes)
-					     + "of file "
-					     + graphName
-					     + " has an invalid number of "
-					     "fields.  Thus I can not read "
-					     "this file.");
-		    // TODO: do I need to free any storage?
-		    return;
-		}
-		Edge * edge = new Edge(nodes.at(fields.at(0).toInt()),
-				       nodes.at(fields.at(1).toInt()));
-		edge->setDestRadius(fields.at(2).toDouble());
-		edge->setSourceRadius(fields.at(3).toDouble());
-		edge->setRotation(fields.at(4).toDouble());
-		edge->setPenWidth(fields.at(5).toDouble());
-		QColor lineColor;
-		lineColor.setRedF(fields.at(6).toDouble());
-		lineColor.setGreenF(fields.at(7).toDouble());
-		lineColor.setBlueF(fields.at(8).toDouble());
-		// printf("setting edge (%d, %d) colour to %.3f, %.3f, %.3f\n",
-		   //    fields.at(0).toInt(), fields.at(1).toInt(),
-		   //    fields.at(6).toDouble(), fields.at(7).toDouble(),
-		   //    fields.at(8).toDouble());
-		edge->setColour(lineColor);
-		if (fields.count() == 11)
-		{
-		    edge->setLabelSize(fields.at(9).toFloat());
-		    edge->setLabel(fields.at(10));
-		}
-		edge->setParentItem(graph);
-		i++;
-		for (int i = 0; i < nodes.count(); i++)
-		{
-		    for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
-		    {
-			Edge * e = nodes.at(i)->edgeList.at(j);
-			// int sourceID = e->sourceNode()->getID();
-			int destID = e->destNode()->getID();
-			if (i < destID)
-			{
-			    // printf("node[%d]'s %d-th edge has dst = %d",
-				//   i, j, destID);
-			    QString wt = e->getLabel();
-			    // QColor col = e->getColour();
-			    // printf(", wt /%s/, rgb (%.2f,%.2f,%.2f)\n",
-				//   wt.toLatin1().data(),
-				//   col.redF(), col.greenF(), col.blueF());
-			}
-		    }
-		}
-		// printf("\n");
+		QMessageBox::information(0, "Error",
+					 "The file " + graphName
+					 + " has an invalid number of "
+					 "nodes.  Thus I can not read "
+					 "this file.");
+		file.close();
+		return;
 	    }
 	}
-	file.close();
-	qDeb() << "select_Custom_Graph: graph->childItems().length() ="
-	       << graph->childItems().length();
-	graph->setRotation(-1 * ui->graphRotation->value());
-	ui->preview->scene()->clear();
-	ui->preview->scene()->addItem(graph);
+	else if (i < numOfNodes)
+	{
+	    QStringList fields = line.split(",");
+
+	    // Nodes may or may not have label info.  Accept both.
+	    // Nominally, we want 10 or 12 (and this assumes we don't
+	    // want to record the label size if there is no label,
+	    // which is possibly not what we will eventually realize
+	    // we want).  But to avoid complex quoting of commas in
+	    // labels, we just glue all the fields past #11 into the
+	    // label.
+	    if (fields.count() < 10 || fields.count() == 11)
+	    {
+		QMessageBox::information(0, "Error",
+					 "Node " + QString::number(i)
+					 + " of file "
+					 + graphName
+					 + " has an invalid number of "
+					 "fields.  Thus I can not read "
+					 "this file.");
+		// TODO: do I need to free any storage?
+		file.close();
+		return;
+	    }
+
+	    Node * node = new Node();
+	    qreal x = fields.at(0).toDouble();
+	    qreal y = fields.at(1).toDouble();
+	    qreal d = fields.at(2).toDouble();
+	    qreal r = d / 2.;
+	    node->setPos(x * screenLogicalDPI_X, y * screenLogicalDPI_Y);
+	    node->setDiameter(d);
+	    node->setRotation(fields.at(3).toDouble());
+	    node->setID(i++);
+	    // Record information about the extremal nodes for use below.
+	    if (x - r < minX)
+	    {
+		minX = x - r;
+		minXr = r;
+	    }
+	    if (x + r > maxX)
+	    {
+		maxX = x + r;
+		maxXr = r;
+	    }
+	    if (y - r < minY)
+	    {
+		minY = y - r;
+		minYr = r;
+	    }
+	    if (y + r > maxY)
+	    {
+		maxY = y + r;
+		maxYr = r;
+	    }
+	    qDebu("  node id %d at (%.4f, %.4f)\n\tX [%.4f, %.4f], "
+		  "Y [%.4f, %.4f]", i-1, x, y, minX, maxX, minY, maxY);
+
+	    QColor fillColor;
+	    fillColor.setRedF(fields.at(4).toDouble());
+	    fillColor.setGreenF(fields.at(5).toDouble());
+	    fillColor.setBlueF(fields.at(6).toDouble());
+	    node->setFillColour(fillColor);
+
+	    QColor lineColor;
+	    lineColor.setRedF(fields.at(7).toDouble());
+	    lineColor.setGreenF(fields.at(8).toDouble());
+	    lineColor.setBlueF(fields.at(9).toDouble());
+	    node->setLineColour(lineColor);
+	    if (fields.count() >= 12)
+	    {
+		// If the label has one or more commas, we must glue
+		// the fields back together.
+		node->setNodeLabelSize(fields.at(10).toFloat());
+		QString l = fields.at(11);
+		for (int i = 12; i < fields.count(); i++)
+		    l += "," + fields.at(i);
+		node->setNodeLabel(l);
+	    }
+	    nodes.append(node);
+	    node->setParentItem(graph);
+	}
+	else	// Default case: looking at an edge
+	{
+	    QStringList fields = line.split(",");
+
+	    // Edges may or may not have label info.  Accept both.
+	    if (fields.count() < 9 || fields.count() == 10)
+	    {
+		QMessageBox::information(0, "Error",
+					 "Edge "
+					 + QString::number(i - numOfNodes)
+					 + "of file "
+					 + graphName
+					 + " has an invalid number of "
+					 "fields.  Thus I can not read "
+					 "this file.");
+		// TODO: do I need to free any storage?
+		file.close();
+		return;
+	    }
+	    Edge * edge = new Edge(nodes.at(fields.at(0).toInt()),
+				   nodes.at(fields.at(1).toInt()));
+	    edge->setDestRadius(fields.at(2).toDouble());
+	    edge->setSourceRadius(fields.at(3).toDouble());
+	    edge->setRotation(fields.at(4).toDouble());
+	    edge->setPenWidth(fields.at(5).toDouble());
+	    QColor lineColor;
+	    lineColor.setRedF(fields.at(6).toDouble());
+	    lineColor.setGreenF(fields.at(7).toDouble());
+	    lineColor.setBlueF(fields.at(8).toDouble());
+	    // printf("setting edge (%d, %d) colour to %.3f, %.3f, %.3f\n",
+	    //    fields.at(0).toInt(), fields.at(1).toInt(),
+	    //    fields.at(6).toDouble(), fields.at(7).toDouble(),
+	    //    fields.at(8).toDouble());
+	    edge->setColour(lineColor);
+	    if (fields.count() >= 11)
+	    {
+		edge->setLabelSize(fields.at(9).toFloat());
+		// If the label has one or more commas, we must glue
+		// the fields back together.
+		QString l = fields.at(10);
+		for (int i = 11; i < fields.count(); i++)
+		    l += "," + fields.at(i);
+		edge->setLabel(l);
+	    }
+	    edge->setParentItem(graph);
+	    i++;
+	    for (int i = 0; i < nodes.count(); i++)
+	    {
+		for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
+		{
+		    Edge * e = nodes.at(i)->edgeList.at(j);
+		    // int sourceID = e->sourceNode()->getID();
+		    int destID = e->destNode()->getID();
+		    if (i < destID)
+		    {
+			// printf("node[%d]'s %d-th edge has dst = %d",
+			//   i, j, destID);
+			QString wt = e->getLabel();
+			// QColor col = e->getColour();
+			// printf(", wt /%s/, rgb (%.2f,%.2f,%.2f)\n",
+			//   wt.toLatin1().data(),
+			//   col.redF(), col.greenF(), col.blueF());
+		    }
+		}
+	    }
+	    // printf("\n");
+	}
     }
-    else
-	qDeb() << "select_Custom_Graph(): graphName is NULL!! ??";
+    file.close();
+
+    // Scale all the node CENTER positions to a 1"x1" square
+    // so that it can be appropriately styled.
+    // TODO(?): center it on (0,0).  (Graphs output by this
+    // program should already be centered.)
+    qreal width = (maxX - maxXr) - (minX + minXr);
+    qreal height = (maxY - maxYr) - (minY + minYr);
+    qDebu("    X: [%.4f, %.4f], Xr min %.4f, max %.4f",
+	  minX, maxX, minXr, maxXr);
+    qDebu("    Y: [%.4f, %.4f], Yr min %.4f, max %.4f",
+	  minY, maxY, minYr, maxYr);
+    qDebu("    width %.4f, height %.4f", width, height);
+    qDeb() << "    minX = " << minX << ", maxX = "
+	   << maxX << "\n\tminY = " << minY << ", maxY = " << maxY
+	   << "; width = " << width << " and height = " << height;
+    for (int i = 0; i < nodes.count(); i++)
+    {
+	Node * n = nodes.at(i);
+	n->setPreviewCoords(n->x() / width / screenLogicalDPI_X,
+			    n->y() / height / screenLogicalDPI_Y);
+	qDebu("    nodes[%s] coords: screen (%.4f, %.4f); "
+	      "preview set to (%.4f, %.4f)", n->getLabel().toLatin1().data(),
+	      n->x(), n->y(), n->getPreviewX(), n->getPreviewY());
+    }
+	
+    qDeb() << "MW::select_Custom_Graph: graph->childItems().length() ="
+	   << graph->childItems().length();
+
+    // Apparently we have to center the graph in the viewport.
+    // (Presumably this is because the node positions are relative to
+    // their parent, the graph?)
+    qDeb() << "    graph current position is " << graph->x() << ", "
+	   << graph->y();
+    //  graph->setPos(mapToScene(viewport()->rect().center()));
+    // "viewport() is unknown in this context.  For now, kludge the
+    // centering of the graph as follows.  Those are the numbers from
+    // PV::Create_Graph (every time), presumably they come from the
+    // fact that PV::PV sets the scene rectangle to (0, 0, 100, 30).
+    // But 100 and 30 are this->width and this->height, and it is not
+    // clear to me how those numbers get set.
+    graph->setPos(49, 15);
+    qDeb() << "    graph NEW position is " << graph->x() << ", "
+	   << graph->y(); 
+    graph->setRotation(-1 * ui->graphRotation->value());
+
+    ui->preview->scene()->clear();
+    ui->preview->scene()->addItem(graph);
 }
 
 
@@ -1868,9 +1979,9 @@ MainWindow::select_Custom_Graph(QString graphName)
  */
 
 void
-MainWindow::style_Graph()
+MainWindow::style_Graph(enum widget_ID what_changed)
 {
-    qDeb() << "MW:style_Graph() called";
+    qDeb() << "MW::style_Graph(WID " << what_changed << ") called";
 
     foreach (QGraphicsItem * item, ui->preview->scene()->items())
     {
@@ -1879,6 +1990,7 @@ MainWindow::style_Graph()
 	    Graph * graphItem =	 qgraphicsitem_cast<Graph *>(item);
 	    ui->preview->Style_Graph(graphItem,
 				     ui->graphType_ComboBox->currentIndex(),
+				     what_changed,
 				     ui->nodeSize->value(),
 				     ui->NodeLabel1->text(),
 				     ui->NodeLabel2->text(),
@@ -1893,7 +2005,6 @@ MainWindow::style_Graph()
 				     ui->graphWidth->value(),
 				     ui->graphHeight->value(), 
 				     ui->graphRotation->value());
-
 	}
     }
 }
@@ -1907,7 +2018,9 @@ MainWindow::style_Graph()
  * Outputs:	Nothing.
  * Modifies:	The drawing in the preview pane.
  * Returns:	Nothing.
- * Assumptions: ?
+ * Assumptions: There is only one MainWindow object per invocation of
+ *		this program; otherwise the static vars below will
+ *		need to be object variables.
  * Bugs:	?
  * Notes:	In the case of a non-"basicGraph", only UI items
  *		specifically modified should be applied to the graph.
@@ -1915,31 +2028,81 @@ MainWindow::style_Graph()
  *		call this function with an identifier for the changed
  *		UI item.  This information is only needed for
  *		"library" graphs.
+ *		Use static variables to remember the last graph type seen,
+ *		and only (re-)load a library graph when the changed
+ *		widget is the graphType_ComboBox.
+ *		Only (re-)load a basic graph when a parameter which
+ *		(might) affect the layout of the nodes has changed.
  */
 
 void
-MainWindow::generate_Graph(int changed_value)
+MainWindow::generate_Graph(enum widget_ID changed_widget)
 {
-    qDeb() << "MW::generate_Graph(widget " << changed_value << ") called.";
+    static int currentGraphIndex = -1;	    // -1 does not exist
+    static int currentNumOfNodes1 = -1;
+    static int currentNumOfNodes2 = -1;
+    static qreal currentNodeDiameter = -1;
+    static bool currentDrawEdges = false;
+
+    int graphIndex = ui->graphType_ComboBox->currentIndex();
+
+    qDeb() << "\nMW::generate_Graph(widget " << changed_widget << ") called.";
+
+    if (ui->preview->items().count() == 0)
+    {
+	qDeb() << "\tpreview is empty, resetting cGI to -1";
+	currentGraphIndex = -1;
+    }
 
     if (ui->graphType_ComboBox->currentIndex() < BasicGraphs::Count)
     {
-	qDeb() << "generate_Graph(): making a basic graph";
-	ui->preview->Create_Graph(ui->graphType_ComboBox->currentIndex(),
-				  ui->numOfNodes1->value(),
-				  ui->numOfNodes2->value(),
-				  ui->complete_checkBox->isChecked());
-	this->style_Graph();
+	int numOfNodes1 = ui->numOfNodes1->value();
+	int numOfNodes2 = ui->numOfNodes2->value();
+	qreal nodeDiameter = ui->nodeSize->value();
+	bool drawEdges = ui->complete_checkBox->isChecked();	
+	
+	if (currentGraphIndex != graphIndex
+	    || currentNumOfNodes1 != numOfNodes1
+	    || currentNumOfNodes2 != numOfNodes2
+	    || currentNodeDiameter != nodeDiameter
+	    || drawEdges != currentDrawEdges)
+	{
+	    qDeb() << "\tmaking a basic graph ("
+		   << ui->graphType_ComboBox->currentText() << ")";
+	    ui->preview->Create_Basic_Graph(graphIndex,
+					    numOfNodes1, numOfNodes2,
+					    nodeDiameter, drawEdges);
+	    this->style_Graph(ALL_WGT);
+	    currentNumOfNodes1 = numOfNodes1;
+	    currentNumOfNodes2 = numOfNodes2;
+	    currentNodeDiameter = nodeDiameter;
+	    currentDrawEdges = drawEdges;
+	}
+	else
+	{
+	    qDeb() << "\tredrawing the current basic graph ("
+		<< ui->graphType_ComboBox->currentText() << ")";
+	    this->style_Graph(changed_widget);
+	}
     }
     else
     {
-	qDebug() << "generate_Graph() making a "
-		 << ui->graphType_ComboBox->currentText()
-		 << " graph";
-	select_Custom_Graph(fileDirectory + "/"
-			    + ui->graphType_ComboBox->currentText()
-			    + "." + GRAPHiCS_FILE_EXTENSION);
+	if (graphIndex != currentGraphIndex)
+	{
+	    qDeb() << "\tmaking a '"
+		   << ui->graphType_ComboBox->currentText()
+		   << "' graph";
+	    select_Custom_Graph(fileDirectory + "/"
+				+ ui->graphType_ComboBox->currentText()
+				+ "." + GRAPHiCS_FILE_EXTENSION);
+	}
+	else
+	{
+	    qDeb() << "\tsame library graph as last time, just style it.";
+	    this->style_Graph(changed_widget);
+	}
     }
+    currentGraphIndex = graphIndex;
 }
 
 
@@ -1968,7 +2131,7 @@ MainWindow::on_NodeOutlineColor_clicked()
 	      + QString(color.blue() < 16 ? "0" : "")
 	      + QString::number(color.blue(), 16) + ";"
 	      BUTTON_STYLE);
-    qDebug() << "on_NodeOutlineColor_clicked(): outline colour set to" << s;
+    qDeb() << "MW::on_NodeOutlineColor_clicked(): outline colour set to" << s;
     ui->NodeOutlineColor->setStyleSheet(s);
     ui->NodeOutlineColor->update();
 }
@@ -2000,7 +2163,7 @@ MainWindow::on_NodeFillColor_clicked()
 	      + QString(color.blue() < 16 ? "0" : "")
 	      + QString::number(color.blue(), 16) + ";"
 	      BUTTON_STYLE);
-    qDebug() << "on_NodeFillColor_clicked(): fill colour set to" << s;
+    qDeb() << "MW::on_NodeFillColor_clicked(): fill colour set to " << s;
     ui->NodeFillColor->setStyleSheet(s);
     ui->NodeFillColor->update();
 }
@@ -2032,7 +2195,7 @@ MainWindow::on_EdgeLineColor_clicked()
 	      + QString(color.blue() < 16 ? "0" : "")
 	      + QString::number(color.blue(), 16) + ";"
 	      BUTTON_STYLE);
-    qDebug() << "on_EdgeLineColor_clicked(): edge line colour set to" << s;
+    qDeb() << "MW::on_EdgeLineColor_clicked(): edge line colour set to" << s;
     ui->EdgeLineColor->setStyleSheet(s);
     ui->EdgeLineColor->update();
 }
@@ -2152,8 +2315,12 @@ MainWindow::set_Label_Font_Sizes()
 
 /*
  * Name:	on_graphType_ComboBox_currentIndexChanged()
- * Purpose:
- * Arguments:	the index of the selected graph from the drop-down list.
+ * Purpose:	Set up the Create Graph widgets in a sensible state
+ *		(either for the default or for a particular graph type).
+ * Arguments:	The index of the selected graph from the drop-down list
+ *		(note that the list title, currently "Select Graph Type",
+ *		is index 0).
+ *		Any arg <= 0 produces the "default" setup and returns.
  * Outputs:	nothing.
  * Modifies:	Various and sundry UI parameters.
  * Returns:	Nothing.
@@ -2165,8 +2332,9 @@ MainWindow::set_Label_Font_Sizes()
 void
 MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 {
-    qDebug() << "on_graphType_ComboBox_currentIndexChanged("
+    qDeb() << "\nMW::on_graphType_ComboBox_currentIndexChanged("
 	     << index << ") called";
+
     // Here are the default settings.  Over-ride as needed below.
     ui->numOfNodes1->setSingleStep(1);
     ui->numOfNodes1->setMinimum(1);
@@ -2175,6 +2343,7 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
     ui->numOfNodes2->setSingleStep(1);
     ui->numOfNodes2->setMinimum(1);
     ui->numOfNodes2->hide();
+    ui->NodeLabel2->hide();
 
     ui->partitionLabel->setText("Nodes");
 
@@ -2184,6 +2353,9 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
     ui->widthLabel->show();
 
     ui->complete_checkBox->show();
+
+    if (index <= 0)
+	return;
 
     switch (index)
     {
@@ -2201,6 +2373,7 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
       case BasicGraphs::Bipartite:
 	ui->partitionLabel->setText("Partitions");
 	ui->numOfNodes2->show();
+	ui->NodeLabel2->show();
 	break;
 
       case BasicGraphs::Cycle:
@@ -2254,23 +2427,12 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 	break;
 
       default:
-	// ToDo: may need to change grphc file format to add
-	if (index > 0)
-	{
-	    // Calling this with an index <= 0 has the effect of
-	    // setting the pane to its default state.  Before this
-	    // change it started with the bipartite choices there,
-	    // which is sort of confusing/misleading.
-	    qDebug() << "on_graphType_ComboBox_currentIndexChanged()"
-		     << "Unknown index " << index;
-	}
+	// Should only get here if the graph is a library graph.
+	// In that case, hide the numOfNodes1 widget, since we can't
+	// change the number of nodes in a library graph from the
+	// preview pane.
+	qDeb() << "\tNot the index of a basic graph, assuming a library graph";
 	ui->numOfNodes1->hide();
-	ui->numOfNodes2->hide();
-	// ui->graphHeight->hide();
-	// ui->graphWidth->hide();
-	// ui->heightLabel->hide();
-	// ui->widthLabel->hide();
-	ui->complete_checkBox->hide();
     }
 }
 
@@ -2294,16 +2456,17 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 void
 MainWindow::on_numOfNodes1_valueChanged(int arg1)
 {
-    qDebug() << "on_numOfNodes1_valueChanged() called";
     Q_UNUSED(arg1);
+
+    qDeb() << "MW::on_numOfNodes1_valueChanged() called";
 
     if (ui->graphType_ComboBox->currentIndex() == BasicGraphs::Petersen)
     {
 	if (ui->numOfNodes2->value()
 	    > floor((ui->numOfNodes1->value() - 1) / 2))
 	{
-	    qDebug() << "\tchanging ui->numOfNodes2 to 1 from "
-		     << ui->numOfNodes2->value();
+	    qDeb() << "\tchanging ui->numOfNodes2 to 1 from "
+		   << ui->numOfNodes2->value();
 	    ui->numOfNodes2->setValue(1);
 	}
     }
@@ -2329,16 +2492,17 @@ MainWindow::on_numOfNodes1_valueChanged(int arg1)
 void
 MainWindow::on_numOfNodes2_valueChanged(int arg1)
 {
-    qDebug() << "on_numOfNodes2_valueChanged() called";
     Q_UNUSED(arg1);
+
+    qDeb() << "MW::on_numOfNodes2_valueChanged() called";
 
     if (ui->graphType_ComboBox->currentIndex() == BasicGraphs::Petersen)
     {
 	if (ui->numOfNodes2->value()
 	    > floor((ui->numOfNodes1->value() - 1) / 2))
 	{
-	    qDebug() << "\tchanging ui->numOfNodes2 to 1 from "
-		     << ui->numOfNodes2->value();
+	    qDeb() << "\tchanging ui->numOfNodes2 to 1 from "
+		   << ui->numOfNodes2->value();
 	    ui->numOfNodes2->setValue(1);
 	}
     }
@@ -2452,7 +2616,7 @@ MainWindow::on_freestyleMode_radioButton_clicked()
 void
 MainWindow::on_tabWidget_currentChanged(int index)
 {
-    qDebug() << "on_tabWidget_currentChanged(" << index << ")";
+    qDeb() << "MW::on_tabWidget_currentChanged(" << index << ")";
     switch(index)
     {
       case 0:
@@ -2655,16 +2819,17 @@ MainWindow::dumpTikZ()
 	}
     }
     
-    printf("%%========== TikZ dump of current graph follows: ============\n");
+    qDeb() << "%%========== TikZ dump of current graph follows: ============";
     QTextStream tty(stdout);
     saveTikZ(tty, nodes);
 }
 
 
+
 void
 MainWindow::dumpGraphIc()
 {
-    printf("dumpGraphIc() called\n");
+    qDeb() << "MW::dumpGraphIc() called";
     QVector<Node *> nodes;
     int numOfNodes = 0;
 
@@ -2678,7 +2843,7 @@ MainWindow::dumpGraphIc()
 	}
     }
     
-    printf("%%========= graphIc dump of current graph follows: ===========\n");
+    qDeb() << "%%========= graphIc dump of current graph follows: ===========";
     QTextStream tty(stdout);
     saveGraphIc(tty, nodes, true);
 }

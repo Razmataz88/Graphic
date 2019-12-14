@@ -2,7 +2,7 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.5
+ * Version: 1.6
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
@@ -41,14 +41,22 @@
  *	this checkBox refers to a different notion than that of a
  *	complete graph.
  *  (e) Obsessively alphabetize the cases in Create_Graph().
+ * Dec 12, 2019 (JD V1.6)
+ *  (a) #include defuns.h and remove debug #ifdef stuff.
+ *  (b) Another batch of comments, debug stmts, identifier improvements.
+ *  (c) Along with changes in mainwindow.cpp, implement the ability to
+ *	style library graphs.  Part of this involves changing
+ *	Style_Graph() so that individual styles can be applied,
+ *	rather than the former "apply everything" approach.
  */
 
-#include "preview.h"
 #include "basicgraphs.h"
+#include "defuns.h"
 #include "edge.h"
 #include "node.h"
 #include "graph.h"
 #include "graphmimedata.h"
+#include "preview.h"
 
 #include <math.h>
 #include <QKeyEvent>
@@ -63,17 +71,6 @@
 #include <qmath.h>
 
 
-// Debugging aids (without editing the source file):
-#ifdef DEBUG
-static const bool debug = true;
-#define qDeb() qDebug().nospace().noquote() << fixed \
-    << qSetRealNumberPrecision(4)
-#else
-static const bool debug = false;
-#define qDeb() if (false) qDebug()
-#endif
-
-
 // This is the factor by which the preview pane is zoomed for each
 // zoom in or zoom out operation.
 #define SCALE_FACTOR    1.2
@@ -81,29 +78,30 @@ static const bool debug = false;
 
 /*
  * Name:        PreView
- * Purpose:     Contructor for PreView class
+ * Purpose:     Constructor for the PreView class.
  * Arguments:   QWidget *
- * Output:      none
- * Modifies:    none
- * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Outputs:     Nothing.
+ * Modifies:    The graphics context.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       None so far.
  */
 
 PreView::PreView(QWidget * parent)
     : QGraphicsView(parent)
 {
-    aScene = new QGraphicsScene();
-    aScene->setSceneRect(0, 0, this->width(), this->height());
-
-    currentGraphTypeIndex = -1;	    // I.e., there is no preview right now.
+    PV_Scene = new QGraphicsScene();
+    PV_Scene->setSceneRect(0, 0, this->width(), this->height());
+    
+    qDeb() << "PV::PV() just set the scene rectangle to 0, 0, "
+	   << this->width() << ", " << this->height();
 
     setCacheMode(CacheBackground);
     setViewportUpdateMode(BoundingRectViewportUpdate); // Updates the canvas
     setRenderHint(QPainter::Antialiasing);
     setTransformationAnchor(AnchorUnderMouse);
-    setScene(aScene);
+    setScene(PV_Scene);
 }
 
 
@@ -272,7 +270,7 @@ PreView::zoomOut()
 
 
 /*
- * Name:	Create_Graph
+ * Name:	Create_Basic_Graph
  * Purpose:	Create a "basic graph" and add it to the preview scene.
  * Arguments:	The graph type index, the node count(s), and a flag
  *		indicating whether edges should be added to the graph
@@ -292,108 +290,92 @@ PreView::zoomOut()
  */
 
 void
-PreView::Create_Graph(int graphType, int numOfNodes1, int numOfNodes2,
-		      bool drawEdges)
+PreView::Create_Basic_Graph(int graphType, int numOfNodes1, int numOfNodes2,
+			    qreal nodeDiameter, bool drawEdges)
 {
-    qDeb() << "PV:Create_Graph(): the preview scene has "
+    // This param is here for the day when some basic graph drawing
+    // algorithm needs this.  Dutch Windmill comes to mind, as does prism.
+    Q_UNUSED(nodeDiameter);
+
+    qDeb() << "PV::Create_Basic_Graph(): the preview scene currently has "
 	   << this->scene()->items().size() << " items";
 
-    if (this->scene()->items().size() != 0
-	&& currentGraphTypeIndex == graphType
-	&& currentTopNodes == numOfNodes1
-	&& currentBottomNodes == numOfNodes2
-	&& currentDrawEdges == drawEdges)
-    {
-	// No change in the graph type or node/edge structure from
-	// last time.  Thus we can return and let the styling change
-	// the appearance of the graph.
-	qDeb() << "PV::Create_Graph(): same graph params as before; returning.";
-	return;
-    }
-
-    qDeb() << "PV::Create_Graph(): diff graph params; creating a new graph.";
-    currentGraphTypeIndex = graphType;
-    currentTopNodes = numOfNodes1;
-    currentBottomNodes = numOfNodes2;
-    currentDrawEdges = drawEdges;
-
-    // We are making a new graph, away with the old one.
+    // We are making a new graph: away with the old one.
     this->scene()->clear();
 
-    Graph * graphItem = new Graph();
-    BasicGraphs * simpleG = new BasicGraphs();
+    Graph * g = new Graph();
+    BasicGraphs * basicG = new BasicGraphs();
 
     switch (graphType)
     {
       case BasicGraphs::Antiprism:
-        simpleG->generate_antiprism(graphItem, numOfNodes1, drawEdges);
+        basicG->generate_antiprism(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::BBTree:
-        simpleG->generate_balanced_binary_tree(graphItem, numOfNodes1,
-					       drawEdges);
+        basicG->generate_balanced_binary_tree(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::Bipartite:
-        simpleG->generate_bipartite(graphItem, numOfNodes1, numOfNodes2,
-				    drawEdges);
+        basicG->generate_bipartite(g, numOfNodes1, numOfNodes2, drawEdges);
         break;
 
       case BasicGraphs::Complete:
-        simpleG->generate_complete(graphItem, numOfNodes1, drawEdges);
+        basicG->generate_complete(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::Crown:
-        simpleG->generate_crown(graphItem, numOfNodes1, drawEdges);
+        basicG->generate_crown(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::Cycle:
-        simpleG->generate_cycle(graphItem, numOfNodes1, drawEdges);
+        basicG->generate_cycle(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::Dutch_Windmill:
-        simpleG->generate_dutch_windmill(graphItem, numOfNodes1, numOfNodes2,
-					 drawEdges);
+        basicG->generate_dutch_windmill(g, numOfNodes1, numOfNodes2, drawEdges);
         break;
 
       case BasicGraphs::Gear:
-	simpleG->generate_gear(graphItem, numOfNodes1, drawEdges);
+	basicG->generate_gear(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::Grid:
-        simpleG->generate_grid(graphItem, numOfNodes1, numOfNodes2, drawEdges);
+        basicG->generate_grid(g, numOfNodes1, numOfNodes2, drawEdges);
         break;
 
       case BasicGraphs::Helm:
-        simpleG->generate_helm(graphItem, numOfNodes1, drawEdges);
+        basicG->generate_helm(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::Path:
-        simpleG->generate_path(graphItem, numOfNodes1, drawEdges);
+        basicG->generate_path(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::Petersen:
-        simpleG->generate_petersen(graphItem, numOfNodes1, numOfNodes2,
-				   drawEdges);
+        basicG->generate_petersen(g, numOfNodes1, numOfNodes2, drawEdges);
         break;
 
       case BasicGraphs::Prism:
-        simpleG->generate_prism(graphItem, numOfNodes1, drawEdges);
+        basicG->generate_prism(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::Star:
-        simpleG->generate_star(graphItem, numOfNodes1, drawEdges);
+        basicG->generate_star(g, numOfNodes1, drawEdges);
         break;
 
       case BasicGraphs::Wheel:
-        simpleG->generate_wheel(graphItem, numOfNodes1, drawEdges);
+        basicG->generate_wheel(g, numOfNodes1, drawEdges);
         break;
 
       default:
+	// This should never happen!  Do not change to qDeb().
+	qDebug() << "PV::Create_Graph(): unknown/invalid graph index "
+		 << graphType;
         break;
     }
 
-    this->scene()->addItem(graphItem);
+    this->scene()->addItem(g);
 }
 
 
@@ -419,16 +401,20 @@ PreView::Create_Graph(int graphType, int numOfNodes1, int numOfNodes2,
  *		information to scale the node location accordingly.
  */
 
+#define GUARD(x) if ((what_changed == ALL_WGT) || ((x) == what_changed))
+
 void
-PreView::Style_Graph(Graph * graph, int graphType, qreal nodeDiameter,
-		     QString topNodeLabels, QString bottomNodeLabels,
-		     bool labelsAreNumbered, qreal nodeLabelSize,
-		     QColor nodeFillColor, QColor nodeOutlineColor,
-		     qreal edgeSize, QString edgeLabel, qreal edgeLabelSize,
-		     QColor edgeLineColor,
-		     qreal totalWidth, qreal totalHeight, qreal rotation)
+PreView::Style_Graph(Graph * graph,		    int graphType,
+		     enum widget_ID what_changed,   qreal nodeDiameter,
+		     QString topNodeLabels,	    QString bottomNodeLabels,
+		     bool labelsAreNumbered,	    qreal nodeLabelSize,
+		     QColor nodeFillColor,	    QColor nodeOutlineColor,
+		     qreal edgeSize,		    QString edgeLabel,
+		     qreal edgeLabelSize,	    QColor edgeLineColor,
+		     qreal totalWidth,		    qreal totalHeight,
+		     qreal rotation)
 {
-    qDeb() << "PV::Style_Graph() called.";
+    qDeb() << "PV::Style_Graph(wid:" << what_changed << ") called.";
 
     int i = 0, j = 0;
 
@@ -450,10 +436,10 @@ PreView::Style_Graph(Graph * graph, int graphType, qreal nodeDiameter,
 	centerHeight = 0.1;
     qreal heightScaleFactor = centerHeight * yDPI;
 
-    qDeb() << "Desired total width: " << totalWidth
+    qDeb() << "    Desired total width: " << totalWidth
 	   << "; desired center width " << centerWidth
 	   << "\n\twidthScaleFactor: " << widthScaleFactor;
-    qDeb() << "Desired total height: " << totalHeight
+    qDeb() << "    Desired total height: " << totalHeight
 	   << "; desired center height " << centerHeight
 	   << "\n\theightScaleFactor: " << heightScaleFactor;
 
@@ -463,35 +449,42 @@ PreView::Style_Graph(Graph * graph, int graphType, qreal nodeDiameter,
         {
 	    Node * node = qgraphicsitem_cast<Node *>(item);
 	    node->setParentItem(nullptr);	    // ?? Eh?
-	    node->setDiameter(nodeDiameter);
-	    node->setFillColour(nodeFillColor);
-	    node->setLineColour(nodeOutlineColor);
-	    node->setNodeLabelSize(nodeLabelSize);
+	    GUARD(nodeSize_WGT) node->setDiameter(nodeDiameter);
+	    GUARD(nodeFillColour_WGT) node->setFillColour(nodeFillColor);
+	    GUARD(nodeOutlineColour_WGT) node->setLineColour(nodeOutlineColor);
+	    GUARD(nodeLabelSize_WGT) node->setNodeLabelSize(nodeLabelSize);
 	    node->setPos(node->getPreviewX() * widthScaleFactor,
 			 node->getPreviewY() * heightScaleFactor);
 
-	    // Clear the node label, in case it was set in a previous styling.
-	    node->setNodeLabel("");
-	    if (labelsAreNumbered)
-		node->setNodeLabel(i++);
-	    else if (graphType == BasicGraphs::Bipartite)
+	    if (what_changed == ALL_WGT
+		|| what_changed == nodeLabel1_WGT
+		|| what_changed == nodeLabel2_WGT
+		|| what_changed == numLabelCheckBox_WGT)
 	    {
-		// Special case for labeling bipartite graphs.
-		if (bottomNodeLabels.length() != 0
-		    && graph->nodes.bipartite_bottom.contains(node))
-		    node->setNodeLabel(bottomNodeLabels, j++);
-		else if (topNodeLabels.length() != 0
-			 && graph->nodes.bipartite_top.contains(node))
-                    node->setNodeLabel(topNodeLabels, i++);
-		else if (topNodeLabels.length() != 0
-			 && graph->nodes.bipartite_bottom.contains(node))
+		// Clear the node label, in case it was set previously.
+		node->setNodeLabel("");
+		if (labelsAreNumbered)
+		    node->setNodeLabel(i++);
+		else if (graphType == BasicGraphs::Bipartite)
+		{
+		    // Special case for labeling bipartite graphs.
+		    if (bottomNodeLabels.length() != 0
+			&& graph->nodes.bipartite_bottom.contains(node))
+			node->setNodeLabel(bottomNodeLabels, j++);
+		    else if (topNodeLabels.length() != 0
+			     && graph->nodes.bipartite_top.contains(node))
+			node->setNodeLabel(topNodeLabels, i++);
+		    else if (topNodeLabels.length() != 0
+			     && graph->nodes.bipartite_bottom.contains(node))
+			node->setNodeLabel(topNodeLabels, i++);
+		}
+		else if (topNodeLabels.length() != 0)
 		    node->setNodeLabel(topNodeLabels, i++);
 	    }
-	    else if (topNodeLabels.length() != 0)
-		node->setNodeLabel(topNodeLabels, i++);
 
-	    qDeb() << "PV::Style_Graph(): node with label /" << node->getLabel()
-		   << "/ has preview coords (" << node->getPreviewX()
+	    qDeb() << "    nodes[" << node->getLabel()
+		   << "] coords: screen (" << node->x() << ", " << node->y()
+		   << "); preview (" << node->getPreviewX()
 		   << ", " << node->getPreviewY() << ")";
 	    node->setParentItem(graph);
         }
@@ -499,20 +492,28 @@ PreView::Style_Graph(Graph * graph, int graphType, qreal nodeDiameter,
         {
 	    Edge * edge = qgraphicsitem_cast<Edge *>(item);
 	    edge->setParentItem(nullptr);	// ?? Eh?
-	    edge->setPenWidth(edgeSize);
-	    edge->setColour(edgeLineColor);
-	    edge->setLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
-	    if (edgeLabel.length() != 0)
-                edge->setLabel(edgeLabel);
-	    else
-		edge->setLabel("");	// Clear any old label
-	    edge->setDestRadius(nodeDiameter / 2.);
+	    GUARD(edgeSize_WGT) edge->setPenWidth(edgeSize);
+	    GUARD(edgeLineColour_WGT) edge->setColour(edgeLineColor);
+	    GUARD(edgeLabelSize_WGT)
+		edge->setLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
+	    GUARD(edgeLabel_WGT)
+	    {
+		if (edgeLabel.length() != 0)
+		    edge->setLabel(edgeLabel);
+		else
+		    edge->setLabel("");	// Clear any old label
+	    }
+	    GUARD(nodeSize_WGT) edge->setDestRadius(nodeDiameter / 2.);
 	    // Q: why did RB do this?  It gives a bizarre value.
 	    // edge->setSourceRadius(edge->sourceNode()->getDiameter() / 2.);
-	    edge->setSourceRadius(nodeDiameter / 2.);
+	    GUARD(nodeSize_WGT) edge->setSourceRadius(nodeDiameter / 2.);
 	    edge->setParentItem(graph);
         }
     }
+    qDeb() << "   graph currently located at " << graph->x() << ", "
+	   << graph->y(); 
     graph->setPos(mapToScene(viewport()->rect().center()));
+    qDeb() << "   graph NOW located at " << graph->x() << ", "
+	   << graph->y(); 
     graph->setRotation(-1 * rotation);
 }

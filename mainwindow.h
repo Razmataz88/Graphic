@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.7
+ * Version:	1.8
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -26,6 +26,10 @@
  * Dec 9, 2019 (JD V1.7)
  *  (a) Add on_numOfNodes1_valueChanged() to follow the actions of
  *	on_numOfNodes2_valueChanged().
+ * Dec 12, 2019 (JD V1.8)
+ *  (a) #include defuns.h.
+ *  (b) Change "changed_widget" from an int to and enum widget_ID.
+ *  (c) Move enum widget_ID to defuns.h.
  */
 
 
@@ -37,6 +41,8 @@
 #include <QtGui>
 #include <QGridLayout>
 #include <QScrollArea>
+
+#include "defuns.h"
 
 namespace Ui
 {
@@ -57,8 +63,8 @@ class MainWindow : public QMainWindow
     bool load_Graphic_File();
     void load_Graphic_Library();
     void select_Custom_Graph(QString graphName);
-    void generate_Graph(int widget_id);
-    void style_Graph();
+    void generate_Graph(enum widget_ID changed_widget);
+    void style_Graph(enum widget_ID changed_widget);
     void generate_Combobox_Titles();
     void dumpGraphIc();
     void dumpTikZ();
@@ -94,12 +100,6 @@ class MainWindow : public QMainWindow
     QString fileDirectory;
     QGridLayout * gridLayout;
     QScrollArea * scroll;
-    enum widget_num {nodeSize, nodeLabel1, nodeLabel2, nodeLabelSize,
-		     numLabelCheckBox, nodeFillColour, nodeOutlineColour,
-		     edgeSize, edgeLabel, edgeLabelSize, edgeLineColour,
-		     graphRotation, completeCheckBox, graphHeight,
-		     graphWidth, numOfNodes1, numOfNodes2,
-		     graphTypeComboBox};
 };
 
 #endif // MAINWINDOW_H
