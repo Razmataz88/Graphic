@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.5
+ * Version: 1.6
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -31,10 +31,15 @@
  * Nov 30, 2019 (JD V1.5)
  *  (a) Tidy up some debug outputs, add some others.
  *  (b) Add function comment for keyReleaseEvent() and a few other ones.
+ * Dec 13, 2019 (JD V1.6)
+ *  (a) Remove unused private var numOfNodes.
+ *  (b) Removed qDeb stuff, now in defuns.h, which is now included here.
+ *  (c) Added a debug stmt.
  */
 
 #include "canvasscene.h"
 #include "canvasview.h"
+#include "defuns.h"
 #include "edge.h"
 #include "graph.h"
 #include "graphmimedata.h"
@@ -52,26 +57,11 @@
 #include <QtGui>
 
 
-// Debugging aids (without editing the source file):
-#ifdef DEBUG
-static const bool debug = true;
-#else
-static const bool debug = false;
-#endif
-
-// Like qDebug(), but a little more literal, and turn-offable:
-#define qDeb if (debug) \
-        QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,  \
-                       QT_MESSAGELOG_FUNC).debug().noquote().nospace
-
-
-
 CanvasScene::CanvasScene()
     :  mCellSize(25, 25)
 {
     setItemIndexMethod(QGraphicsScene::NoIndex);
     setSortCacheEnabled(true);
-    numOfNodes = 0;
 
     connectNode1a = nullptr;
     connectNode2a = nullptr;
@@ -144,8 +134,8 @@ CanvasScene::drawBackground(QPainter * painter, const QRectF &rect)
 
 
 
-/* Apparently not called in Freestyle mode, but is called in the
- * others */
+/* Apparently this is not called in Freestyle mode, but is called in
+ * the other modes */
 
 void
 CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
@@ -301,6 +291,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 		{
 		    if (event->button() == Qt::LeftButton)
 		    {
+			qDeb() << "\tLeft button over a node";
 			mDragged = qgraphicsitem_cast<Node*>(item);
 			undoPos->node = qgraphicsitem_cast<Node *>(mDragged);
 			undoPos->pos = mDragged->pos();
