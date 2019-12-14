@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.7
+ * Version: 1.8
  *
  * Purpose: creates a node for the users graph
  *
@@ -53,8 +53,11 @@
  * Dec 1, 2019 (JD V1.7)
  *  (a) Add preview X and Y coords and setter/getters.
  *  (b) Remove edgeWeight, which is used nowhere.
+ * Dec 13, 2019 (JD V1.8)
+ *  (a) Added defuns.h, removed debug stuff.
  */
 
+#include "defuns.h"
 #include "edge.h"
 #include "node.h"
 #include "canvasview.h"
@@ -73,16 +76,6 @@
 #include <QDrag>
 #include <QtCore>
 
-
-// Debugging aids (without editing the source file):
-#ifdef DEBUG
-static const bool debug = true;
-#define qDeb() qDebug().nospace().noquote() << fixed \
-    << qSetRealNumberPrecision(4)
-#else
-static const bool debug = false;
-#define qDeb() if (false) qDebug()
-#endif
 
 
 /*
