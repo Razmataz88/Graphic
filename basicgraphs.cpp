@@ -2,7 +2,7 @@
  * File:	basicgraphs.cpp
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.4
+ * Version:	1.5
  *
  * Purpose:	Implement functions which draw all the "known" graph types.
  *
@@ -35,13 +35,32 @@
  * Dec 10, 2019 (JD V1.4):
  *  (a) Having put the debug defns in defuns.h (included by basicgraphs.h),
  *      remove them from here.
+ * Dec 14, 2019 (JD V1.5):
+ *  (a) Modify create_cycle() so that the cycle fills up as much of
+ *	the given rectangle as possible, while scaling X and Y equally.
+ *  (b) Modify generate_antiprism() to create two separate cycles,
+ *	since the former method of creating one cycle and then moving
+ *	some vertices did not play well with the new create_cycle().
+ *	(And, as a side benefit, not only are the sizes closer to the
+ *	requested box, but the numbering of the vertices is, arguably,
+ *	more pleasing.).
+ *  (c) Modify generate_prism() so that the number of nodes parameter
+ *      specifies the total nodes, not the nodes in the outer (and
+ *	inner) cycle.  This makes it consistent with generate_antiprism().
+ *	Also make the inner cycle shrink size a function of the number of
+ *	nodes.
+ *  (d) Modify generate_dutch_windmill() so that the windmill is as
+ *	large as possible while still fitting inside the bounding box.
+ *  (e) Modify generate_gear() so that the gear is as large as
+ *	possible while still fitting inside the bounding box (as with
+ *	all the above, while scaling X and Y equally).
  */
 
 #include "basicgraphs.h"
-
-#include <qmath.h>
+#include "defuns.h"
 #include "node.h"
 #include "edge.h"
+#include <qmath.h>
 #include <QDebug>
 
 
@@ -69,7 +88,7 @@ BasicGraphs::BasicGraphs()
 /*
  * Name:	create_cycle()
  * Purpose:	Create a list of nodes uniformly distributed on a
- *		ellipse centered at (0,0).
+ *		width*height ellipse centered at (0,0).
  *		Make these children of the given graph.
  * Arguments:	A graph, the number of nodes, the height and width of
  *		the ellipse, and, optionally, an angle which specifies
@@ -79,7 +98,10 @@ BasicGraphs::BasicGraphs()
  * Returns:	The list of nodes.
  * Assumptions:	?
  * Bugs:	?
- * Notes:	
+ * Notes:	Depending on the number of nodes, we can't necessarily
+ *		fill the width*height ellipse.  However, maximize the
+ *		cycle in that space.  I do a brute-force calculation,
+ *		but probably some clever trigonometry would be better.
  */
 
 
@@ -88,15 +110,48 @@ BasicGraphs::create_cycle(Graph * g, qreal width, qreal height,
 			  int numOfNodes, qreal radians)
 {
     QList<Node *> nodes;
-
     qreal spacing = (2 * PI) / numOfNodes;
+
+    qDebu("BG::create_cycle(w = %.3f, h = %.3f, n = %d, a = %.3f",
+	      width, height, numOfNodes, radians);
+
+    // Calculate the amount by which we should scale up w and h.
+    qreal minX = 1E10, maxX = -1E10, minY = 1E10, maxY = -1E10;
+    qreal rads = radians;
     for (int i = 0; i < numOfNodes; i++)
     {
-        qreal y = height * -qCos(radians);
+        qreal x = width * qSin(rads);
+        qreal y = height * -qCos(rads);
+	qDebu("\ti = %d: a = %.3f; x = %.3f, y = %.3f", i, rads, x, y);
+	if (x < minX)
+	    minX = x;
+	if (x > maxX)
+	    maxX = x;
+	if (y < minY)
+	    minY = y;
+	if (y > maxY)
+	    maxY = y;
+        rads += spacing;
+    }
+
+    // Find out which dimension allows the smallest scaling up.
+    qreal xslop = 2 * width / (maxX - minX);
+    qreal yslop = 2 * height / (maxY - minY);
+    qreal minSlop = xslop < yslop ? xslop : yslop;
+    qDebu("\tX [%.3f, %.3f] Y [%.3f, %.3f]",
+	  minX, maxX, minY, maxY);
+    qDebu("\txslop %.3f; yslop %.3f; minSlop %.3f", xslop, yslop, minSlop);
+    width *= minSlop;
+    height *= minSlop;
+    qDebu("\tnew width %.3f, new height %.3f", width, height);
+
+    for (int i = 0; i < numOfNodes; i++)
+    {
         qreal x = width * qSin(radians);
+        qreal y = height * -qCos(radians);
+
         Node * node = new Node();
-	qDeb() << "BG:create_cycle() putting a node at ("
-	       << x << ", " << y << ")";
+	qDeb() << "\tputting a node at (" << x << ", " << y << ")";
         node->setPreviewCoords(x, y);
         nodes.append(node);
         node->setParentItem(g);
@@ -108,55 +163,81 @@ BasicGraphs::create_cycle(Graph * g, qreal width, qreal height,
 
 
 
+/*
+ * Name:	generate_antiprism()
+ * Purpose:	Generate an antiprism graph.
+ * Arguments:	The graph g, the number of nodes, and whether to draw edges.
+ * Outputs:	Nothing.
+ * Modifies:	g
+ * Returns:	Nothing.
+ * Assumptions:	numOfNodes is even and >= 6.  (If odd, it is "rounded" down.)
+ * Bugs:	?
+ * Notes:	Aesthetic positioning of the interior nodes depends on
+ *		both the number of nodes and the size of the nodes.
+ *		In the future it might make sense to add the node
+ *		diameter to this function for better aesthetics.  The
+ *		shrink factors below were empirically found to be
+ *		reasonably pleasing for a node diameter of 0.20 inch.
+ *		TODO: make this better.
+ */
+
 void
 BasicGraphs::generate_antiprism(Graph * g, int numOfNodes, bool drawEdges)
 {
     qreal width = 0.5;
     qreal height = 0.5;
+    int halfNumNodes = numOfNodes / 2;
 
-    g->nodes.cycle = create_cycle(g, width, height, numOfNodes);
-
-    qreal spacing =  (2 * PI) / numOfNodes;
-    qreal angle = 0;
-
-    // We move 1/2 the notes into a smaller cycle in the middle.
-    // The following numbers are empirically chosen to provide
-    // at least moderately pleasing values when the node size is
-    // 0.20", but with smaller or bigger node sizes we could certainly
-    // want different shrink factors.  TODO: make them better.
-    qreal shrink_factor = 4.;
-    if (numOfNodes > 26)
+    // These numbers arbitrarily picked while looking at 2.5" x 2.5"
+    // graphs with 0.20" nodes.
+    qreal shrink_factor = 4;
+    if (numOfNodes > 32)
+	shrink_factor = 1.4;
+    else if (numOfNodes > 24)
 	shrink_factor = 1.6;
-    else if (numOfNodes > 20)
+    else if (numOfNodes > 16)
 	shrink_factor = 2.;
-    else if (numOfNodes > 14)
+    else if (numOfNodes > 8)
 	shrink_factor = 2.5;
-    else if (numOfNodes > 6)
-	shrink_factor = 3.;
 
-    qreal y = (height / shrink_factor) * qCos(angle) * -1;
-    qreal x = (width / shrink_factor) * qSin(angle);
+    qDebu("BG::generate_antiprism(%d) shrink_factor is %.2f",
+	  numOfNodes, shrink_factor);
 
-    for (int i = 0; i < g->nodes.cycle.count(); i++)
+    // Create the two cycles.  A slight abuse of Rachel's plan for the
+    // double_cycle (to avoid a bunch of modular arithmetic).
+    qreal inner_rotation = 2 * PI / numOfNodes;
+    g->nodes.cycle = create_cycle(g, width, height, halfNumNodes);
+    g->nodes.double_cycle.append(create_cycle(g, width / shrink_factor,
+					      height / shrink_factor,
+					      halfNumNodes,
+					      inner_rotation));
+
+    for (int i = 0; i < halfNumNodes; i++)
     {
 	if (drawEdges)
 	{
-	    Edge * edge = new Edge(g->nodes.cycle.at(i),
-				   g->nodes.cycle.at(
-				       (i + 2) % g->nodes.cycle.count()));
-	    edge->setParentItem(g);
+	    Edge * edge1, * edge2, * edge3, * edge4;
 
-            Edge * edge2 = new Edge(g->nodes.cycle.at(i),
-				    g->nodes.cycle.at(
-					(i + 1) % g->nodes.cycle.count()));
+	    // The edges in the outer cycle:
+	    edge1 = new Edge(g->nodes.cycle.at(i),
+			     g->nodes.cycle.at((i + 1) % halfNumNodes));
+	    edge1->setParentItem(g);
+
+	    // The edges in the inner cycle:
+            edge2 = new Edge(g->nodes.double_cycle.at(0).at(i),
+			     g->nodes.double_cycle.at(0).at(
+				 (i + 1) % halfNumNodes));
             edge2->setParentItem(g);
-	}
-        if (i % 2 != 0)
-            g->nodes.cycle.at(i)->setPreviewCoords(x, y);
 
-        angle += spacing;
-        y = (height / shrink_factor) * qCos(angle) * -1;
-        x = (width / shrink_factor) * qSin(angle);
+	    // The edges connecting the inner and outer cycles:
+	    edge3 = new Edge(g->nodes.cycle.at(i),
+			     g->nodes.double_cycle.at(0).at(i));
+            edge3->setParentItem(g);
+	    edge4 = new Edge(g->nodes.cycle.at(i),
+			     g->nodes.double_cycle.at(0).at(
+				 (halfNumNodes + i - 1) % halfNumNodes));
+            edge4->setParentItem(g);
+	}
     }
 }
 
@@ -360,6 +441,7 @@ BasicGraphs::generate_complete(Graph * g, int numOfNodes, bool drawEdges)
 }
 
 
+
 void
 BasicGraphs::generate_crown(Graph * g, int numOfNodes, bool drawEdges)
 {
@@ -460,7 +542,7 @@ BasicGraphs::generate_dutch_windmill(Graph * g, int blades, int bladeSize,
     qDeb() << "\tbladeSpacing is " << bladeSpacing << " radians";
     qDeb() << "\tbladeWidth is " << bladeWidth << " radians";
     qDeb() << "\tbladeWidth * #verts / (#v -2) / Pi = "
-	     << bladeWidth * bladeSize / (bladeSize - 2) / PI;
+	   << bladeWidth * bladeSize / (bladeSize - 2) / PI;
 
     g->nodes.center = new Node();
     g->nodes.center->setPreviewCoords(0, 0);
@@ -526,41 +608,126 @@ BasicGraphs::generate_dutch_windmill(Graph * g, int blades, int bladeSize,
 	    edge->setParentItem(g);
 	}
     }
+
+    // Now scale the coords so that the windmill fits in the bounding box
+    // as closely as possible.
+    qreal minX = 1E10, maxX = -1E10, minY = 1E10, maxY = -1E10;
+    for (int i = 0; i < blades; i++)
+    {
+	QList <Node *> i_cycle = list_of_cycles.at(i);
+	for (int j = 0; j < i_cycle.count(); j++)
+	{
+	    qreal x = i_cycle.at(j)->getPreviewX();
+	    qreal y = i_cycle.at(j)->getPreviewY();
+	    qDebu("  gdw: blade %d node %d (label %s): x = %.3f, y = %.3f",
+		  i, j, i_cycle.at(j)->getLabel().toLatin1().data(), x, y);
+	    if (x < minX)
+		minX = x;
+	    if (x > maxX)
+		maxX = x;
+	    if (y < minY)
+		minY = y;
+	    if (y > maxY)
+		maxY = y;
+	}
+    }    
+
+    // Find out which dimension allows the smallest scaling up.
+    qreal xSlop = height / (maxX - minX);
+    qreal ySlop = height / (maxY - minY);
+    qreal minSlop = xSlop < ySlop ? xSlop : ySlop;
+    qDebu("BG::generate_dutch_windmill(): X [%.3f, %.3f] Y [%.3f, %.3f]",
+	  minX, maxX, minY, maxY);
+    qDebu("\tminSlop %.3f", minSlop);
+
+    // Now scale all the node preview locations:
+    for (int i = 0; i < blades; i++)
+    {
+	QList <Node *> i_cycle = list_of_cycles.at(i);
+	for (int j = 0; j < i_cycle.count(); j++)
+	{
+	    Node * n = i_cycle.at(j);
+	    qreal x = n->getPreviewX();
+	    qreal y = n->getPreviewY();
+	    n->setPreviewCoords(x * minSlop, y * minSlop);
+	}
+    }
 }
 
 
 
+/*
+ * Name:	generate_gear()
+ * Purpose:	Create a generalized gear graph.
+ * Arguments:	The graph g, the number of nodes, and whether to draw edges.
+ * Outputs:	Nothing.
+ * Modifies:	g.
+ * Returns:	Nothing.
+ * Assumptions:	
+ * Bugs:	
+ * Notes:	
+ */
 void
 BasicGraphs::generate_gear(Graph * g, int numOfNodes, bool drawEdges)
 {
     qreal width = 0.5;
     qreal height = 0.5;
+    int numCycleNodes = numOfNodes & ~1;
 
     qreal x1, y1, x2, y2;
 
-    if (numOfNodes % 2 != 0)
-        g->nodes.cycle = create_cycle(g, width, height, numOfNodes - 1);
-    else
-        g->nodes.cycle = create_cycle(g, width, height, numOfNodes);
+    g->nodes.cycle = create_cycle(g, width, height, numCycleNodes);
 
-    for (int i = 0; i < g->nodes.cycle.count(); i++)
+    // Move the odd-numbered nodes in line with their adjacent nodes.
+    for (int i = 0; i < numCycleNodes; i++)
     {
         if (i % 2 == 1)
         {
-            x1 = g->nodes.cycle.at((i - 1) % g->nodes.cycle.count())
-		->getPreviewX();
-            y1 = g->nodes.cycle.at((i - 1) % g->nodes.cycle.count())
-		->getPreviewY();
-            x2 = g->nodes.cycle.at((i + 1) % g->nodes.cycle.count())
-		->getPreviewX();
-            y2 = g->nodes.cycle.at((i + 1) % g->nodes.cycle.count())
-		->getPreviewY();
+            x1 = g->nodes.cycle.at((i - 1) % numCycleNodes)->getPreviewX();
+            y1 = g->nodes.cycle.at((i - 1) % numCycleNodes)->getPreviewY();
+            x2 = g->nodes.cycle.at((i + 1) % numCycleNodes)->getPreviewX();
+            y2 = g->nodes.cycle.at((i + 1) % numCycleNodes)->getPreviewY();
 	    
             g->nodes.cycle.at(i)->setPreviewCoords((x1 + x2) / 2,
-						      (y1 + y2) / 2);
+						   (y1 + y2) / 2);
         }
     }
 
+    // Now scale the coords so that the gear fits in the bounding box
+    // as closely as possible.
+    qreal minX = 1E10, maxX = -1E10, minY = 1E10, maxY = -1E10;
+    for (int i = 0; i < numCycleNodes; i++)
+    {
+	qreal x = g->nodes.cycle.at(i)->getPreviewX();
+	qreal y = g->nodes.cycle.at(i)->getPreviewY();
+	if (x < minX)
+	    minX = x;
+	if (x > maxX)
+	    maxX = x;
+	if (y < minY)
+	    minY = y;
+	if (y > maxY)
+	    maxY = y;
+    }
+
+    // Find out which dimension allows the smallest scaling up.
+    qreal xslop = 2 * width / (maxX - minX);
+    qreal yslop = 2 * height / (maxY - minY);
+    qreal minSlop = xslop < yslop ? xslop : yslop;
+    qDebu("BG::generate_gear(): X [%.3f, %.3f] Y [%.3f, %.3f]",
+	  minX, maxX, minY, maxY);
+    qDebu("\txslop %.3f; yslop %.3f; minSlop %.3f", xslop, yslop, minSlop);
+
+    // Now scale all the node preview locations:
+    for (int i = 0; i < numCycleNodes; i++)
+    {
+	Node * n = g->nodes.cycle.at(i);
+	qreal x = n->getPreviewX();
+	qreal y = n->getPreviewY();
+	n->setPreviewCoords(x * minSlop, y * minSlop);
+    }
+
+    // Add the center one, if it exists.
     Node * center = new Node();
     if (numOfNodes % 2 == 1)
     {
@@ -568,6 +735,7 @@ BasicGraphs::generate_gear(Graph * g, int numOfNodes, bool drawEdges)
         center->setParentItem(g);
         g->nodes.center = center;
     }
+
     if (! drawEdges)
 	return;
 
@@ -580,7 +748,7 @@ BasicGraphs::generate_gear(Graph * g, int numOfNodes, bool drawEdges)
 	}
 	Edge * edge = new Edge(g->nodes.cycle.at(i),
 			       g->nodes.cycle.at((i + 1)
-					    % g->nodes.cycle.count()));
+						 % g->nodes.cycle.count()));
 	edge->setParentItem(g);
     }
 }
@@ -759,11 +927,28 @@ BasicGraphs::generate_prism(Graph * g, int numOfNodes, bool drawEdges)
 {
     qreal width = 0.5;
     qreal height = 0.5;
+    int halfNumNodes = numOfNodes / 2;
+
+    // These numbers arbitrarily picked while looking at 2.5" x 2.5"
+    // graphs with 0.20" nodes.
+    qreal shrink_factor = 2.5;
+    if (numOfNodes > 32)
+	shrink_factor = 1.4;
+    else if (numOfNodes > 24)
+	shrink_factor = 1.6;
+    else if (numOfNodes > 16)
+	shrink_factor = 2.;
+    else if (numOfNodes > 6)
+	shrink_factor = 2.25;
+
+    qDebu("BG::generate_antiprism(%d) shrink_factor is %.2f",
+	  numOfNodes, shrink_factor);
 
     g->nodes.double_cycle.append(create_cycle(g, width, height,
-						 numOfNodes));
-    g->nodes.double_cycle.append(create_cycle(g, width / 2., height / 2.,
-                                                 numOfNodes));
+					      halfNumNodes));
+    g->nodes.double_cycle.append(create_cycle(g, width / shrink_factor,
+					      height / shrink_factor,
+					      halfNumNodes));
 
     if (! drawEdges)
 	return;

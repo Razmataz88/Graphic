@@ -2,7 +2,7 @@
  * File:	basicgraphs.h
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.3
+ * Version:	1.4
  *
  * Purpose:	Declare the basicgraphs class.
  *
@@ -17,13 +17,14 @@
  * Dec 12, 2019 (JD V1.3):
  *  (b) Add "None" to enum Graph_Type, to match the index when no
  *	graph type is selected.
+ * Dec 14, 2019 (JD V1.4):
+ *  (a) Remove "#include defuns.h" from here.
  */
 
 
 #ifndef BASICGRAPHS_H
 #define BASICGRAPHS_H
 
-#include <defuns.h>
 #include <graph.h>
 
 class BasicGraphs

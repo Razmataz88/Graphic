@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.21
+ * Version:	1.22
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -185,6 +185,10 @@
  *	needs to be dealt with in the fullness of time.
  *  (f) Show nodeLabel2 iff showing numOfNodes2.
  *  (g) The usual collection of debug statement improvements.
+ * Dec 15, 2019 (JD V1.22)
+ *  (a) Modify on_graphType_ComboBox_currentIndexChanged() so that
+ *	Prism gets the same treatment as Antiprism, vis-a-vis the
+ *	behaviour of ui->numOfNodes1.
  */
 
 #include "mainwindow.h"
@@ -2054,7 +2058,7 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 	currentGraphIndex = -1;
     }
 
-    if (ui->graphType_ComboBox->currentIndex() < BasicGraphs::Count)
+    if (graphIndex < BasicGraphs::Count)
     {
 	int numOfNodes1 = ui->numOfNodes1->value();
 	int numOfNodes2 = ui->numOfNodes2->value();
@@ -2360,6 +2364,7 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
     switch (index)
     {
       case BasicGraphs::Antiprism:
+      case BasicGraphs::Prism:
 	ui->numOfNodes1->setMinimum(6);
 	if (ui->numOfNodes1->value() % 2 == 1)
 	    ui->numOfNodes1->setValue(ui->numOfNodes1->value() - 1);
@@ -2379,7 +2384,6 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
       case BasicGraphs::Cycle:
       case BasicGraphs::Crown:
       case BasicGraphs::Helm:
-      case BasicGraphs::Prism:
 	ui->numOfNodes1->setMinimum(3);
 	break;
 
