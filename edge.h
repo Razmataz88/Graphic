@@ -1,8 +1,8 @@
 /*
- * File:    edge.cpp
+ * File:    edge.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -27,6 +27,8 @@
  *  (b) Removed decl for the unused isDigits() function.
  * Dec 12, 2019 (JD V1.4):
  *  (a) Include defuns.h.
+ * Dec 15, 2019 (JD V1.5):
+ *  (a) Remove (globally) unused "penWidth" private variable.
  */
 
 #ifndef EDGE_H
@@ -99,7 +101,7 @@ private:
     Node	* source, * dest;   // Original names based on directed graphs
     QPointF	sourcePoint, destPoint;
     QPolygonF	selectionPolygon;
-    qreal	destRadius, sourceRadius, penWidth, rotation;
+    qreal	destRadius, sourceRadius, rotation;
     QLineF	edgeLine;
     QString	label;
     qreal	labelSize, penSize;
