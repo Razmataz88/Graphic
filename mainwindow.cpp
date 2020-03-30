@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.22
+ * Version:	1.23
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -189,6 +189,13 @@
  *  (a) Modify on_graphType_ComboBox_currentIndexChanged() so that
  *	Prism gets the same treatment as Antiprism, vis-a-vis the
  *	behaviour of ui->numOfNodes1.
+ * Dec 15, 2019 (JD V1.23)
+ *  (a) Replace font.setPixelSize() (which is a device-dependent
+ *	thing) with font.setPointSize() (which is device-INdependent).
+ *	This makes the fonts on Linux show up at a reasonable size
+ *	even without env QT_AUTO_SCREEN_SCALE_FACTOR=1 and things look
+ *	fine on macos as well.
+ *  (b) Replace a bunch of printf()s with qDebu(); delete a number of others.
  */
 
 #include "mainwindow.h"
@@ -757,8 +764,6 @@ findDefaults(QVector<Node *> nodes,
     nodeDefaults_p->fillR = result >> 16;
     nodeDefaults_p->fillG = (result >> 8) & 0xFF;
     nodeDefaults_p->fillB = result & 0xFF;
-    // printf("nodeFill: (%d,%d,%d) count = %d\n", nodeDefaults_p->fillR,
-    //   nodeDefaults_p->fillG, nodeDefaults_p->fillB, max_count);
 
     max_count = 0;
     result = nodeDefaults_p->lineR << 16 | nodeDefaults_p->lineG << 8
@@ -775,9 +780,6 @@ findDefaults(QVector<Node *> nodes,
     nodeDefaults_p->lineG = (result >> 8) & 0xFF;
     nodeDefaults_p->lineB = result & 0xFF;
 
-    // printf("nodeLine: (%d,%d,%d) count = %d\n", nodeDefaults_p->lineR,
-    //   nodeDefaults_p->lineG, nodeDefaults_p->lineB, max_count);
-
     max_count = 0;
     fresult = nodeDefaults_p->nodeDiameter;
     for (auto item : vNodeDiam)
@@ -789,7 +791,7 @@ findDefaults(QVector<Node *> nodes,
         }
     }
     nodeDefaults_p->nodeDiameter = fresult;
-    printf("nodeDiam: %.4f count = %d\n", fresult, max_count);
+    qDebu("nodeDiam: %.4f count = %d", fresult, max_count);
 
     max_count = 0;
     fresult = nodeDefaults_p->labelSize;
@@ -802,12 +804,10 @@ findDefaults(QVector<Node *> nodes,
         }
     }
     nodeDefaults_p->labelSize = fresult;
-    printf("nodeLabelSize: %.4f count = %d\n", fresult, max_count);
+    qDebu("nodeLabelSize: %.4f count = %d", fresult, max_count);
 
-    // printf("nodes.count() = %d\n", nodes.count());
     for (int i = 0; i < nodes.count(); i++)
     {
-	// printf("node %d has %d edges\n", i, nodes.at(i)->edgeList.count());
 	for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
 	{
 	    // TODO: see TODO in Edge section of saveTikZ().
@@ -828,9 +828,9 @@ findDefaults(QVector<Node *> nodes,
 		// Only count the label sizes for edges which have a label.
 		if (edge->getLabel().length() > 0)
 		{
-		    printf("i=%d, j=%d, label=/%s/, size=%.1f\n",
-			   i, j, edge->getLabel().toLatin1().data(),
-			   edge->getLabelSize());
+		    qDebu("i=%d, j=%d, label=/%s/, size=%.1f",
+			  i, j, edge->getLabel().toLatin1().data(),
+			  edge->getLabelSize());
 		    if (edge->getLabelSize() >= 1)
 			eLabelSize[edge->getLabelSize()]++;
 		}
@@ -852,8 +852,8 @@ findDefaults(QVector<Node *> nodes,
     edgeDefaults_p->lineR = result >> 16;
     edgeDefaults_p->lineG = (result >> 8) & 0xFF;
     edgeDefaults_p->lineB = result & 0xFF;
-    printf("edgeColour: (%d,%d,%d) count = %d\n", edgeDefaults_p->lineR,
-	   edgeDefaults_p->lineG, edgeDefaults_p->lineB, max_count);
+    qDebu("edgeColour: (%d,%d,%d) count = %d", edgeDefaults_p->lineR,
+	  edgeDefaults_p->lineG, edgeDefaults_p->lineB, max_count);
 
     max_count = 0;
     fresult = edgeDefaults_p->penSize;
@@ -866,7 +866,7 @@ findDefaults(QVector<Node *> nodes,
         }
     }
     edgeDefaults_p->penSize = fresult;
-    printf("edgePenSize: %.4f count = %d\n", fresult, max_count);
+    qDebu("edgePenSize: %.4f count = %d", fresult, max_count);
 
     max_count = 0;
     fresult = edgeDefaults_p->labelSize;
@@ -879,7 +879,7 @@ findDefaults(QVector<Node *> nodes,
         }
     }
     edgeDefaults_p->labelSize = fresult;
-    printf("edgeLabelSize: %.4f count = %d\n", fresult, max_count);
+    qDebu("edgeLabelSize: %.4f count = %d", fresult, max_count);
 }
 
 
@@ -904,7 +904,7 @@ findDefaults(QVector<Node *> nodes,
 bool
 saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 {
-    printf("saveTikZ() called!\n");
+    qDebu("saveTikZ() called!");
     // TODO: only define a given colour once.
     // (Hash the known colours, and use the name if already defined?)
 
@@ -1049,7 +1049,6 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 
 	if (node->getFillColour() != defNodeFillColour)
 	{
-	    // printf("Node %d: fill colour non-default; ", i);
 	    fillColour = lookupColour(node->getFillColour());
 	    if (fillColour == nullptr)
 	    {
@@ -1064,11 +1063,9 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	    // Wrap the fillColour with the TikZ syntax for later consumption:
 	    fillColour = ", fill=" + fillColour;
 	    doNewLine = true;
-	    //printf("fillColour = /%s/\n", fillColour.toLatin1().data());
 	}
 	if (node->getLineColour() != defNodeLineColour)
 	{
-	    //printf("Node %d: line colour non-default\n", i);
 	    lineColour = lookupColour(node->getLineColour());
 	    if (lineColour == nullptr)
 	    {
@@ -1081,7 +1078,6 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	    }
 	    lineColour = ", draw=" + lineColour;
 	    doNewLine = true;
-	    //printf("SETTING lineColour = /%s/\n", lineColour.toLatin1().data());
 	}
 
 	// Use (x,y) coordinate system for node positions.
@@ -1094,7 +1090,6 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 				   / -screenLogicalDPI_Y,
 				   'f', VP_PREC_TIKZ)
 		<< ") [n";
-//	printf("HERE: lineColour = /%s/\n", lineColour.toLatin1().data());
 	outfile << fillColour << lineColour;
 	if (node->getDiameter() != nodeDefaults.nodeDiameter)
 	{
@@ -1123,7 +1118,6 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	    // if a subscript itself has a superscript
 	    // and there is no (top-level) superscript, we would
 	    // fail to add the "^{}" text.
-	    // printf("thisLabel = /%s/\n", thisLabel.toLatin1().data());
 	    if (thisLabel.indexOf('^') != -1 || thisLabel.indexOf('_') == -1)
 		outfile << "] {$" << thisLabel << "$};\n";
 	    else
@@ -1140,7 +1134,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     for (int i = 0; i < nodes.count(); i++)
     {
 	bool wroteExtra = false;
-	printf("Node %d has %d edges\n", i, nodes.at(i)->edgeList.count());
+	qDebu("\tNode %d has %d edges", i, nodes.at(i)->edgeList.count());
 	for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
 	{
 	    // TODO: is it possible that with various and sundry
@@ -1155,12 +1149,12 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	    if ((sourceID == i && destID > i)
 		|| (destID == i && sourceID > i))
 	    {
-		printf("i %d j %d srcID %d dstID %d", i, j, sourceID, destID);
-		printf("\tlabel = /%s/\n", edge->getLabel().toLatin1().data());
+		qDebu("\ti %d j %d srcID %d dstID %d", i, j, sourceID, destID);
+		qDebu("\tlabel = /%s/", edge->getLabel().toLatin1().data());
 		QString lineColour = "";
 		if (edge->getColour() != defEdgeLineColour)
 		{
-		    printf("E %d,%d: colour non-default\n", sourceID, destID);
+		    qDebu("E %d,%d: colour non-default", sourceID, destID);
 		    lineColour = lookupColour(edge->getColour());
 		    if (lineColour == nullptr)
 		    {
@@ -1176,7 +1170,8 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 		    }
 		    lineColour = ", draw=" + lineColour;
 		    wroteExtra = true;
-		    printf("SETTING lineColour = /%s/\n", lineColour.toLatin1().data());
+		    qDebu("\tSETTING lineColour = /%s/",
+			  lineColour.toLatin1().data());
 		}
 
 		outfile << "\\path (v"
@@ -1892,27 +1887,6 @@ MainWindow::select_Custom_Graph(QString graphName)
 		edge->setLabel(l);
 	    }
 	    edge->setParentItem(graph);
-	    i++;
-	    for (int i = 0; i < nodes.count(); i++)
-	    {
-		for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
-		{
-		    Edge * e = nodes.at(i)->edgeList.at(j);
-		    // int sourceID = e->sourceNode()->getID();
-		    int destID = e->destNode()->getID();
-		    if (i < destID)
-		    {
-			// printf("node[%d]'s %d-th edge has dst = %d",
-			//   i, j, destID);
-			QString wt = e->getLabel();
-			// QColor col = e->getColour();
-			// printf(", wt /%s/, rgb (%.2f,%.2f,%.2f)\n",
-			//   wt.toLatin1().data(),
-			//   col.redF(), col.greenF(), col.blueF());
-		    }
-		}
-	    }
-	    // printf("\n");
 	}
     }
     file.close();
@@ -1992,23 +1966,24 @@ MainWindow::style_Graph(enum widget_ID what_changed)
 	if (item->type() == Graph::Type)
 	{
 	    Graph * graphItem =	 qgraphicsitem_cast<Graph *>(item);
-	    ui->preview->Style_Graph(graphItem,
-				     ui->graphType_ComboBox->currentIndex(),
-				     what_changed,
-				     ui->nodeSize->value(),
-				     ui->NodeLabel1->text(),
-				     ui->NodeLabel2->text(),
-				     ui->NumLabelCheckBox->isChecked(),
-				     ui->NodeLabelSize->value(),
-				     ui->NodeFillColor->palette().background().color(),
-				     ui->NodeOutlineColor->palette().background().color(),
-				     ui->edgeSize->value(),
-				     ui->EdgeLabel->text(),
-				     ui->EdgeLabelSize->value(),
-				     ui->EdgeLineColor->palette().background().color(),
-				     ui->graphWidth->value(),
-				     ui->graphHeight->value(), 
-				     ui->graphRotation->value());
+	    ui->preview->Style_Graph(
+		graphItem,
+		ui->graphType_ComboBox->currentIndex(),
+		what_changed,
+		ui->nodeSize->value(),
+		ui->NodeLabel1->text(),
+		ui->NodeLabel2->text(),
+		ui->NumLabelCheckBox->isChecked(),
+		ui->NodeLabelSize->value(),
+		ui->NodeFillColor->palette().background().color(),
+		ui->NodeOutlineColor->palette().background().color(),
+		ui->edgeSize->value(),
+		ui->EdgeLabel->text(),
+		ui->EdgeLabelSize->value(),
+		ui->EdgeLineColor->palette().background().color(),
+		ui->graphWidth->value(),
+		ui->graphHeight->value(), 
+		ui->graphRotation->value());
 	}
     }
 }
@@ -2205,6 +2180,7 @@ MainWindow::on_EdgeLineColor_clicked()
 }
 
 
+
 /*
  * Name:	on_NumLabelCheckBox_clicked()
  * Purpose:
@@ -2226,6 +2202,7 @@ MainWindow::on_NumLabelCheckBox_clicked(bool checked)
 }
 
 
+
 /*
  * Name:	MainWindow::set_Label_Font_Sizes()
  * Purpose:
@@ -2243,75 +2220,75 @@ MainWindow::set_Label_Font_Sizes()
 {
     QFont font;
     font = ui->graphLabel->font();
-    font.setPixelSize(TITLE_SIZE);
+    font.setPointSize(TITLE_SIZE);
     ui->graphLabel->setFont(font);
 
     font = ui->edgeLabel->font();
-    font.setPixelSize(TITLE_SIZE - 1);
+    font.setPointSize(TITLE_SIZE - 1);
     ui->edgeLabel->setFont(font);
 
     font = ui->nodeLabel->font();
-    font.setPixelSize(TITLE_SIZE - 1);
+    font.setPointSize(TITLE_SIZE - 1);
     ui->nodeLabel->setFont(font);
 
     font = ui->sizeLabel->font();
-    font.setPixelSize(SUB_TITLE_SIZE);
+    font.setPointSize(SUB_TITLE_SIZE);
     ui->sizeLabel->setFont(font);
 
     font = ui->partitionLabel->font();
-    font.setPixelSize(SUB_TITLE_SIZE);
+    font.setPointSize(SUB_TITLE_SIZE);
     ui->partitionLabel->setFont(font);
 
     font = ui->labelLabel->font();
-    font.setPixelSize(SUB_TITLE_SIZE);
+    font.setPointSize(SUB_TITLE_SIZE);
     ui->labelLabel->setFont(font);
 
     font = ui->sizeLabelEN->font();
-    font.setPixelSize(SUB_TITLE_SIZE);
+    font.setPointSize(SUB_TITLE_SIZE);
     ui->sizeLabelEN->setFont(font);
 
     font = ui->colorLabel->font();
-    font.setPixelSize(SUB_TITLE_SIZE);
+    font.setPointSize(SUB_TITLE_SIZE);
     ui->colorLabel->setFont(font);
 
     font = ui->rotationLabel->font();
-    font.setPixelSize(SUB_TITLE_SIZE);
+    font.setPointSize(SUB_TITLE_SIZE);
     ui->rotationLabel->setFont(font);
 
     font = ui->widthLabel->font();
-    font.setPixelSize(SUB_SUB_TITLE_SIZE);
+    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->widthLabel->setFont(font);
 
     font = ui->heightLabel->font();
-    font.setPixelSize(SUB_SUB_TITLE_SIZE);
+    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->heightLabel->setFont(font);
 
     font = ui->textInputLabel->font();
-    font.setPixelSize(SUB_SUB_TITLE_SIZE);
+    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->textInputLabel->setFont(font);
 
     font = ui->textSizeLabel->font();
-    font.setPixelSize(SUB_SUB_TITLE_SIZE);
+    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->textSizeLabel->setFont(font);
 
     font = ui->fillLabel->font();
-    font.setPixelSize(SUB_SUB_TITLE_SIZE);
+    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->fillLabel->setFont(font);
 
     font = ui->outlineLabel->font();
-    font.setPixelSize(SUB_SUB_TITLE_SIZE);
+    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->outlineLabel->setFont(font);
 
     font = ui->ptLabel->font();
-    font.setPixelSize(SUB_SUB_TITLE_SIZE);
+    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->ptLabel->setFont(font);
 
     font = ui->inchesLabel->font();
-    font.setPixelSize(SUB_SUB_TITLE_SIZE);
+    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->inchesLabel->setFont(font);
 
     font = ui->complete_checkBox->font();
-    font.setPixelSize(SUB_SUB_TITLE_SIZE - 1);
+    font.setPointSize(SUB_SUB_TITLE_SIZE - 1);
     ui->complete_checkBox->setFont(font);
 }
 

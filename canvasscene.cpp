@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.6
+ * Version: 1.7
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -35,6 +35,8 @@
  *  (a) Remove unused private var numOfNodes.
  *  (b) Removed qDeb stuff, now in defuns.h, which is now included here.
  *  (c) Added a debug stmt.
+ * Mar 30, 2020 (JD V1.7)
+ *  (a) Remove deprecated usage of setSortCacheEnabled() in CanvasScene().
  */
 
 #include "canvasscene.h"
@@ -61,7 +63,6 @@ CanvasScene::CanvasScene()
     :  mCellSize(25, 25)
 {
     setItemIndexMethod(QGraphicsScene::NoIndex);
-    setSortCacheEnabled(true);
 
     connectNode1a = nullptr;
     connectNode2a = nullptr;

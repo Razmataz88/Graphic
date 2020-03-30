@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.12
+ * Version: 1.13
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -45,6 +45,8 @@
  *  (a) Remove node->edgeWeight, which is used nowhere.
  * Dec 13, 2019 (JD V1.12)
  *  (a) Added defuns.h, removed debug #defines.
+ * Dec 17, 2019 (JD V1.13)
+ *  (a) Add usage of Esc to edit mode help.
  */
 
 #include "canvasview.h"
@@ -65,7 +67,8 @@ static const QString JOIN_DESCRIPTION =
     "and press 'J'.  "
     "The second component is moved and the second selected node is "
     "identified with the first.  "
-    "If two other nodes were selected, they are also identified.";
+    "If two other nodes were selected, they are also identified, "
+    "which may cause one part to be rotated.";
 
 static const QString DELETE_DESCRIPTION =
     "Delete mode: Click on any node or edge to be deleted.  "
@@ -73,7 +76,8 @@ static const QString DELETE_DESCRIPTION =
 
 static const QString EDIT_DESCRIPTION =
     "Edit mode: Drag individual nodes around within a graph drawing.  "
-    "Click on a node to give it a label.";
+    "Use the 'Esc' key to undo one or more node drags.  ";
+    // TODO make this work "Click on a node to give it a label.  ";
 
 static const QString FREESTYLE_DESCRIPTION =
     "Freestyle mode: Add nodes by double clicking at the desired location.  "
