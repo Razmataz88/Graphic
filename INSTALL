@@ -1,0 +1,58 @@
+The web page http://graph-drawing.acadiau.ca/ should have links to
+pre-compiled versions of this software for various operating systems.
+If you don't find one that works for you, or if you prefer to compile
+from source, instructions which may get you going are found below.
+
+To compile (and optionally install) Graphic on Linux:
+-----------------------------------------------------
+0. Copy down the source files found here.
+1. Install the Qt5 package for your version of Linux
+   -> you must install the development tools, so if you have a choice
+      to just select a "run-time" package, don't pick that one
+2. Run
+      qmake-qt5
+   (or try plain  qmake  if your distro doesn't have qmake-qt5)
+3. Assuming that is all good, run
+      make
+   or optionally, if you want to keep many of your CPUs busy
+      make -j 8
+   On a fast-ish CPU the latter should finish in 10 or 15 seconds.
+4. The executable is the program "Graphic" in this directory.
+   You can "install" it by copying it to the directory of your choice,
+   such as
+      /usr/local/bin
+   or
+      $HOME/bin
+
+
+To compile (and optionally install) Graphic on MacOS:
+-----------------------------------------------------
+0. Copy down the source files found here.
+1. Install Qt5
+   -> you must install the Qt development tools, not just the run-time support.
+2. Run
+      qmake
+3. Clean up old versions of files:
+      make clean ; rm -rf Graphic.app graphic.dmg
+4. Assuming that is all good, run
+      make
+   or optionally, if you want to keep many of your CPUs busy
+      make -j 8
+   On a fast-ish CPU the latter should finish in 10 or 15 seconds.
+5. The executable is the program "Graphic" in the directory
+      Graphic.app/Contents/MacOS
+   If you wish, you can create a .dmg file with the command
+      macdeployqt graphic.app -dmg
+   which should create "graphic.dmg" in this directory.
+
+
+
+-----------------------------------------------------
+
+Other OSes:
+
+I have no other OSes on any of my computers with which to compile
+Graphic.  If you compile the sources for another OS and wish to share
+your knowledge, please e-mail me (Jim Diamond) the details of what you
+did.  (See the e-mail link found at http://graph-drawing.acadiau.ca/.)
+
