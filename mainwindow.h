@@ -2,9 +2,34 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.1
+ * Version:	1.8
  *
- * Purpose:	
+ * Purpose:	Define the MainWindow class.
+ *
+ * Modification history:
+ * Oct 13, 2019 (JD V1.2)
+ *  (a) Minor comment & formatting changes.
+ *  (b) Add lookupColour() (for TikZ output routine).
+ * Nov 17, 2019 (JD V1.3)
+ *  (a) Remove lookupColour() (now a non-class function).
+ * Nov 28, 2019 (JD V1.4)
+ *  (a) Add dumpGraphIc() and dumpTikZ().
+ * Nov 29, 2019 (JD V1.5)
+ *  (a) Rename "none" mode to "drag" mode, for less confusion.
+ *      This required changes to mainwindow.ui as well.
+ *	(Also changed "Complete" to "Draw edges" there.)
+ * Dec 6, 2019 (JD V1.6)
+ *  (a) Rename generate_Freestyle_{Nodes,Edges} to {node,edge}ParamsUpdated
+ *      to better reflect what those functions do.
+ *  (b) Modify generate_Graph() to take a parameter.
+ *  (c) Add the enum widget_num as the parameter values for generate_Graph().
+ * Dec 9, 2019 (JD V1.7)
+ *  (a) Add on_numOfNodes1_valueChanged() to follow the actions of
+ *	on_numOfNodes2_valueChanged().
+ * Dec 12, 2019 (JD V1.8)
+ *  (a) #include defuns.h.
+ *  (b) Change "changed_widget" from an int to and enum widget_ID.
+ *  (c) Move enum widget_ID to defuns.h.
  */
 
 
@@ -17,7 +42,10 @@
 #include <QGridLayout>
 #include <QScrollArea>
 
-namespace Ui {
+#include "defuns.h"
+
+namespace Ui
+{
     class MainWindow;
 }
 
@@ -25,19 +53,21 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-public:
+  public:
     explicit MainWindow(QWidget * parent = 0);
     ~MainWindow();
     void setKeyStatusLabel(QString text);
 
-private slots:
+  private slots:
     bool save_Graph();
     bool load_Graphic_File();
     void load_Graphic_Library();
     void select_Custom_Graph(QString graphName);
-    void generate_Graph();
-    void style_Graph();
+    void generate_Graph(enum widget_ID changed_widget);
+    void style_Graph(enum widget_ID changed_widget);
     void generate_Combobox_Titles();
+    void dumpGraphIc();
+    void dumpTikZ();
 
     void set_Label_Font_Sizes();
     void on_NodeOutlineColor_clicked();
@@ -46,10 +76,11 @@ private slots:
 
     void on_NumLabelCheckBox_clicked(bool checked);
     void on_graphType_ComboBox_currentIndexChanged(int index);
+    void on_numOfNodes1_valueChanged(int arg1);
     void on_numOfNodes2_valueChanged(int arg1);
 
-    void generate_Freestyle_Nodes();
-    void generate_Freestyle_Edges();
+    void nodeParamsUpdated();
+    void edgeParamsUpdated();
 
     void on_deleteMode_radioButton_clicked();
 
@@ -57,13 +88,13 @@ private slots:
 
     void on_editMode_radioButton_clicked();
 
-    void on_noMode_radioButton_clicked();
+    void on_dragMode_radioButton_clicked();
 
     void on_freestyleMode_radioButton_clicked();
 
     void on_tabWidget_currentChanged(int index);
 
-private:
+  private:
     Ui::MainWindow * ui;
     QDir dir;
     QString fileDirectory;

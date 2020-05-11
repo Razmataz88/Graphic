@@ -1,10 +1,24 @@
 /*
  * File:	basicgraphs.h
  * Author:	Rachel Bood
- * Date:	
- * Version:	
+ * Date:	Dec 31, 2015 (?)
+ * Version:	1.4
  *
- * Purpose:	
+ * Purpose:	Declare the basicgraphs class.
+ *
+ * Modification history:
+ * Dec 9, 2019 (JD V1.1)
+ *  (a) Reorder the function declarations.
+ *  (b) Rename some variables.
+ *  (c) Remove width and height from almost all functions.
+ * Dec 10, 2019 (JD V1.2):
+ *  (a) Change decls of Graph_Type_Name and getGraphName() to static so
+ *	that I can access getGraphName() from other classes.
+ * Dec 12, 2019 (JD V1.3):
+ *  (b) Add "None" to enum Graph_Type, to match the index when no
+ *	graph type is selected.
+ * Dec 14, 2019 (JD V1.4):
+ *  (a) Remove "#include defuns.h" from here.
  */
 
 
@@ -17,49 +31,38 @@ class BasicGraphs
 {
   public:
     BasicGraphs();
-    void generate_wheel(Graph * item, qreal width, qreal height,
-			int numOfNodes, bool complete);
-    void generate_bipartite(Graph * item, int topNodes,int bottomNodes,
-			    qreal height, qreal width, bool complete);
-    void generate_cycle(Graph * item, qreal width, qreal height,
-			int numOfNodes, bool complete);
-    void generate_star(Graph * item, qreal width, qreal height,
-		       int numOfNodes, bool complete);
-    void generate_complete(Graph * item, qreal width, qreal height,
-			   int numOfNodes, bool complete);
-    void generate_petersen(Graph * item, qreal width, qreal height,
-			   int numOfNodes, int starSkip, bool complete);
-    void generate_gear(Graph * item, qreal width, qreal height,
-		       int numOfNodes, bool complete);
-    void generate_helm(Graph * item, qreal width, qreal height,
-		       int numOfNodes, bool complete);
-    void generate_crown(Graph * item, qreal width, qreal height,
-			int numOfNodes, bool complete);
-    void generate_grid(Graph * item, qreal height, qreal width,
-		       int topNodes, int bottomNodes, bool complete);
-    void generate_antiprism(Graph * item, qreal width, qreal height,
-			    int topNode, bool complete);
-    void generate_path(Graph * item, qreal width, int numOfNodes,
-		       bool complete);
-    void generate_prism(Graph * item, qreal width, qreal height,
-			int numOfNodes, bool complete);
-    void generate_balanced_binary_tree(Graph * item, qreal height,
-				       qreal width, int numOfNodes,
-				       bool complete);
-    void recursive_binary_tree(Graph * item, int depth, int index,
-			       qreal height, qreal width, int treeDepth);
-    void generate_dutch_windmill(Graph * g, qreal height, int blades,
-				 int bladeSize, bool complete);
-    QList<Node *> create_cycle(Graph * item, qreal width, qreal height,
+    QList<Node *> create_cycle(Graph * g, qreal width, qreal height,
 			       int numOfNodes, qreal radians = 0);
 
-    enum Graph_Type {Antiprism = 1, BBTree, Bipartite, Crown, Cycle,
-		     Windmill, Gear, Grid, Helm, Path, Petersen, Prism,
-		     Complete, Star, Wheel, Count};
-    QString getGraphName(int enumValue);
+    void generate_antiprism(Graph * g, int numOfNodes, bool drawEdges);
+    void recursive_binary_tree(Graph * g, int depth, int index, int treeDepth);
+    void generate_balanced_binary_tree(Graph * g, int numOfNodes,
+				       bool drawEdges);
+    void generate_bipartite(Graph * g, int topNodes,int bottomNodes,
+			    bool drawEdges);
+    void generate_complete(Graph * g, int numOfNodes, bool drawEdges);
+    void generate_crown(Graph * g, int numOfNodes, bool drawEdges);
+    void generate_cycle(Graph * g, int numOfNodes, bool drawEdges);
+    void generate_dutch_windmill(Graph * g, int blade, int bladeSize,
+				 bool drawEdges);
+    void generate_gear(Graph * g, int numOfNodes, bool drawEdges);
+    void generate_grid(Graph * g, int columns, int rows, bool drawEdges);
+    void generate_helm(Graph * g, int numOfNodes, bool drawEdges);
+    void generate_path(Graph * g, int numOfNodes, bool drawEdges);
+    void generate_petersen(Graph * g, int numOfNodes, int starSkip,
+			   bool drawEdges);
+    void generate_prism(Graph * g, int numOfNodes, bool drawEdges);
+    void generate_star(Graph * g, int numOfNodes, bool drawEdges);
+    void generate_wheel(Graph * g, int numOfNodes, bool drawEdges);
+
+    // This must agree with Graph_Type_Name set in the BG constructor.
+    enum Graph_Type {Nothing = 0, Antiprism, BBTree, Bipartite, Complete,
+		     Crown, Cycle, Dutch_Windmill, Gear, Grid, Helm, Path,
+		     Petersen, Prism, Star, Wheel, Count};
+    static QString getGraphName(int enumValue);
 
   private:
-    QVector<QString> Graph_Type_Name;
+    static QVector<QString> Graph_Type_Name;
 };
 
 #endif // BASICGRAPHS_H

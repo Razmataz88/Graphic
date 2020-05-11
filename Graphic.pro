@@ -22,7 +22,7 @@ SOURCES += \
     edge.cpp \
     graph.cpp \
     graphmimedata.cpp \
-    label.cpp \
+    html-label.cpp \
     labelcontroller.cpp \
     labelsizecontroller.cpp \
     main.cpp \
@@ -40,7 +40,7 @@ HEADERS += \
     edge.h \
     graph.h \
     graphmimedata.h \
-    label.h \
+    html-label.h \
     labelcontroller.h \
     labelsizecontroller.h \
     mainwindow.h \
