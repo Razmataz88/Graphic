@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.24
+ * Version:	1.25
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -201,6 +201,15 @@
  * 	scaling issues. (Only reliable with Qt V5.14.2 or higher)
  *  (b) Changed ...->palette().background().color() to
  *	...->palette().window().color() as per current practice.
+ * May 15, 2020 (IC V1.25)
+ *  (a) Manually set the sizes of many UI elements in an attempt to get
+ *      them to show up at consistent sizes on different systems.
+ *	This requires the use of logical as well as physical DPI values.
+ *  (b) Silence some whinage from gcc.
+ *  (c) Rename set_Label_Font_Sizes() to set_Font_Sizes().  Rearrange code.
+ *      Add set_Interface_Sizes().
+ *	Use (and embed) arimo as the standard font to help the UI look
+ *	similar across many platforms.
  */
 
 #include "mainwindow.h"
@@ -225,6 +234,7 @@
 #include <QtSvg/QSvgGenerator>
 #include <QErrorMessage>
 #include <QDate>
+#include <QFont>
 
 
 #define GRAPHiCS_FILE_EXTENSION "grphc"
@@ -237,10 +247,16 @@
 #define BUTTON_STYLE "border-style: outset; border-width: 2px; " \
 	     "border-radius: 5px; border-color: beige; padding: 3px;"
 
-// The unit of these is points:
-#define TITLE_SIZE	    20
-#define SUB_TITLE_SIZE	    18
-#define SUB_SUB_TITLE_SIZE  12
+// The unit of these is pixels:
+#define TITLE_SIZE	    27
+#define SUB_TITLE_SIZE	    24
+#define SUB_SUB_TITLE_SIZE  16
+
+// Size of widgets in LOGICAL inches:
+#define SPINBOX		0.525
+#define DOUBLESPINBOX   0.675
+#define LINE_EDIT	0.675
+#define COLOUR_PUSH	0.60
 
 // The precision (number of digits after the decimal place) with which
 // vertex positions and edge thicknesses, respectively, are written in
@@ -251,6 +267,8 @@
 #define VP_PREC_GRPHC  4
 
 static qreal screenPhysicalDPI_X, screenPhysicalDPI_Y;
+static qreal screenLogicalDPI_X, screenLogicalDPI_Y;
+//static qreal ratio, ratioFont;
 
 /*
  * Name:	MainWindow
@@ -323,10 +341,10 @@ QMainWindow(parent),
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(nodeSize_WGT); });
     connect(ui->NodeLabel1,
-	    (void(QLineEdit::*)(QString))&QLineEdit::textChanged,
+            (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
 	    this, [this]() { generate_Graph(nodeLabel1_WGT); });
     connect(ui->NodeLabel2,
-	    (void(QLineEdit::*)(QString))&QLineEdit::textChanged,
+            (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
 	    this, [this]() { generate_Graph(nodeLabel2_WGT); });
     connect(ui->NodeLabelSize,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
@@ -347,7 +365,7 @@ QMainWindow(parent),
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(edgeSize_WGT); });
     connect(ui->EdgeLabel,
-	    (void(QLineEdit::*)(QString))&QLineEdit::textChanged,
+            (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
 	    this, [this]() { generate_Graph(edgeLabel_WGT); });
     connect(ui->EdgeLabelSize,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
@@ -359,8 +377,8 @@ QMainWindow(parent),
     // Redraw the preview pane graph (if any) when these GRAPH
     // parameters are modified:
     connect(ui->graphRotation,
-	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(graphRotation_WGT); });
+            (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+            this, [this]() { generate_Graph(graphRotation_WGT); });
     connect(ui->complete_checkBox,
 	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
 	    this, [this]() { generate_Graph(completeCheckBox_WGT); });
@@ -436,7 +454,23 @@ QMainWindow(parent),
     ui->canvas->snapToGrid(ui->snapToGrid_checkBox->isChecked());
 
     ui->splitter->setStretchFactor(0, 1); // Show different modes at start up.
-    set_Label_Font_Sizes();
+
+    QScreen * screen = QGuiApplication::primaryScreen();
+    screenPhysicalDPI_X = screen->physicalDotsPerInchX();
+    screenPhysicalDPI_Y = screen->physicalDotsPerInchY();
+    screenLogicalDPI_X = screen->logicalDotsPerInchX();
+    screenLogicalDPI_Y = screen->logicalDotsPerInchY();
+
+    //qreal refDpi = 142.;
+    //qreal refHeight = 1080.;
+    //qreal refWidth = 1920.;
+
+    //ratio = screen->size().width()/refWidth;
+    //ratioFont = screenPhysicalDPI_X/refDpi;
+
+    //set_Interface_Sizes();
+
+    set_Font_Sizes();
     // Initialize font sizes for ui labels (Linux fix).
     gridLayout = new QGridLayout();
 
@@ -445,10 +479,6 @@ QMainWindow(parent),
 
     // Initialize Create Graph pane to default values
     on_graphType_ComboBox_currentIndexChanged(-1);
-
-    QScreen * screen = QGuiApplication::primaryScreen();
-    screenPhysicalDPI_X = screen->physicalDotsPerInchX();
-    screenPhysicalDPI_Y = screen->physicalDotsPerInchY();
 
 #ifdef DEBUG
     // Info to help with dealing with HiDPI issues
@@ -2209,7 +2239,7 @@ MainWindow::on_NumLabelCheckBox_clicked(bool checked)
 
 
 /*
- * Name:	MainWindow::set_Label_Font_Sizes()
+ * Name:	MainWindow::set_Font_Sizes()
  * Purpose:
  * Arguments:
  * Outputs:
@@ -2221,83 +2251,115 @@ MainWindow::on_NumLabelCheckBox_clicked(bool checked)
  */
 
 void
-MainWindow::set_Label_Font_Sizes()
+MainWindow::set_Font_Sizes()
 {
     QFont font;
-    font = ui->graphLabel->font();
-    font.setPointSize(TITLE_SIZE);
+    font.setFamily("Arimo");
+    font.setPixelSize(13);
+    this->setFont(font);
+
+    font.setPixelSize(TITLE_SIZE);
     ui->graphLabel->setFont(font);
 
-    font = ui->edgeLabel->font();
-    font.setPointSize(TITLE_SIZE - 1);
+    font.setPixelSize(TITLE_SIZE - 1);
     ui->edgeLabel->setFont(font);
-
-    font = ui->nodeLabel->font();
-    font.setPointSize(TITLE_SIZE - 1);
     ui->nodeLabel->setFont(font);
 
-    font = ui->sizeLabel->font();
-    font.setPointSize(SUB_TITLE_SIZE);
-    ui->sizeLabel->setFont(font);
-
-    font = ui->partitionLabel->font();
-    font.setPointSize(SUB_TITLE_SIZE);
+    font.setPixelSize(SUB_TITLE_SIZE);
     ui->partitionLabel->setFont(font);
-
-    font = ui->labelLabel->font();
-    font.setPointSize(SUB_TITLE_SIZE);
-    ui->labelLabel->setFont(font);
-
-    font = ui->sizeLabelEN->font();
-    font.setPointSize(SUB_TITLE_SIZE);
-    ui->sizeLabelEN->setFont(font);
-
-    font = ui->colorLabel->font();
-    font.setPointSize(SUB_TITLE_SIZE);
     ui->colorLabel->setFont(font);
-
-    font = ui->rotationLabel->font();
-    font.setPointSize(SUB_TITLE_SIZE);
     ui->rotationLabel->setFont(font);
 
-    font = ui->widthLabel->font();
-    font.setPointSize(SUB_SUB_TITLE_SIZE);
+    font.setPixelSize(SUB_SUB_TITLE_SIZE);
     ui->widthLabel->setFont(font);
-
-    font = ui->heightLabel->font();
-    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->heightLabel->setFont(font);
-
-    font = ui->textInputLabel->font();
-    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->textInputLabel->setFont(font);
-
-    font = ui->textSizeLabel->font();
-    font.setPointSize(SUB_SUB_TITLE_SIZE);
+    ui->textInputLabel_2->setFont(font);
     ui->textSizeLabel->setFont(font);
-
-    font = ui->fillLabel->font();
-    font.setPointSize(SUB_SUB_TITLE_SIZE);
+    ui->textSizeLabel_2->setFont(font);
     ui->fillLabel->setFont(font);
-
-    font = ui->outlineLabel->font();
-    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->outlineLabel->setFont(font);
-
-    font = ui->ptLabel->font();
-    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->ptLabel->setFont(font);
-
-    font = ui->inchesLabel->font();
-    font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->inchesLabel->setFont(font);
 
-    font = ui->complete_checkBox->font();
-    font.setPointSize(SUB_SUB_TITLE_SIZE - 1);
+    font.setPixelSize(SUB_SUB_TITLE_SIZE - 1);
+    ui->graphType_ComboBox->setFont(font);
     ui->complete_checkBox->setFont(font);
+    ui->NumLabelCheckBox->setFont(font);
+    ui->EdgeLabel->setFont(font);
+    ui->NodeLabel1->setFont(font);
+    ui->NodeLabel2->setFont(font);
+
+    font.setPixelSize(SUB_SUB_TITLE_SIZE - 2);
+    ui->graphHeight->setFont(font);
+    ui->graphWidth->setFont(font);
+    ui->numOfNodes1->setFont(font);
+    ui->numOfNodes2->setFont(font);
+    ui->graphRotation->setFont(font);
+    ui->EdgeLabelSize->setFont(font);
+    ui->edgeSize->setFont(font);
+    ui->NodeLabelSize->setFont(font);
+    ui->nodeSize->setFont(font);
 }
 
+/*
+ * Name:	MainWindow::set_Interface_Sizes()
+ * Purpose:
+ * Arguments:
+ * Outputs:
+ * Modifies:
+ * Returns:
+ * Assumptions:
+ * Bugs:
+ * Notes:
+ */
 
+void
+MainWindow::set_Interface_Sizes()
+{
+    ui->tabWidget->setFixedWidth(screenLogicalDPI_X*7.5);
+    ui->newGraph->setFixedWidth(screenLogicalDPI_X*7.5 - 6); // 6px for border
+
+    ui->graphType_ComboBox->setFixedWidth(screenLogicalDPI_X*2.25);
+
+    ui->numOfNodes1->setFixedWidth(screenLogicalDPI_X*SPINBOX);
+    ui->numOfNodes2->setFixedWidth(screenLogicalDPI_X*SPINBOX);
+    ui->EdgeLabelSize->setFixedWidth(screenLogicalDPI_X*SPINBOX);// DSpinBox
+    ui->NodeLabelSize->setFixedWidth(screenLogicalDPI_X*SPINBOX);// DSpinBox
+
+    ui->graphHeight->setFixedWidth(screenLogicalDPI_X*DOUBLESPINBOX);
+    ui->graphWidth->setFixedWidth(screenLogicalDPI_X*DOUBLESPINBOX);
+    ui->graphRotation->setFixedWidth(screenLogicalDPI_X*DOUBLESPINBOX);
+    ui->edgeSize->setFixedWidth(screenLogicalDPI_X*DOUBLESPINBOX);
+    ui->nodeSize->setFixedWidth(screenLogicalDPI_X*DOUBLESPINBOX);
+
+    ui->EdgeLabel->setFixedWidth(screenLogicalDPI_X*LINE_EDIT);
+    ui->NodeLabel1->setFixedWidth(screenLogicalDPI_X*LINE_EDIT);
+    ui->NodeLabel2->setFixedWidth(screenLogicalDPI_X*LINE_EDIT);
+
+    ui->EdgeLineColor->setFixedWidth(screenLogicalDPI_X*COLOUR_PUSH);
+    ui->NodeOutlineColor->setFixedWidth(screenLogicalDPI_X*COLOUR_PUSH);
+    ui->NodeFillColor->setFixedWidth(screenLogicalDPI_X*COLOUR_PUSH);
+
+    // Other labels available for resizing:
+    //ui->ptLabel->setFixedWidth(screenLogicalDPI_X*0.7);
+    //ui->inchesLabel->setFixedWidth(screenLogicalDPI_X*0.8);
+    //ui->sizeLabel->setFixedWidth(screenLogicalDPI_X*1.1);
+    //ui->heightLabel->setFixedWidth(screenLogicalDPI_X*0.5);
+    //ui->widthLabel->setFixedWidth(screenLogicalDPI_X*0.5);
+    //ui->partitionLabel->setFixedWidth(screenLogicalDPI_X*1.5);
+    //ui->complete_checkBox->setFixedWidth(screenLogicalDPI_X*1.4);
+    //ui->rotationLabel->setFixedWidth(screenLogicalDPI_X*0.8);
+    //ui->edgeLabel->setFixedWidth(screenLogicalDPI_X*1.2);
+    //ui->textInputLabel->setFixedWidth(screenLogicalDPI_X*0.7);
+    //ui->textSizeLabel->setFixedWidth(screenLogicalDPI_X*0.7);
+    //ui->colorLabel->setFixedWidth(screenLogicalDPI_X*1.25);
+    //ui->outlineLabel->setFixedWidth(screenLogicalDPI_X*0.35);
+    //ui->fillLabel->setFixedWidth(screenLogicalDPI_X*0.35);
+    //ui->nodeLabel->setFixedWidth(screenLogicalDPI_X*1.8);
+    //ui->textInputLabel_2->setFixedWidth(screenLogicalDPI_X*0.75);
+    //ui->textSizeLabel_2->setFixedWidth(screenLogicalDPI_X*0.75);
+}
 
 /*
  * Name:	on_graphType_ComboBox_currentIndexChanged()
