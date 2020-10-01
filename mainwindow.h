@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.9
+ * Version:	1.10
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -31,8 +31,10 @@
  *  (b) Change "changed_widget" from an int to and enum widget_ID.
  *  (c) Move enum widget_ID to defuns.h.
  * May 15, 2020 (IC V1.9)
- *  (a) Rename set_Label_Font_Sizes() to set_Font_Sizes().
- *      Add set_Interface_Sizes().
+ *  (a) Renamed set_Font_Label_Sizes() to set_Font_Sizes() to better reflect
+ *	what the function does.
+ * May 25, 2020 (IC V1.10)
+ *  (a) Removed set_Interface_Sizes().
  */
 
 
@@ -73,7 +75,6 @@ class MainWindow : public QMainWindow
     void dumpTikZ();
 
     void set_Font_Sizes();
-    void set_Interface_Sizes();
     void on_NodeOutlineColor_clicked();
     void on_NodeFillColor_clicked();
     void on_EdgeLineColor_clicked();
