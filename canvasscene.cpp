@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.7
+ * Version: 1.9
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -37,6 +37,11 @@
  *  (c) Added a debug stmt.
  * Mar 30, 2020 (JD V1.7)
  *  (a) Remove deprecated usage of setSortCacheEnabled() in CanvasScene().
+ * June 17, 2020 (IC V1.8)
+ *  (a) Corrected mousePressEvent to properly delete the graph (and parent
+ *      graphs) if the last child node is deleted.
+ * June 19, 2020 (IC V1.9)
+ *  (a) Added graphDropped() signal to tell mainWindow to update the edit tab.
  */
 
 #include "canvasscene.h"
@@ -112,9 +117,9 @@ CanvasScene::dropEvent(QGraphicsSceneDragDropEvent * event)
         addItem(graphItem);
         graphItem->isMoved();
         clearSelection();
+        emit graphDropped();
     }
 }
-
 
 
 void
@@ -243,23 +248,27 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 
 			Graph * parent =
 			    qgraphicsitem_cast<Graph*>(node->parentItem());
-
-			if (parent != nullptr || parent != 0)
-			{
-			    if (parent->childItems().length() == 0)
-			    {
-				parent->setParentItem(nullptr);
-				removeItem(parent);
-				delete parent;
-				parent = nullptr;
-			    }
-			}
+			Graph * tempParent;
 
 			// Delete the node.
 			node->setParentItem(nullptr);
 			removeItem(node);
 			delete node;
 			node = nullptr;
+
+			// Now delete Graph (and root graphs) if there are no nodes left
+			while (parent != nullptr || parent != 0)
+			{
+			    tempParent = qgraphicsitem_cast<Graph*>(parent->parentItem());
+			    if (parent->childItems().isEmpty())
+			    {
+				parent->setParentItem(nullptr);
+				removeItem(parent);
+				delete parent;
+				parent = nullptr;
+			    }
+			    parent = tempParent;
+			}
 			break;
 		    }
 		    else if (item->type() == Edge::Type)
@@ -753,7 +762,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 	break;
 
       case Qt::Key_Escape:
-	if (undoPositions.length() > 0)
+        if (undoPositions.length() > 0)
 	{
 	    undoPositions.last()->node->setPos(undoPositions.last()->pos);
 	    undoPositions.removeLast();

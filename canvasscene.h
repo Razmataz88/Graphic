@@ -3,7 +3,7 @@
  * File:	canvasscene.h
  * Author:	Rachel Bood
  * Date:	?
- * Version:	1.1
+ * Version:	1.2
  *
  * Purpose:
  *
@@ -12,6 +12,8 @@
  *  (a) Minor formatting changes/cleanups, add header comment.
  * Dec 13, 2019 (JD V1.1)
  *  (a) Remove unused private var numOfNodes.
+ * June 19, 2020 (IC V1.2)
+ *  (a) Added graphDropped() signal to tell mainWindow to update the edit tab.
  */
 
 #ifndef CANVASSCENE_H
@@ -24,6 +26,8 @@
 
 class CanvasScene : public QGraphicsScene
 {
+    Q_OBJECT
+
 public:
     typedef struct undoPositions
     {
@@ -36,6 +40,9 @@ public:
     void getConnectionNodes();
     int getMode() const;
     void setCanvasMode(int mode);
+
+signals:
+    void graphDropped();
 
 protected:
     void dragMoveEvent (QGraphicsSceneDragDropEvent * event);
