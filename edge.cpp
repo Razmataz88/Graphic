@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.9
+ * Version: 1.10
  *
  * Purpose: creates an edge for the users graph
  *
@@ -59,6 +59,9 @@
  * June 18, 2020 (IC V1.9)
  *  (a) Added setEdgeLabel() and appropriate connect in the contructor to
  *      update label when changes are made on the canvas in edit mode.
+ * June 25, 2020 (IC V1.10)
+ *  (a) Update the constructor to initialize causedConnect.
+ *  (b) Added two comments.
  */
 
 #include "edge.h"
@@ -99,7 +102,7 @@ Edge::Edge(Node * sourceNode, Node * destNode)
     qDeb() << "Edge:Edge constructor called";
 
     setFlag(ItemIsSelectable);
-    setFlag(ItemIsFocusable);
+    setFlag(ItemIsFocusable); // Why is this here?
     setFlag(ItemSendsGeometryChanges);
     source = sourceNode;
     setZValue(0);
@@ -109,6 +112,7 @@ Edge::Edge(Node * sourceNode, Node * destNode)
     penSize = 1;
     rotation = 0;
     label = "";
+    causedConnect = 0;
     destRadius = destNode->getDiameter() / 2.;
     sourceRadius = destNode->getDiameter() / 2.;
     setHandlesChildEvents(true);
@@ -280,7 +284,7 @@ Edge::setLabel(QString aLabel)
  * Modifies:    The edge's label.
  * Returns:     Nothing.
  * Assumptions: None.
- * Bugs:        None.
+ * Bugs:        Sets the line edit text to u1 instead of u_{1} for subscripts.
  * Notes:       Not sure if anything should be done to htmlLabel.
  *              Edge.cpp and Node.cpp are very inconsistent in how they handle
  *              labels.

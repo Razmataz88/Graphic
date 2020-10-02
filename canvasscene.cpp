@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.9
+ * Version: 1.10
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -42,6 +42,9 @@
  *      graphs) if the last child node is deleted.
  * June 19, 2020 (IC V1.9)
  *  (a) Added graphDropped() signal to tell mainWindow to update the edit tab.
+ * June 26, 2020 (IC V1.10)
+ *  (a) Updated mouseMoveEvent and mouseReleaseEvent to only snapToGrid a node
+ *      or graph if the item was actually moved.
  */
 
 #include "canvasscene.h"
@@ -117,7 +120,7 @@ CanvasScene::dropEvent(QGraphicsSceneDragDropEvent * event)
         addItem(graphItem);
         graphItem->isMoved();
         clearSelection();
-        emit graphDropped();
+        emit graphDropped(graphItem);
     }
 }
 
@@ -152,7 +155,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
     {
         QList<QGraphicsItem *> itemList
 	    = items(event->scenePos(), Qt::IntersectsItemShape,
-		    Qt::DescendingOrder, QTransform());
+		    Qt::AscendingOrder, QTransform());
 
         switch (getMode())
         {
@@ -327,7 +330,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 		if (item != nullptr || item != 0)
 		    if (item->type() == Graph::Type)
 		    {
-			mDragged = item;
+			mDragged = qgraphicsitem_cast<Graph*>(item);
 			while (mDragged->parentItem() != nullptr)
 			    mDragged = mDragged->parentItem();
 
@@ -358,6 +361,7 @@ CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
     if (mDragged
 	&& (getMode() == CanvasView::drag || getMode() == CanvasView::edit))
     {
+        moved = true;
 	qDeb() << "CS::mouseMoveEvent: mode is "
 	       << CanvasView::getModeName(getMode());
         if (mDragged->type() == Graph::Type)
@@ -383,13 +387,13 @@ CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 }
 
 
-
+// TODO: Prevent node/graph from moving if mouse didn't move.
 void
 CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
     qDeb() << "CS::mouseReleaseEvent(" << event->screenPos() << ")";
 
-    if (mDragged && snapToGrid
+    if (mDragged && snapToGrid && moved
 	&& (getMode() == CanvasView::drag || getMode() == CanvasView::edit))
     {
         int x = 0;
@@ -412,11 +416,10 @@ CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 		* mCellSize.width();
             y = round(mDragged->pos().y() / mCellSize.height())
 		* mCellSize.height();
-            mDragged->setPos(x , y);
-            clearSelection();
+	    mDragged->setPos(x , y);
         }
+        moved = false;
     }
-
     mDragged = nullptr;
     clearSelection();
     QGraphicsScene::mouseReleaseEvent(event);

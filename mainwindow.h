@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.13
+ * Version:	1.14
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -34,7 +34,7 @@
  *  (a) Renamed set_Font_Label_Sizes() to set_Font_Sizes() to better reflect
  *	what the function does.
  * May 25, 2020 (IC V1.10)
- *  (a) Removed set_Interface_Sizes().
+ *  (a) Removed setKeyStatusLabel() in favour of tooltips for each mode.
  * June 6, 2020 (IC V1.11)
  *  (a) Added set_Interface_Sizes() to fix sizing issues on monitors with
  *      different DPIs.
@@ -43,6 +43,10 @@
  * June 19, 2020 (IC V1.13)
  *  (a) Added multiple slots for updating edit tab when graphs/nodes/edges are
  *      created.
+ * June 26, 2020 (IC V1.14)
+ *  (a) Rename on_tabWidget_currentChanged(int) to updateEditTab(int).
+ *  (b) Add params to add<X>ToEditTab().
+ *  (c) Add graphList to the mainwindow object.
  */
 
 
@@ -56,6 +60,7 @@
 #include <QScrollArea>
 
 #include "defuns.h"
+#include "graph.h"
 
 namespace Ui
 {
@@ -108,13 +113,12 @@ class MainWindow : public QMainWindow
 
     void on_freestyleMode_radioButton_clicked();
 
-    void on_tabWidget_currentChanged(int index); // I want this to die horribly
+    void updateEditTab(int index);
+    void updateEditTab();
 
-    void updateEditTab(); // Easy fix but not ideal
-
-    void addGraphToEditTab(); // These three are what we want instead
-    void addNodeToEditTab();
-    void addEdgeToEditTab();
+    void addGraphToEditTab(Graph * graph);
+    void addNodeToEditTab(Node * node);
+    void addEdgeToEditTab(Edge * edge);
 
 private:
     void loadSettings();
@@ -125,6 +129,7 @@ private:
     QString fileDirectory;
     QGridLayout * gridLayout;
     QScrollArea * scroll;
+    QList<Graph *> graphList;
 };
 
 #endif // MAINWINDOW_H

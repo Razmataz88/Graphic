@@ -2,7 +2,7 @@
  * File:    labelcontroller.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose: ?
  *
@@ -18,6 +18,9 @@
  *  - Added extra connect statements to handle those edit events.
  * June 19, 2020 (IC, V1.4)
  *  - Updated setters to check for appropriate focusEvents.
+ * June 24, 2020 (IC, V1.5)
+ *  (a) Rename some functions.
+ *  (b) Update/fix connections in label controllers accordingly.
  */
 
 
@@ -35,7 +38,7 @@ LabelController::LabelController(Edge * anEdge, QLineEdit * anEdit)
         connect(edit, SIGNAL(textChanged(QString)),
                 this, SLOT(setEdgeLabel(QString)));
         connect(edge->htmlLabel->document(), SIGNAL(contentsChanged()),
-                this, SLOT(setEdgeLabel2()));
+                this, SLOT(setEditLabel1()));
         connect(anEdge, SIGNAL(destroyed(QObject*)),
                 this, SLOT(deletedLineEdit()));
         connect(anEdge, SIGNAL(destroyed(QObject*)),
@@ -57,7 +60,7 @@ LabelController::LabelController(Node * aNode, QLineEdit * anEdit)
         connect(edit, SIGNAL(textChanged(QString)),
                 this, SLOT(setNodeLabel(QString)));
         connect(node->htmlLabel->document(), SIGNAL(contentsChanged()),
-                this, SLOT(setNodeLabel2()));
+                this, SLOT(setEditLabel2()));
         connect(aNode, SIGNAL(destroyed(QObject*)),
                 this, SLOT(deletedLineEdit()));
         connect(aNode, SIGNAL(destroyed(QObject*)),
@@ -77,14 +80,6 @@ LabelController::setEdgeLabel(QString string)
 
 
 void
-LabelController::setEdgeLabel2()
-{
-    if (edge->htmlLabel->hasFocus())
-        edit->setText(edge->htmlLabel->toPlainText());
-}
-
-
-void
 LabelController::setNodeLabel(QString string)
 {
     if (node != nullptr || node != 0)
@@ -94,8 +89,16 @@ LabelController::setNodeLabel(QString string)
 
 
 void
-LabelController::setNodeLabel2()
-{
+LabelController::setEditLabel1()
+{ // Sets the line edit text to u1 instead of u_{1} for subscripts.
+    if (edge->htmlLabel->hasFocus())
+        edit->setText(edge->htmlLabel->toPlainText());
+}
+
+
+void
+LabelController::setEditLabel2()
+{ // Sets the line edit text to u1 instead of u_{1} for subscripts.
     if (node->htmlLabel->hasFocus())
         edit->setText(node->htmlLabel->toPlainText());
 }

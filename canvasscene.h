@@ -1,9 +1,8 @@
-
 /*
  * File:	canvasscene.h
  * Author:	Rachel Bood
  * Date:	?
- * Version:	1.2
+ * Version:	1.3
  *
  * Purpose:
  *
@@ -14,6 +13,8 @@
  *  (a) Remove unused private var numOfNodes.
  * June 19, 2020 (IC V1.2)
  *  (a) Added graphDropped() signal to tell mainWindow to update the edit tab.
+ * June 26, 2020 (IC V1.3)
+ *  (a) Added moved field and Graph * param to graphDropped().
  */
 
 #ifndef CANVASSCENE_H
@@ -21,6 +22,7 @@
 
 #include "mainwindow.h"
 #include "node.h"
+#include "graph.h"
 
 #include <QGraphicsScene>
 
@@ -42,7 +44,7 @@ public:
     void setCanvasMode(int mode);
 
 signals:
-    void graphDropped();
+    void graphDropped(Graph * graph);
 
 protected:
     void dragMoveEvent (QGraphicsSceneDragDropEvent * event);
@@ -57,6 +59,7 @@ protected:
 private:
     int modeType;
     bool snapToGrid;
+    bool moved = false;
     const QSize mCellSize;		// The size of the cells in the grid.
     QGraphicsItem * mDragged;		// The item being dragged.
     Node * connectNode1a, * connectNode1b; // The first Nodes to be joined.

@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.10
+ * Version: 1.11
  *
  * Purpose: creates a node for the users graph
  *
@@ -63,6 +63,8 @@
  * June 18, 2020 (IC V1.10)
  *  (a) Added setNodeLabel() and appropriate connect in the contructor to
  *      update label when changes are made on the canvas in edit mode.
+ * June 26, 2020 (IC V1.11)
+ *  (a) Comment out setFlag(QGraphicsItem::ItemClipsChildrenToShape); (Why?)
  */
 
 #include "defuns.h"
@@ -102,7 +104,7 @@ Node::Node()
     setFlag(ItemIsMovable);
     setFlag(ItemIsSelectable);
     setFlag(ItemSendsGeometryChanges);
-    setFlag(QGraphicsItem::ItemClipsChildrenToShape);
+    //setFlag(QGraphicsItem::ItemClipsChildrenToShape);
     setZValue(2);
     nodeID = -1;
     penStyle = 0;	// What type of pen style to use when drawing outline.
@@ -522,7 +524,7 @@ Node::setNodeLabel(QString aLabel)
  * Modifies:    The node's label.
  * Returns:     Nothing.
  * Assumptions: None.
- * Bugs:        None.
+ * Bugs:        Sets the line edit text to u1 instead of u_{1} for subscripts.
  * Notes:       Not sure if anything should be done to htmlLabel.
  *              Edge.cpp and Node.cpp are very inconsistent in how they handle
  *              labels.

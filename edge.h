@@ -2,7 +2,7 @@
  * File:    edge.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.6
+ * Version: 1.7
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -33,6 +33,9 @@
  *  (a) Added setEdgeLabel() slot to update label when changes are made on the
  *      canvas in edit mode.
  *  (b) Changed htmlLabel to public for use in labelcontroller.cpp
+ * June 25, 2020 (IC V1.7)
+ *  (a) Add causedConnect to edge object.
+ *  (b) #include <QTextDocument>.  (TODO: Why??)
  */
 
 #ifndef EDGE_H
@@ -45,6 +48,7 @@
 #include <QList>
 #include <QGraphicsSimpleTextItem>
 #include <QGraphicsSceneMouseEvent>
+#include <QTextDocument>
 
 class Node;
 class CanvasView;
@@ -97,6 +101,7 @@ public:
      //~Edge(); deconstructor a WIP
 
     HTML_Label * htmlLabel;
+    int causedConnect;
 
 public slots:
     void setEdgeLabel();

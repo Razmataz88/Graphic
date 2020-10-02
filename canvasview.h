@@ -2,7 +2,7 @@
  * File:    canvasview.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose: Define the CanvasView class.
  *
@@ -17,6 +17,8 @@
  * June 19, 2020 (IC V1.3)
  *  (a) Added nodeCreated() and edgeCreated() signals to tell mainWindow to
  *      update the edit tab.
+ * June 24, 2020 (IC V1.4)
+ *  (a) Add params to nodeCreated() and edgeCreated().
  */
 
 
@@ -81,8 +83,8 @@ class CanvasView: public QGraphicsView
   signals:
 	void setKeyStatusLabelText(QString text);
 	void resetDragMode();
-	void nodeCreated();
-	void edgeCreated();
+	void nodeCreated(Node * node);
+	void edgeCreated(Edge * edge);
 
   protected:
 	void dragEnterEvent(QDragEnterEvent * event);
