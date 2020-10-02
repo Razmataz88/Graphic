@@ -2,7 +2,7 @@
  * File:	defuns.h
  * Author:	Jim Diamond
  * Date:	2019-12-10
- * Version:	1.1
+ * Version:	1.2
  *
  * Purpose:	Hold definitions that are needed by multiple classes
  *		and yet don't seem to meaningfully fit anywhere else.
@@ -19,6 +19,8 @@
  *	"NO_WGT" indicates that no styles should be applied; used when
  * May 25, 2020 (IC V1.1)
  *  (a) Added numLabelStart_WGT.
+ * June 9, 2020 (IC V1.2)
+ *  (a) Moved BUTTON_STYLE here so it is not repeated across 3 files
  */
 
 #ifndef DEFUNS_H
@@ -37,7 +39,8 @@ static const bool debug = false;
 #define qDebu(...) 
 #endif
 
-
+#define BUTTON_STYLE "border-style: outset; border-width: 2px; " \
+	     "border-radius: 5px; border-color: beige; padding: 3px;"
 
 enum widget_ID {NO_WGT, ALL_WGT, nodeSize_WGT, nodeLabel1_WGT, nodeLabel2_WGT,
 		nodeLabelSize_WGT, numLabelCheckBox_WGT, nodeFillColour_WGT,

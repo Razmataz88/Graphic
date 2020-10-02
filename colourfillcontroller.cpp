@@ -1,7 +1,18 @@
+/*
+ * File:    colourfillcontroller.cpp
+ * Author:  Rachel Bood 100088769
+ * Date:    2014 (?)
+ * Version: 1.1
+ *
+ * Purpose:
+ *
+ * Modification history:
+ * Jul 9, 2020 (IC V1.1)
+ *  (a) BUTTON_STYLE moved to defuns.h.
+ */
+
 #include "colourfillcontroller.h"
 #include <QColorDialog>
-
-#define BUTTON_STYLE "border-style: outset; border-width: 2px; border-radius: 5px; border-color: beige; padding: 3px;"
 
 ColorFillController::ColorFillController(Node *aNode, QPushButton *aButton)
 {

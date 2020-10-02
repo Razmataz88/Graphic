@@ -1,9 +1,20 @@
+/*
+ * File:    colourlinecontroller.cpp
+ * Author:  Rachel Bood 100088769
+ * Date:    2014 (?)
+ * Version: 1.1
+ *
+ * Purpose:
+ *
+ * Modification history:
+ * Jul 9, 2020 (IC V1.1)
+ *  (a) BUTTON_STYLE moved to defuns.h.
+ */
+
 #include "colourlinecontroller.h"
 
 #include <QColorDialog>
 #include <QtCore>
-
-#define BUTTON_STYLE "border-style: outset; border-width: 2px; border-radius: 5px; border-color: beige; padding: 3px;"
 
 ColorLineController::ColorLineController(Edge * anEdge, QPushButton * aButton)
 {
