@@ -2,7 +2,7 @@
  * File:    canvasview.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.2
+ * Version: 1.3
  *
  * Purpose: Define the CanvasView class.
  *
@@ -14,6 +14,9 @@
  *  (a) Deleted unused and undefined isSnappedToGrid(bool snap);
  *  (b) Rename "none" mode to "drag" mode, for less confusion.
  *  (c) Added getModeName() declaration.
+ * June 19, 2020 (IC V1.3)
+ *  (a) Added nodeCreated() and edgeCreated() signals to tell mainWindow to
+ *      update the edit tab.
  */
 
 
@@ -78,6 +81,8 @@ class CanvasView: public QGraphicsView
   signals:
 	void setKeyStatusLabelText(QString text);
 	void resetDragMode();
+	void nodeCreated();
+	void edgeCreated();
 
   protected:
 	void dragEnterEvent(QDragEnterEvent * event);

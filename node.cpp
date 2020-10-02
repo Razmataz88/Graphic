@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.9
+ * Version: 1.10
  *
  * Purpose: creates a node for the users graph
  *
@@ -60,6 +60,9 @@
  *	to correct scaling issues. (Only reliable with Qt V5.14.2 or higher)
  *  (b) Removed unused physicalDotsPerInchY variable as only one DPI
  *	value is needed for the node's radius.
+ * June 18, 2020 (IC V1.10)
+ *  (a) Added setNodeLabel() and appropriate connect in the contructor to
+ *      update label when changes are made on the canvas in edit mode.
  */
 
 #include "defuns.h"
@@ -84,14 +87,14 @@
 
 /*
  * Name:        Node
- * Purpose:     Contructor for Node class.
- * Arguments:   canvas pointer, diameter of node, edge size
- * Output:      none
+ * Purpose:     Constructor for Node class.
+ * Arguments:   None.
+ * Output:      Nothing.
  * Modifies:    Private node variables.
  * Returns:     none
- * Assumptions: none
- * Bugs:        none
- * Notes:       none
+ * Assumptions: None.
+ * Bugs:        None known.
+ * Notes:       None.
  */
 
 Node::Node()
@@ -110,20 +113,23 @@ Node::Node()
     select = false;		    // TODO: is 'select' of any use?
     QScreen * screen = QGuiApplication::primaryScreen();
     physicalDotsPerInchX = screen->physicalDotsPerInchX();
+
+    connect(htmlLabel->document(), SIGNAL(contentsChanged()),
+            this, SLOT(setNodeLabel()));
 }
 
 
 
 /*
  * Name:        addEdge
- * Purpose:     adds an Edge to the pointer QList of edges
- * Arguments:   an Edge pointer
+ * Purpose:     Adds an Edge to the pointer QList of edges.
+ * Arguments:   An Edge pointer.
  * Output:      Nothing.
  * Modifies:    The node's edgeList.
  * Returns:     Nothing.
  * Assumptions: edgeList is valid.
- * Bugs:        none...so far
- * Notes:       none
+ * Bugs:        None...so far.
+ * Notes:       None.
  */
 
 void
@@ -146,7 +152,8 @@ Node::addEdge(Edge * edge)
  * Notes:       none
  */
 
-bool Node::removeEdge(Edge * edge)
+bool
+Node::removeEdge(Edge * edge)
 {
     for (int i = 0; i < edgeList.length(); i++)
     {
@@ -419,7 +426,7 @@ Node::edges() const
 
 
 /*
- * Name:        setNodeLabel()
+ * Name:        setNodeLabel(int)
  * Purpose:     Sets the label of the node to an integer.
  * Arguments:   An int, the node label.
  * Output:      Nothing.
@@ -502,6 +509,29 @@ Node::setNodeLabel(QString aLabel)
 {
     label = aLabel;
     labelToHtml();
+}
+
+
+
+/*
+ * Name:        setNodeLabel()
+ * Purpose:     Specifically used to update the label when changes are made
+ *              to the htmllabel on the canvas in edit mode.
+ * Argument:    QString
+ * Output:      Nothing.
+ * Modifies:    The node's label.
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       Not sure if anything should be done to htmlLabel.
+ *              Edge.cpp and Node.cpp are very inconsistent in how they handle
+ *              labels.
+ */
+
+void
+Node::setNodeLabel()
+{
+    label = htmlLabel->document()->toPlainText().toLatin1().data();
 }
 
 
@@ -736,11 +766,11 @@ Node::editLabel(bool edit)
  * Notes:       none
  */
 
-void
+/*void
 Node::nodeDeleted()
 {
 
-}
+}*/
 
 
 
@@ -914,11 +944,15 @@ Node::setPreviewCoords(qreal x, qreal y)
     previewY = y;
 }
 
+
+
 qreal
 Node::getPreviewX()
 {
     return previewX;
 }
+
+
 
 qreal
 Node::getPreviewY()

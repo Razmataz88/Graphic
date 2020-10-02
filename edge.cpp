@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.8
+ * Version: 1.9
  *
  * Purpose: creates an edge for the users graph
  *
@@ -56,6 +56,9 @@
  * Dec 12, 2019 (JD V1.8):
  *  (a) The debug defns have now moved to defuns.h, which is now
  *	included by edge.h.
+ * June 18, 2020 (IC V1.9)
+ *  (a) Added setEdgeLabel() and appropriate connect in the contructor to
+ *      update label when changes are made on the canvas in edit mode.
  */
 
 #include "edge.h"
@@ -115,6 +118,9 @@ Edge::Edge(Node * sourceNode, Node * destNode)
 		      (edgeLine.p2().ry() + edgeLine.p1().ry()) / 2.
 		      - htmlLabel->boundingRect().height() / 2.);
     adjust();
+
+    connect(htmlLabel->document(), SIGNAL(contentsChanged()),
+            this, SLOT(setEdgeLabel()));
 }
 
 
@@ -232,7 +238,7 @@ Edge::getRootParent()
 
 
 /*
- * Name:        setLabel()
+ * Name:        setLabel(QString)
  * Purpose:     Set the label and htmlLabel of an edge.
  * Argument:    QString
  * Output:      Nothing.
@@ -264,6 +270,27 @@ Edge::setLabel(QString aLabel)
 //        htmlLabel->setHtml("<font face=\"cmmi10\">" + aLabel + "</font>");
 }
 
+
+/*
+ * Name:        setEdgeLabel()
+ * Purpose:     Specifically used to update the label when changes are made
+ *              to the htmllabel on the canvas in edit mode.
+ * Argument:    QString
+ * Output:      Nothing.
+ * Modifies:    The edge's label.
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       Not sure if anything should be done to htmlLabel.
+ *              Edge.cpp and Node.cpp are very inconsistent in how they handle
+ *              labels.
+ */
+
+void
+Edge::setEdgeLabel()
+{
+    label = htmlLabel->document()->toPlainText().toLatin1().data();
+}
 
 
 /*
@@ -797,11 +824,11 @@ Edge::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
  *		TO DO: should there be code here?
  */
 
-void
+/*void
 Edge::edgeDeleted()
 {
 
-}
+}*/
 
 
 

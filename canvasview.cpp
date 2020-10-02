@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.13
+ * Version: 1.16
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -47,6 +47,15 @@
  *  (a) Added defuns.h, removed debug #defines.
  * Dec 17, 2019 (JD V1.13)
  *  (a) Add usage of Esc to edit mode help.
+ * June 12, 2020 (IC V1.14)
+ *  (a) Added measures to addEdgeToScene() to prevent edges being made between
+ *      nodes that already have an edge.
+ * June 17, 2020 (IC V1.15)
+ *  (a) Updated setMode() to delete freestyle graph after a mode change if
+ *      the freestyle graph is empty.
+ * June 19, 2020 (IC V1.16)
+ *  (a) Added nodeCreated() and edgeCreated() signals to tell mainWindow to
+ *      update the edit tab.
  */
 
 #include "canvasview.h"
@@ -212,6 +221,8 @@ CanvasView::keyPressEvent(QKeyEvent * event)
 void
 CanvasView::setMode(int m)
 {
+    int lastModeType = modeType;
+
     qDeb() << "CV::setMode(" << m << ") called; "
 	   << "previous mode was " << modeType
 	   << " == " << getModeName(getMode());
@@ -220,6 +231,12 @@ CanvasView::setMode(int m)
     {
 	qDeb() << "\tSame mode as before, returning.";
 	return;
+    }
+
+    if (lastModeType == mode::freestyle) // Deletes empty freestyle graph
+    {
+        if (freestyleGraph->childItems().isEmpty())
+            delete freestyleGraph;
     }
 
     if (node1 != nullptr)
@@ -248,7 +265,7 @@ CanvasView::setMode(int m)
 
       case mode::freestyle:
 	emit setKeyStatusLabelText(FREESTYLE_DESCRIPTION);
-	freestyleGraph = new Graph();
+	freestyleGraph = new Graph(); // BAD BAD BAD
 	aScene->addItem(freestyleGraph);
 	freestyleGraph->isMoved();
 	node1 = nullptr;
@@ -291,6 +308,7 @@ CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
 	pt = mapToScene(event->pos());
 	qDeb() << "\tfreestyle mode: create a new node at " << pt;
 	createNode(pt);
+	emit nodeCreated();
 	if (node1 != nullptr)
 	    node1->chosen(0);
 	node1 = nullptr;
@@ -350,6 +368,7 @@ CanvasView::mousePressEvent(QMouseEvent * event)
 		{
 		    qDeb() << "\t\tcalling addEdgeToScene(n1, n2) !";
 		    addEdgeToScene(node1, node2);
+		    emit edgeCreated();
 		    // qDeb() << "node1->pos() is " << node1->pos();
 		    // qDeb() << "node1->scenePos() is " << node1->scenePos();
 		    // TODO: without this horrible hack, edges
@@ -421,8 +440,22 @@ CanvasView::addEdgeToScene(Node * source, Node * destination)
 	   << "source label is /" << source->getLabel()
 	   << "/ dest label is /" << destination->getLabel() << "/";
 
+    // Prevent edges being made if one already exists between source and dest
+    int exists = 0;
+    for (int i = 0; i < source->edgeList.count(); i++)
+        if ((source->edgeList.at(i)->sourceNode() == source
+             && source->edgeList.at(i)->destNode() == destination)
+             || (source->edgeList.at(i)->sourceNode() == destination
+             && source->edgeList.at(i)->destNode() == source))
+            exists = 1;
+
+    if (exists == 1)
+    {
+        return nullptr;
+    }
+
     Edge * edge = createEdge(source, destination);
-    if (node1->parentItem() == node2->parentItem())
+    if (node1->parentItem() == node2->parentItem()) // What if they share a root parent?!?!
     {
 	// Both nodes are from the same parent item
 	qDeb() << "\taETS: both nodes have the same parentItem";
@@ -447,6 +480,16 @@ CanvasView::addEdgeToScene(Node * source, Node * destination)
 
         parent1 = qgraphicsitem_cast<Graph*>(node1->parentItem());
         parent2 = qgraphicsitem_cast<Graph*>(node2->parentItem());
+
+        // Makes parent1 the parent of parent2's children. WIP
+        /*for (int i = 0; i < parent2->childItems().count(); i++)
+        {
+            parent2->childItems().at(i)->setParentItem(parent1);
+        }
+
+        edge->setZValue(0);
+        edge->setParentItem(parent1);
+        edge->adjust();*/
 
         while (parent1->parentItem() != nullptr)
             parent1 = qgraphicsitem_cast<Graph*>(parent1->parentItem());

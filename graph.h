@@ -2,7 +2,7 @@
  * File:	graph.h
  * Author:	Rachel Bood
  * Date:	2014 or 2015?
- * Version:	1.0
+ * Version:	1.1
  *
  * Purpose:	Define the graph class.
  *
@@ -11,6 +11,9 @@
  *  (a) Add this header comment.
  *  (b) Remove unused field "point_star" from the graph struct.
  *  (c) Minor reformatting.
+ * June 17, 2020 (IC V1.1)
+ *  (a) Changed class type from QGraphicsItem to QGraphicsObject for access to
+ *      destroyed() signal in connect statements for graphs.
  */
 
 #ifndef GRAPH_H
@@ -23,7 +26,7 @@ class CanvasView;
 class Node;
 class Edge;
 
-class Graph : public QGraphicsItem
+class Graph : public QGraphicsObject
 {
 public:
     typedef struct graph

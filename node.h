@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.6
+ * Version: 1.7
  *
  * Purpose: Declare the node class.
  * 
@@ -28,6 +28,10 @@
  *	to correct scaling issues. (Only reliable with Qt V5.14.2 or higher)
  *  (b) Removed unused physicalDotsPerInchY variable as only one DPI
  *	value is needed for the node's radius.
+ * June 18, 2020 (IC V1.7)
+ *  (a) Added setNodeLabel() slot to update label when changes are made on the
+ *      canvas in edit mode.
+ *  (b) Changed htmlLabel to public for use in labelcontroller.cpp
  */
 
 
@@ -38,6 +42,7 @@
 #include <QGraphicsItem>
 #include <QList>
 #include <QGraphicsSceneMouseEvent>
+#include <QTextDocument>
 
 class Edge;
 class CanvasView;
@@ -45,6 +50,8 @@ class PreView;
 
 class Node : public QGraphicsObject
 {
+    Q_OBJECT
+
   public:
     Node();
 
@@ -93,6 +100,11 @@ class Node : public QGraphicsObject
     void editLabel(bool edit);
     // ~Node();
 
+    HTML_Label * htmlLabel;
+
+  public slots:
+    void setNodeLabel();
+
   protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
     void mousePressEvent(QGraphicsSceneMouseEvent * event);  
@@ -101,13 +113,12 @@ class Node : public QGraphicsObject
 	       QWidget * widget);
 
   signals:
-    void nodeDeleted();
+    //void nodeDeleted(); // Should be removed? Never used.
 
   private:
     QPointF	newPos;
     qreal	nodeDiameter, rotation;
     QString	label;
-    HTML_Label	* htmlLabel;
     QColor	nodeLine, nodeFill;
     int		nodeID;		    // The (internal) number of the node.
     int		penStyle;

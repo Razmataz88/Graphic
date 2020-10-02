@@ -2,7 +2,7 @@
  * File:    main.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose: executes the mainwindow.ui.
  *
@@ -15,6 +15,9 @@
  *      can look as similar as possible on different systems.
  * May 13, 2020 (JD V1.3)
  *  (a) Update comments.
+ * June 6, 2020 (IC V1.4)
+ *  (a) Call set_Interface_Sizes() after show() to get accurate sizehints
+ *      when resizing the window.
  */
 
 #include "mainwindow.h"
@@ -34,6 +37,7 @@ main(int argc, char * argv[])
 
     MainWindow w;
     w.show();
+    w.set_Interface_Sizes();
 
     return a.exec();
 }
