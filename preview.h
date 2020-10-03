@@ -2,7 +2,7 @@
  * File:    preview.h
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07 (?)
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose: define the fields of the preview class.
  *
@@ -24,6 +24,10 @@
  * May 25, 2020 (IC V1.3)
  *  (a) Added numStart param to Style_Graph() to allow numbering of nodes
  *	to start at a specified value instead of only 0.
+ * Jul 3, 2020 (IC V1.4)
+ *  (a) Added nodeThickness param to Style_Graph() to allow adjusting
+ *      thickness of nodes.
+ *  (b) Add code to support displaying the zoom amount.
  */
 
 #ifndef PREVIEW_H
@@ -45,6 +49,7 @@ class PreView: public QGraphicsView
     public slots:
       void zoomIn();
       void zoomOut();
+      void hideZoomDisplay();
       void Create_Basic_Graph(int graphType, int numOfNodes1, int numOfNodes2,
 			      qreal nodeDiameter, bool drawEdges);
 
@@ -56,7 +61,8 @@ class PreView: public QGraphicsView
 		       qreal edgeSize,		    QString edgeLabel,
 		       qreal edgeLabelSize,	    QColor edgeLineColor,
 		       qreal totalWidth,	    qreal totalHeight,
-		       qreal rotation,		    qreal numStart);
+		       qreal rotation,		    qreal numStart,
+		       qreal nodeThickness);
 
   protected:
     virtual void keyPressEvent(QKeyEvent * event);
@@ -65,6 +71,8 @@ class PreView: public QGraphicsView
 
   private:
     QGraphicsScene * PV_Scene;
+    QGraphicsTextItem * zoomDisplay;
+    QTimer * timer;
 };
 
 #endif // PREVIEW_H

@@ -2,7 +2,7 @@
  * File:	html-label.cpp	    Formerly label.cpp
  * Author:	Rachel Bood
  * Date:	2014-??-??
- * Version:	1.4
+ * Version:	1.5
  * 
  * Purpose:	Implement the functions relating to node and edge labels.
  *		(Some places in the code use "weight" for "edge label".)
@@ -28,6 +28,8 @@
  *  (c) Fix some comments.
  * Nov 30, 2019 (JD V1.4)
  *  (a) Add qDeb() / #ifdef DEBUG jazz and a few debug outputs.
+ * Jul 9, 2020 (IC V1.5)
+ *  (a) Change the Z value of the HTML label to 5.  (JD Q: why?)
  */
 
 #include "html-label.h"

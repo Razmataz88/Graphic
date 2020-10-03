@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.10
+ * Version: 1.11
  *
  * Purpose: creates an edge for the users graph
  *
@@ -56,12 +56,15 @@
  * Dec 12, 2019 (JD V1.8):
  *  (a) The debug defns have now moved to defuns.h, which is now
  *	included by edge.h.
- * June 18, 2020 (IC V1.9)
+ * Jun 18, 2020 (IC V1.9)
  *  (a) Added setEdgeLabel() and appropriate connect in the contructor to
  *      update label when changes are made on the canvas in edit mode.
- * June 25, 2020 (IC V1.10)
+ * Jun 25, 2020 (IC V1.10)
  *  (a) Update the constructor to initialize causedConnect.
  *  (b) Added two comments.
+ * Jul 9, 2020 (IC V1.11)
+ *  (a) Remove the position setting from the edge constructor,
+ *      and remove a presumably-redundant test in Edge::paint().
  */
 
 #include "edge.h"

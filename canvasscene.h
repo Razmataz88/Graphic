@@ -2,7 +2,7 @@
  * File:	canvasscene.h
  * Author:	Rachel Bood
  * Date:	?
- * Version:	1.3
+ * Version:	1.4
  *
  * Purpose:
  *
@@ -11,10 +11,12 @@
  *  (a) Minor formatting changes/cleanups, add header comment.
  * Dec 13, 2019 (JD V1.1)
  *  (a) Remove unused private var numOfNodes.
- * June 19, 2020 (IC V1.2)
+ * Jun 19, 2020 (IC V1.2)
  *  (a) Added graphDropped() signal to tell mainWindow to update the edit tab.
- * June 26, 2020 (IC V1.3)
+ * Jun 26, 2020 (IC V1.3)
  *  (a) Added moved field and Graph * param to graphDropped().
+ * Jul 8, 2020 (IC V1.4)
+ *  (a) Add graphJoined() signal.
  */
 
 #ifndef CANVASSCENE_H
@@ -45,6 +47,7 @@ public:
 
 signals:
     void graphDropped(Graph * graph);
+    void graphJoined();
 
 protected:
     void dragMoveEvent (QGraphicsSceneDragDropEvent * event);

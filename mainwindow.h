@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.14
+ * Version:	1.15
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -35,18 +35,20 @@
  *	what the function does.
  * May 25, 2020 (IC V1.10)
  *  (a) Removed setKeyStatusLabel() in favour of tooltips for each mode.
- * June 6, 2020 (IC V1.11)
+ * Jun 6, 2020 (IC V1.11)
  *  (a) Added set_Interface_Sizes() to fix sizing issues on monitors with
  *      different DPIs.
- * June 10, 2020 (IC V1.12)
+ * Jun 10, 2020 (IC V1.12)
  *  (a) Added loadSettings(), saveSettings(), and reimplemented closeEvent().
- * June 19, 2020 (IC V1.13)
+ * Jun 19, 2020 (IC V1.13)
  *  (a) Added multiple slots for updating edit tab when graphs/nodes/edges are
  *      created.
- * June 26, 2020 (IC V1.14)
+ * Jun 26, 2020 (IC V1.14)
  *  (a) Rename on_tabWidget_currentChanged(int) to updateEditTab(int).
  *  (b) Add params to add<X>ToEditTab().
  *  (c) Add graphList to the mainwindow object.
+ * Jul 7, 2020 (IC V1.15)
+ *  (a) Add generate_Graph() function.
  */
 
 
@@ -84,6 +86,7 @@ class MainWindow : public QMainWindow
     bool load_Graphic_File();
     void load_Graphic_Library();
     void select_Custom_Graph(QString graphName);
+    void generate_Graph();
     void generate_Graph(enum widget_ID changed_widget);
     void style_Graph(enum widget_ID changed_widget);
     void generate_Combobox_Titles();

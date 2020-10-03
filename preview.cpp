@@ -2,7 +2,7 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.8
+ * Version: 1.9
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
@@ -56,6 +56,11 @@
  *  (a) Added numStart param to Style_Graph() to allow numbering of nodes
  *	to start at a specified value instead of only 0.
  *	Check for that widget being changed in Style_Graph().
+ * Jul 3, 2020 (IC V1.9)
+ *  (a) Added nodeThickness param to Style_Graph() to allow adjusting
+ *      thickness of nodes.
+ *  (b) Display the zoom amount.  Fixed keyPressEvent to require Ctrl+
+ *	and Ctrl- to zoom out/in instead of just + and - keys.
  */
 
 #include "basicgraphs.h"
@@ -81,7 +86,9 @@
 
 // This is the factor by which the preview pane is zoomed for each
 // zoom in or zoom out operation.
-#define SCALE_FACTOR    1.2
+#define SCALE_FACTOR    1.1
+static qreal zoomValue = 100;
+static QString zoomDisplayText = "Zoom: " + QString::number(zoomValue) + "%";
 
 
 /*
@@ -110,6 +117,21 @@ PreView::PreView(QWidget * parent)
     setRenderHint(QPainter::Antialiasing);
     setTransformationAnchor(AnchorUnderMouse);
     setScene(PV_Scene);
+
+    // Sets up the zoomDisplay
+    zoomDisplay = new QGraphicsTextItem();
+    QFont font;
+    font.setFamily("Arimo");
+    font.setPointSize(14);
+    zoomDisplay->setFont(font);
+    zoomDisplay->setPlainText(zoomDisplayText);
+    zoomDisplay->setVisible(false);
+    scene()->addItem(zoomDisplay);
+
+    // Sets up base settings for our zoomDisplay timer
+    timer = new QTimer;
+    timer->setInterval(2000);
+    timer->setSingleShot(true);
 }
 
 
@@ -131,20 +153,24 @@ PreView::keyPressEvent(QKeyEvent * event)
 {
     qDeb() << "PV:keyPressEvent(" << event->key() << ") called.";
 
-    switch (event->key())
+    if (event->modifiers().testFlag(Qt::ControlModifier))
     {
-      case Qt::Key_Plus:
-      case Qt::Key_Equal:
-        zoomIn();
-        break;
-      case Qt::Key_Minus:
-        zoomOut();
-        break;
-      case Qt::Key_Delete:
-	// TODO: why is this here??
-        break;
-      default:
-        QGraphicsView::keyPressEvent(event);
+        switch (event->key())
+        {
+          //case Qt::Key_Plus:
+          case Qt::Key_Equal:
+            zoomIn();
+            break;
+          //case Qt::Key_Underscore:
+          case Qt::Key_Minus:
+            zoomOut();
+            break;
+          case Qt::Key_Delete:
+	    // TODO: why is this here??
+            break;
+          default:
+            QGraphicsView::keyPressEvent(event);
+	}
     }
 }
 
@@ -171,7 +197,30 @@ PreView::scaleView(qreal scaleFactor)
                 .mapRect(QRectF(0, 0, 1, 1)).width();
     if (factor < 0.07 || factor > 100)
         return;
+
     scale(scaleFactor, scaleFactor);
+
+    // Determine how displayed zoom value needs to update
+    qreal afterFactor = transform().scale(scaleFactor, scaleFactor)
+            .mapRect(QRectF(0, 0, 1, 1)).width();
+    if (afterFactor > factor)
+        zoomValue = zoomValue * SCALE_FACTOR;
+    else
+        zoomValue = zoomValue / SCALE_FACTOR;
+
+    // Update and show the current zoom
+    zoomDisplayText = "Zoom: " + QString::number(zoomValue) + "%";
+    zoomDisplay->setPlainText(zoomDisplayText);
+    zoomDisplay->adjustSize();
+    zoomDisplay->setVisible(true);
+    connect(timer, SIGNAL(timeout()), this, SLOT(hideZoomDisplay()));
+    timer->start();
+}
+
+void
+PreView::hideZoomDisplay()
+{
+    zoomDisplay->setVisible(false);
 }
 
 
@@ -385,6 +434,16 @@ PreView::Create_Basic_Graph(int graphType, int numOfNodes1, int numOfNodes2,
     }
 
     this->scene()->addItem(g);
+
+    // Re-add the zoomDisplay
+    zoomDisplay = new QGraphicsTextItem();
+    QFont font;
+    font.setFamily("Arimo");
+    font.setPointSize(14);
+    zoomDisplay->setFont(font);
+    zoomDisplay->setPlainText(zoomDisplayText);
+    zoomDisplay->setVisible(false);
+    scene()->addItem(zoomDisplay);
 }
 
 
@@ -421,7 +480,8 @@ PreView::Style_Graph(Graph * graph,		    int graphType,
 		     qreal edgeSize,		    QString edgeLabel,
 		     qreal edgeLabelSize,	    QColor edgeLineColor,
 		     qreal totalWidth,		    qreal totalHeight,
-		     qreal rotation,		    qreal numStart)
+		     qreal rotation,		    qreal numStart,
+		     qreal nodeThickness)
 {
     qDeb() << "PV::Style_Graph(wid:" << what_changed << ") called.";
 
@@ -459,6 +519,7 @@ PreView::Style_Graph(Graph * graph,		    int graphType,
         {
 	    Node * node = qgraphicsitem_cast<Node *>(item);
 	    node->setParentItem(nullptr);	    // ?? Eh?
+	    GUARD(nodeThickness_WGT) node->setPenWidth(nodeThickness);
 	    GUARD(nodeSize_WGT) node->setDiameter(nodeDiameter);
 	    GUARD(nodeFillColour_WGT) node->setFillColour(nodeFillColor);
 	    GUARD(nodeOutlineColour_WGT) node->setLineColour(nodeOutlineColor);

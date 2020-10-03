@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.7
+ * Version: 1.8
  *
  * Purpose: Declare the node class.
  * 
@@ -28,10 +28,13 @@
  *	to correct scaling issues. (Only reliable with Qt V5.14.2 or higher)
  *  (b) Removed unused physicalDotsPerInchY variable as only one DPI
  *	value is needed for the node's radius.
- * June 18, 2020 (IC V1.7)
+ * Jun 18, 2020 (IC V1.7)
  *  (a) Added setNodeLabel() slot to update label when changes are made on the
  *      canvas in edit mode.
  *  (b) Changed htmlLabel to public for use in labelcontroller.cpp
+ * Jul 3, 2020 (IC V1.8)
+ *  (a) Added setter and getter for node pen width to allow user to change
+ *      thickness of a node.
  */
 
 
@@ -61,6 +64,9 @@ class Node : public QGraphicsObject
 
     void setDiameter(qreal diameter);
     qreal getDiameter();
+
+    void setPenWidth(qreal aPenWidth);
+    qreal getPenWidth();
 
     void setRotation(qreal aRotation);
     qreal getRotation();
@@ -122,6 +128,7 @@ class Node : public QGraphicsObject
     QColor	nodeLine, nodeFill;
     int		nodeID;		    // The (internal) number of the node.
     int		penStyle;
+    qreal	penSize;
     bool	select;
     qreal	physicalDotsPerInchX;
     void	labelToHtml();

@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.35
+ * Version:	1.37
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -212,33 +212,41 @@
  *	nodes at a specified value instead of always 0.
  * May 28, 2020 (IC V1.29)
  *  (a) Modified save_Graph() to use a white background for JPEG files.
- * June 6, 2020 (IC V1.30)
+ * Jun 6, 2020 (IC V1.30)
  *  (a) Added set_Interface_Sizes() to fix sizing issues on monitors with
  *      different DPIs.
- * June 9, 2020 (IC V1.31)
+ * Jun 9, 2020 (IC V1.31)
  *  (a) Converted the node and edge label size doublespinboxes into
  *      regular spinboxes and updated any relevant connect statements.
- * June 10, 2020 (IC V1.32)
+ * Jun 10, 2020 (IC V1.32)
  *  (a) Added QSettings to save the window size on exit and load the size
  *      on startup. See saveSettings() and loadSettings()
  *  (b) Reimplemented closeEvent() to accommodate QSettings and prompt user to
  *      save graph if any exists on the canvas.
  *  (c) Added code to saveGraph() that supports saving default background
  *      colour of saved images. WIP
- * June 17, 2020 (IC V1.33)
+ * Jun 17, 2020 (IC V1.33)
  *  (a) Updated on_tabWidget_currentChanged() to display merged graphs under a
  *      single set of headers as well as delete those headers if the graph is
  *      deleted.
- * June 19, 2020 (IC V1.34)
+ * Jun 19, 2020 (IC V1.34)
  *  (a) Added multiple slots and appropriate connections for updating edit tab
  *      when graphs/nodes/edges are created.
- * June 26, 2020 (IC V1.35)
+ * Jun 26, 2020 (IC V1.35)
  *  (a) Update some connections to take a node or edge param.
  *  (b) When getting a colour ensure that getColor() returned a valid color.
  *  (c) Rename on_tabWidget_currentChanged(int) to updateEditTab(int).
  *      Do some UI tweaking there.
  *  (d) Implement addGraphToEditTab(), addNodeToEditTab() and
  *      addEdgeToEditTab().
+ * Jun 30, 2020 (IC V1.36)
+ *  (a) Added another connection to refresh the preview pane with a new graph
+ *      when the previous is dropped onto the canvas.
+ * Jul 3, 2020 (IC V1.37)
+ *  (a) Added code so that the thickness of a node (the circle) can be
+ *      changed.  Added another connection to update the preview and
+ *	params when the node thickness is adjusted.
+ *  (b) Updated set_Font_Sizes() to include the new thickness widgets.
  */
 
 #include "mainwindow.h"
@@ -362,6 +370,9 @@ QMainWindow(parent),
     connect(ui->nodeSize,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(nodeSize_WGT); });
+    connect(ui->nodeThickness,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(nodeThickness_WGT); });
     connect(ui->NodeLabel1,
 	    (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
 	    this, [this]() { generate_Graph(nodeLabel1_WGT); });
@@ -429,6 +440,8 @@ QMainWindow(parent),
     // "Create Graph" tab.
     connect(ui->nodeSize, SIGNAL(valueChanged(double)),
 	    this, SLOT(nodeParamsUpdated()));
+    connect(ui->nodeThickness, SIGNAL(valueChanged(double)),
+	    this, SLOT(nodeParamsUpdated()));
     connect(ui->NodeLabel1, SIGNAL(textChanged(QString)),
 	    this, SLOT(nodeParamsUpdated()));
     connect(ui->NodeLabel2, SIGNAL(textChanged(QString)),
@@ -458,13 +471,16 @@ QMainWindow(parent),
     connect(ui->canvas, SIGNAL(resetDragMode()),
 	    ui->dragMode_radioButton, SLOT(click()));
 
-    // Few more connections!!
+    // These connects update the edit tab when the number of items on the
+    // canvas changes.
     connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
+	    this, SLOT(updateEditTab()));
+    connect(ui->canvas->scene(), SIGNAL(graphJoined()),
             this, SLOT(updateEditTab()));
     connect(ui->canvas, SIGNAL(nodeCreated(Node*)),
-            this, SLOT(updateEditTab()));
+	    this, SLOT(updateEditTab()));
     connect(ui->canvas, SIGNAL(edgeCreated(Edge*)),
-            this, SLOT(updateEditTab()));
+	    this, SLOT(updateEditTab()));
 
     /*connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
             this, SLOT(addGraphToEditTab(Graph*)));
@@ -472,6 +488,11 @@ QMainWindow(parent),
             this, SLOT(addNodeToEditTab(Node*)));
     connect(ui->canvas, SIGNAL(edgeCreated(Edge*)),
             this, SLOT(addEdgeToEditTab(Edge*)));*/
+
+    // Adds a new graph to the preview pane when the previous is dropped onto
+    // the canvas.
+    connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
+	    this, SLOT(generate_Graph()));
 
     // Initialize the canvas to be in "drag" mode.
     ui->dragMode_radioButton->click();
@@ -2041,11 +2062,19 @@ MainWindow::style_Graph(enum widget_ID what_changed)
 		ui->graphWidth->value(),
 		ui->graphHeight->value(), 
 		ui->graphRotation->value(),
-		ui->NumLabelStart->value());
+		ui->NumLabelStart->value(),
+		ui->nodeThickness->value());
 	}
     }
 }
 
+
+// Called when a graph is moved from preview to canvas.
+void
+MainWindow::generate_Graph()
+{
+    generate_Graph(NO_WGT);
+}
 
 
 /*
@@ -2140,6 +2169,19 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 	}
     }
     currentGraphIndex = graphIndex;
+
+    // Node and edge labels are focusable (but not editable) so lets fix that
+    if (!ui->editMode_radioButton->isChecked()) //Unnecessary but good practice
+    {
+        foreach (QGraphicsItem * item, ui->preview->scene()->items())
+        {
+            if (item->type() == HTML_Label::Type)
+            {
+                item->setFlag(QGraphicsItem::ItemIsFocusable, false);
+                item->setFlag(QGraphicsItem::ItemIsSelectable, false);//Useless?
+            }
+        }
+    }
 }
 
 
@@ -2301,9 +2343,10 @@ MainWindow::set_Font_Sizes()
     font.setPointSize(SUB_TITLE_SIZE);
     ui->partitionLabel->setFont(font);
     ui->colorLabel->setFont(font);
-    ui->rotationLabel->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE);
+    ui->thicknessLabel->setFont(font);
+    ui->rotationLabel->setFont(font);
     ui->widthLabel->setFont(font);
     ui->heightLabel->setFont(font);
     ui->textInputLabel->setFont(font);
@@ -2329,6 +2372,7 @@ MainWindow::set_Font_Sizes()
     ui->graphWidth->setFont(font);
     ui->numOfNodes1->setFont(font);
     ui->numOfNodes2->setFont(font);
+    ui->nodeThickness->setFont(font);
     ui->graphRotation->setFont(font);
     ui->EdgeLabelSize->setFont(font);
     ui->edgeSize->setFont(font);
@@ -2361,12 +2405,17 @@ MainWindow::set_Interface_Sizes()
     //printf("Scale: %.3f\n", scale);
 
     // Total width of tabWidget borders
-    int borderWidth1 = (50 * scale); // Which is better?
+    int borderWidth1 = 50 * scale; // Which is better?
     //int borderWidth1 = (ui->scrollAreaWidgetContents_2->width()
       //                  - ui->tabWidget->width());
 
     // Total width of mainWindow borders (Not exactly precise yet)
-    int borderWidth2 = (30 * scale);
+    int borderWidth2 = 30 * scale;
+
+    // These three widgets need a max width or they misbehave, so we scale them
+    ui->EdgeLabel->setMaximumWidth(ui->EdgeLabel->maximumWidth() * scale);
+    ui->NodeLabel1->setMaximumWidth(ui->NodeLabel1->maximumWidth() * scale);
+    ui->NodeLabel2->setMaximumWidth(ui->NodeLabel2->maximumWidth() * scale);
 
     // Fix tabWidgets minimum width
     ui->tabWidget->setMinimumWidth(

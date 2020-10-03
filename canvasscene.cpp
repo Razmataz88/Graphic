@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.10
+ * Version: 1.11
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -37,14 +37,20 @@
  *  (c) Added a debug stmt.
  * Mar 30, 2020 (JD V1.7)
  *  (a) Remove deprecated usage of setSortCacheEnabled() in CanvasScene().
- * June 17, 2020 (IC V1.8)
+ * Jun 17, 2020 (IC V1.8)
  *  (a) Corrected mousePressEvent to properly delete the graph (and parent
  *      graphs) if the last child node is deleted.
- * June 19, 2020 (IC V1.9)
+ * Jun 19, 2020 (IC V1.9)
  *  (a) Added graphDropped() signal to tell mainWindow to update the edit tab.
- * June 26, 2020 (IC V1.10)
+ * Jun 26, 2020 (IC V1.10)
  *  (a) Updated mouseMoveEvent and mouseReleaseEvent to only snapToGrid a node
  *      or graph if the item was actually moved.
+ * Jul 9, 2020 (IC V1.11)
+ *  (a) When two graphs are joined emit a signal so that the edit tab
+ *	can be updated.
+ *  (b) Add some code for edit mode to check whether a label is being edited,
+ *      and to avoid snapping a node to grid if the node wasn't dragged.
+ *	[[ I think ... JD comment added well after the fact. ]]
  */
 
 #include "canvasscene.h"
@@ -151,11 +157,14 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
     qDeb() << "CS::mousePressEvent(" << event->screenPos() << ")";
 
+    bool foundNode = false;
+    bool foundLabel = false;
+
     if (itemAt(event->scenePos(), QTransform()) != nullptr)
     {
         QList<QGraphicsItem *> itemList
 	    = items(event->scenePos(), Qt::IntersectsItemShape,
-		    Qt::AscendingOrder, QTransform());
+		    Qt::DescendingOrder, QTransform());
 
         switch (getMode())
         {
@@ -300,11 +309,18 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 	    foreach (QGraphicsItem * item, itemList)
 	    {
 		qDeb() << "\titem type is " << item->type();
-		if (item->type() == Node::Type)
+		if (event->button() == Qt::LeftButton)
 		{
-		    if (event->button() == Qt::LeftButton)
+		    if (item->type() == HTML_Label::Type && !foundLabel)
+		    {
+			foundLabel = true;
+			qDeb() << "\tLeft button over a label";
+			item->setFocus();
+		    }
+		    else if (item->type() == Node::Type && !foundNode)
 		    {
 			qDeb() << "\tLeft button over a node";
+			foundNode = true;
 			mDragged = qgraphicsitem_cast<Node*>(item);
 			undoPos->node = qgraphicsitem_cast<Node *>(mDragged);
 			undoPos->pos = mDragged->pos();
@@ -317,11 +333,10 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 			}
 		    }
 		}
-
 	    }
-	    if (mDragged != nullptr)
+	    /*if (mDragged != nullptr)
 		if (mDragged->type() == Node::Type)
-		    QGraphicsScene::mousePressEvent(event);
+		    QGraphicsScene::mousePressEvent(event);*/
 	    break;
 
 	  case CanvasView::drag:
@@ -387,7 +402,7 @@ CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 }
 
 
-// TODO: Prevent node/graph from moving if mouse didn't move.
+
 void
 CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
@@ -645,6 +660,8 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 
 		connectNode2a = nullptr;
 		connectNode2b = nullptr;
+
+		emit graphJoined();
 	    }
 	}
 	else if (connectNode1a != nullptr && connectNode2a != nullptr)
@@ -735,6 +752,8 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 	    delete connectNode2a;
 	    connectNode2a = nullptr;
 	    connectNode1a->chosen(0);
+
+	    emit graphJoined();
 	}
 
 	if (connectNode1a)

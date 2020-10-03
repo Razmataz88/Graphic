@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.11
+ * Version: 1.12
  *
  * Purpose: creates a node for the users graph
  *
@@ -60,11 +60,14 @@
  *	to correct scaling issues. (Only reliable with Qt V5.14.2 or higher)
  *  (b) Removed unused physicalDotsPerInchY variable as only one DPI
  *	value is needed for the node's radius.
- * June 18, 2020 (IC V1.10)
+ * Jun 18, 2020 (IC V1.10)
  *  (a) Added setNodeLabel() and appropriate connect in the contructor to
  *      update label when changes are made on the canvas in edit mode.
- * June 26, 2020 (IC V1.11)
+ * Jun 26, 2020 (IC V1.11)
  *  (a) Comment out setFlag(QGraphicsItem::ItemClipsChildrenToShape); (Why?)
+ * Jul 3, 2020 (IC V1.12)
+ *  (a) Added setter and getter for node pen width and updated the painter
+ *      to allow user to change thickness of a node.
  */
 
 #include "defuns.h"
@@ -108,6 +111,7 @@ Node::Node()
     setZValue(2);
     nodeID = -1;
     penStyle = 0;	// What type of pen style to use when drawing outline.
+    penSize = 1;        // Size of node line
     nodeDiameter = 1;
     rotation = 0;
     htmlLabel = new HTML_Label(this);
@@ -524,7 +528,7 @@ Node::setNodeLabel(QString aLabel)
  * Modifies:    The node's label.
  * Returns:     Nothing.
  * Assumptions: None.
- * Bugs:        Sets the line edit text to u1 instead of u_{1} for subscripts.
+ * Bugs:        Sets the lineEdit text to u1 instead of u_{1} for subscripts.
  * Notes:       Not sure if anything should be done to htmlLabel.
  *              Edge.cpp and Node.cpp are very inconsistent in how they handle
  *              labels.
@@ -777,6 +781,51 @@ Node::nodeDeleted()
 
 
 /*
+ * Name:        setPenWidth()
+ * Purpose:     Sets the width (penSize) of the node.
+ * Arguments:   The new width.
+ * Output:      Nothing.
+ * Modifies:    The node's penSize.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       The method is labeled setPenWidth and not setNodeWidth because
+ *              penWidth is the naming convention used in Qt to draw a line.
+ *              See paint() function for further details and implementation.
+ */
+
+void
+Node::setPenWidth(qreal aPenWidth)
+{
+    penSize = aPenWidth;
+    update();
+}
+
+
+
+/*
+ * Name:        getPenWidth()
+ * Purpose:     Returns the width (penSize) of the node.
+ * Arguments:   None.
+ * Output:      Nothing.
+ * Modifies:    Nothing.
+ * Returns:     A qreal, the penSize.
+ * Assumptions: None.
+ * Bugs:        None.
+ * Notes:       The method is labeled getPenWidth and not getNodeWidth because
+ *              penWidth is the naming convention used in Qt to draw a line.
+ *              See paint() function for further details and implementation.
+ */
+
+qreal
+Node::getPenWidth()
+{
+    return penSize;
+}
+
+
+
+/*
  * Name:        paint()
  * Purpose:     Paints a node.
  * Arguments:   QPainter *, QStyleOptionGraphicsItem *, QWidget *
@@ -809,6 +858,7 @@ Node::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
         pen.setStyle(Qt::SolidLine);
 
     pen.setColor(nodeLine);
+    pen.setWidthF(penSize);
     painter->setPen(pen);
 
     painter->drawEllipse(-1 * nodeDiameter / 2,
