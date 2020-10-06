@@ -2,7 +2,7 @@
  * File:    edge.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.7
+ * Version: 1.8
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -29,13 +29,15 @@
  *  (a) Include defuns.h.
  * Dec 15, 2019 (JD V1.5):
  *  (a) Remove (globally) unused "penWidth" private variable.
- * June 18, 2020 (IC V1.6)
+ * Jun 18, 2020 (IC V1.6)
  *  (a) Added setEdgeLabel() slot to update label when changes are made on the
  *      canvas in edit mode.
  *  (b) Changed htmlLabel to public for use in labelcontroller.cpp
- * June 25, 2020 (IC V1.7)
+ * Jun 25, 2020 (IC V1.7)
  *  (a) Add causedConnect to edge object.
  *  (b) #include <QTextDocument>.  (TODO: Why??)
+ * Jul 28, 2020 (IC V1.8)
+ *  (a) Add checked member.
  */
 
 #ifndef EDGE_H

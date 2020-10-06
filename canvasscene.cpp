@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.11
+ * Version: 1.13
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -46,11 +46,19 @@
  *  (a) Updated mouseMoveEvent and mouseReleaseEvent to only snapToGrid a node
  *      or graph if the item was actually moved.
  * Jul 9, 2020 (IC V1.11)
- *  (a) When two graphs are joined emit a signal so that the edit tab
- *	can be updated.
- *  (b) Add some code for edit mode to check whether a label is being edited,
- *      and to avoid snapping a node to grid if the node wasn't dragged.
- *	[[ I think ... JD comment added well after the fact. ]]
+ *  (a) Added bools to mousePressEvent so we grab the first label/node clicked.
+ *  (b) Labels should always receive keyboard focus immediately following a
+ *      mouse press event.  Additionally, other graph's bounding rects
+ *	should no longer block keyboard focus going to a label.
+ *	Further [JD thinks, anyway] add code to avoid snapping a node
+ *	to the grid if it wasn't actually dragged.
+ *  (c) Added graphJoined() signal to tell mainWindow to update the edit tab.
+ * July 17, 2020 (IC V1.12)
+ *  (a) Corrected keyReleaseEvent to properly renumber the newly joined graph
+ *      if the label of the initial selected node contained only a number.
+ * July 23, 2020 (IC V1.13)
+ *  (a) Added searchAndSeparate() function to determine if a graph needs to be
+ *      split into individual graphs following a node/edge deletion.
  */
 
 #include "canvasscene.h"
@@ -244,10 +252,18 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 			}
 
 			// Delete all edges incident to node to be deleted
+			QList<Node *> adjacentNodes;
 			foreach (Edge * edge, node->edgeList)
 			{
 			    if (edge != nullptr || edge != 0)
 			    {
+				if (!adjacentNodes.contains(edge->destNode())
+					&& edge->destNode() != node)
+				    adjacentNodes.append(edge->destNode());
+				else if (!adjacentNodes.contains(edge->sourceNode())
+					 && edge->sourceNode() != node)
+				    adjacentNodes.append(edge->sourceNode());
+
 				edge->destNode()->removeEdge(edge);
 				edge->sourceNode()->removeEdge(edge);
 
@@ -257,6 +273,8 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 				edge = nullptr;
 			    }
 			}
+			if (adjacentNodes.count() > 1)
+			    searchAndSeparate(adjacentNodes);
 
 			Graph * parent =
 			    qgraphicsitem_cast<Graph*>(node->parentItem());
@@ -293,6 +311,12 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 
 			edge->setParentItem(nullptr);
 			removeItem(edge);
+
+			QList<Node *> adjacentNodes;
+			adjacentNodes.append(edge->destNode());
+			adjacentNodes.append(edge->sourceNode());
+			searchAndSeparate(adjacentNodes);
+
 			delete edge;
 			edge = nullptr;
 			break;
@@ -343,9 +367,11 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 	    foreach (QGraphicsItem * item, itemList)
 	    {
 		if (item != nullptr || item != 0)
-		    if (item->type() == Graph::Type)
+		    if (item->type() == Node::Type
+			|| item->type() == Edge::Type
+			|| item->type() == HTML_Label::Type)
 		    {
-			mDragged = qgraphicsitem_cast<Graph*>(item);
+			mDragged = item;
 			while (mDragged->parentItem() != nullptr)
 			    mDragged = mDragged->parentItem();
 
@@ -530,7 +556,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 	    && connectNode1b != nullptr && connectNode2b != nullptr)
 	{
 	    qDeb() << "CS:keyReleaseEvent('j'); four selected nodes case";
-	    if (connectNode1a->parentItem() != nullptr
+	    if (connectNode1a->parentItem() != nullptr // Useless if statement?
 		&& connectNode2a != nullptr
 		&& connectNode1b != nullptr && connectNode2b != nullptr)
 	    {
@@ -620,24 +646,33 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		{
 		    int count = 0;
 
-		    foreach (QGraphicsItem * i, root1->childItems())
-		    {
-			if (i->type() == Node::Type)
-			{
-			    Node * node = qgraphicsitem_cast<Node*>(i);
-			    node->setNodeLabel(count);
-			    count++;
-			}
-		    }
+		    QList<QGraphicsItem *> list;
+		    foreach (QGraphicsItem * gItem, root1->childItems())
+			if (gItem->type() == Node::Type
+			    || gItem->type() == Graph::Type)
+			    list.append(gItem);
 
-		    foreach (QGraphicsItem * i, root2->childItems())
+		    foreach (QGraphicsItem * gItem, root2->childItems())
+			if (gItem->type() == Node::Type
+			    || gItem->type() == Graph::Type)
+			    list.append(gItem);
+
+		    while (!list.isEmpty())
 		    {
-			if (i->type() == Node::Type
-			    && i != connectNode2a && i != connectNode2b)
+			foreach (QGraphicsItem * i, list)
 			{
-			    Node * node = qgraphicsitem_cast<Node*>(i);
-			    node->setNodeLabel(count);
-			    count++;
+			    if (i->type() == Graph::Type)
+			    {
+				list.append(i->childItems());
+			    }
+			    else if (i->type() == Node::Type
+				&& i != connectNode2a && i != connectNode2b)
+			    {
+				Node * node = qgraphicsitem_cast<Node*>(i);
+				node->setNodeLabel(count);
+				count++;
+			    }
+			    list.removeOne(i);
 			}
 		    }
 		}
@@ -720,23 +755,33 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 	    {
 		qDeb() << "\tn1 has a numeric label, renumber all nodes";
 		int count = 0;
-		foreach (QGraphicsItem * i, root1->childItems())
-		{
-		    qDeb() << "\ta root1 child of type " << i->type();
-		    if (i->type() == Node::Type)
-		    {
-			Node * node = qgraphicsitem_cast<Node*>(i);
 
-			node->setNodeLabel(count++);
-		    }
-		}
-		foreach (QGraphicsItem * i, root2->childItems())
+		QList<QGraphicsItem *> list;
+		foreach (QGraphicsItem * gItem, root1->childItems())
+		    if (gItem->type() == Node::Type ||
+			    gItem->type() == Graph::Type)
+			list.append(gItem);
+
+		foreach (QGraphicsItem * gItem, root2->childItems())
+		    if (gItem->type() == Node::Type ||
+			    gItem->type() == Graph::Type)
+			list.append(gItem);
+
+		while (!list.isEmpty())
 		{
-		    qDeb() << "\ta root2 child of type " << i->type();
-		    if (i->type() == Node::Type && i != connectNode2a)
+		    foreach (QGraphicsItem * i, list)
 		    {
-			Node * node = qgraphicsitem_cast<Node*>(i);
-			node->setNodeLabel(count++);
+			if (i->type() == Graph::Type)
+			{
+			    list.append(i->childItems());
+			}
+			else if (i->type() == Node::Type && i != connectNode2a)
+			{
+			    Node * node = qgraphicsitem_cast<Node*>(i);
+			    node->setNodeLabel(count);
+			    count++;
+			}
+			list.removeOne(i);
 		    }
 		}
 	    }
@@ -864,3 +909,123 @@ CanvasScene::getMode() const
 {
     return modeType;
 }
+
+
+
+/*
+ * Name:	searchAndSeparate()
+ * Purpose:	Determines whether new graph items need to be made
+ *              as a result of deleting an edge/node.
+ * Arguments:	A list of nodes incident to the item being deleted.
+ * Outputs:	Nothing.
+ * Modifies:	Potentially the graph(s) on the canvas.
+ * Returns:	Nothing.
+ * Assumptions:	Atleast 2 nodes are in the list.
+ * Bugs:	?
+ * Notes:	None.
+ */
+
+void
+CanvasScene::searchAndSeparate(QList<Node *> Nodes)
+{
+    QList<Node *> graphNodes; // Checks if nodes in passed list are reachable
+    QList<QGraphicsItem *> graphItems; // Stores items for new graph
+    QList<int> skipList; // Used to skip indexes of reachable nodes
+    QPointF itemPos;
+    Node * node1;
+    Node * node2;
+    int i = 0;
+    int j = 1;
+
+    while (i < Nodes.indexOf(Nodes.last()))
+    {
+        node1 = Nodes.at(i);
+        graphNodes.append(node1);
+        graphItems.append(node1);
+
+        while (!graphNodes.isEmpty())
+        {
+            for (Node * node : graphNodes)
+            {
+                // Check if this node can reach any nodes in the passed list
+                while (j <= Nodes.indexOf(Nodes.last()))
+                {
+                    node2 = Nodes.at(j);
+                    if (node == node2)
+                        skipList.append(j);
+                    j += 1;
+                }
+                j = i + 1; // Reset j
+                node->checked = 1;
+                // Add neighbor nodes to graphNodes and neighbor nodes/edges
+                // to graphItems in case we need to make a new graph
+                foreach (Edge * edge, node->edgeList)
+                {
+                    if (!graphNodes.contains(edge->destNode())
+                        && edge->destNode()->checked == 0)
+                    {
+                        graphNodes.append(edge->destNode());
+                        if (!graphItems.contains(edge->destNode()))
+                            graphItems.append(edge->destNode());
+                    }
+                    else if (!graphNodes.contains(edge->sourceNode())
+                             && edge->sourceNode()->checked == 0)
+                    {
+                        graphNodes.append(edge->sourceNode());
+                        if (!graphItems.contains(edge->sourceNode()))
+                            graphItems.append(edge->sourceNode());
+                    }
+                    if (!graphItems.contains(edge))
+                        graphItems.append(edge);
+
+                    edge->checked = 1;
+                }
+                graphNodes.removeOne(node);
+            }
+        }
+        // Only make a new graph if atleast one node from the passed list
+        // is not reachable
+        if (skipList.count() != (Nodes.count() - i - 1))
+        {
+            Graph * graph = new Graph;
+            addItem(graph);
+
+            foreach (QGraphicsItem * item, graphItems)
+            {
+                itemPos = item->scenePos(); // MUST BE scenePos(), NOT pos()
+                item->setParentItem(graph);
+                item->setPos(itemPos);
+            }
+        }
+        // Reset all the checked items.
+        foreach (QGraphicsItem * item, graphItems)
+        {
+            if (item->type() == Node::Type)
+            {
+                Node * node = qgraphicsitem_cast<Node *>(item);
+                node->checked = 0;
+            }
+            else if (item->type() == Edge::Type)
+            {
+                Edge * edge = qgraphicsitem_cast<Edge *>(item);
+                edge->checked = 0;
+            }
+        }
+        graphItems.clear();
+
+        // Skip any nodes reachable by a previous node
+        i += 1;
+        while (skipList.contains(i))
+            i += 1;
+        skipList.clear();
+        j = i + 1;
+    }
+    emit itemDeleted();
+}
+
+
+
+
+
+
+

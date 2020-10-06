@@ -85,8 +85,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>574</width>
-               <height>774</height>
+               <width>580</width>
+               <height>778</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1982,6 +1982,61 @@
                 <property name="autoFillBackground">
                  <bool>false</bool>
                 </property>
+                <widget class="QLabel" name="zoomDisplay">
+                 <property name="geometry">
+                  <rect>
+                   <x>10</x>
+                   <y>10</y>
+                   <width>141</width>
+                   <height>21</height>
+                  </rect>
+                 </property>
+                 <property name="palette">
+                  <palette>
+                   <active>
+                    <colorrole role="WindowText">
+                     <brush brushstyle="SolidPattern">
+                      <color alpha="255">
+                       <red>103</red>
+                       <green>103</green>
+                       <blue>103</blue>
+                      </color>
+                     </brush>
+                    </colorrole>
+                   </active>
+                   <inactive>
+                    <colorrole role="WindowText">
+                     <brush brushstyle="SolidPattern">
+                      <color alpha="255">
+                       <red>103</red>
+                       <green>103</green>
+                       <blue>103</blue>
+                      </color>
+                     </brush>
+                    </colorrole>
+                   </inactive>
+                   <disabled>
+                    <colorrole role="WindowText">
+                     <brush brushstyle="SolidPattern">
+                      <color alpha="255">
+                       <red>120</red>
+                       <green>120</green>
+                       <blue>120</blue>
+                      </color>
+                     </brush>
+                    </colorrole>
+                   </disabled>
+                  </palette>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>14</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>Zoom: 100%</string>
+                 </property>
+                </widget>
                </widget>
               </item>
              </layout>
@@ -2012,7 +2067,7 @@
                <x>0</x>
                <y>0</y>
                <width>574</width>
-               <height>774</height>
+               <height>778</height>
               </rect>
              </property>
             </widget>
@@ -2198,7 +2253,7 @@
      <x>0</x>
      <y>0</y>
      <width>1300</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="sizePolicy">

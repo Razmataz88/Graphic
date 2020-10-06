@@ -2,7 +2,7 @@
  * File:	canvasscene.h
  * Author:	Rachel Bood
  * Date:	?
- * Version:	1.4
+ * Version:	1.5
  *
  * Purpose:
  *
@@ -17,6 +17,8 @@
  *  (a) Added moved field and Graph * param to graphDropped().
  * Jul 8, 2020 (IC V1.4)
  *  (a) Add graphJoined() signal.
+ * Jul 22, 2020 (IC V1.5)
+ *  (a) add searchAndSeparate() and itemDeleted().
  */
 
 #ifndef CANVASSCENE_H
@@ -44,10 +46,12 @@ public:
     void getConnectionNodes();
     int getMode() const;
     void setCanvasMode(int mode);
+    void searchAndSeparate(QList<Node *> adjacentNodes);
 
 signals:
     void graphDropped(Graph * graph);
     void graphJoined();
+    void itemDeleted();
 
 protected:
     void dragMoveEvent (QGraphicsSceneDragDropEvent * event);

@@ -1,3 +1,17 @@
+/*
+ * File:    graph.cpp
+ * Author:  Rachel Bood
+ * Date:    2014/11/07 (?)
+ * Version: 1.1
+ *
+ * Purpose:
+ *
+ * Modification history:
+ * July 20, 2020 (IC V1.1)
+ *  (a) Fixed setRotation to properly rotate graph items while taking into
+ *      account their previous rotation value.
+ */
+
 #include "graph.h"
 #include "canvasview.h"
 #include "node.h"
@@ -126,17 +140,32 @@ QRectF Graph::boundingRect() const
  */
 void Graph::setRotation(qreal aRotation)
 {
-    for (QGraphicsItem * child: this->childItems())
+    QList<QGraphicsItem *> list;
+
+    foreach (QGraphicsItem * gItem, this->childItems())
+        list.append(gItem);
+
+    while (!list.isEmpty())
     {
-        if (child != nullptr || child != 0)
+        foreach (QGraphicsItem * child, list)
         {
-            if (child->type() == Node::Type)
+            if (child != nullptr || child != 0)
             {
-                child->setRotation(-aRotation);
-            }
-            else if(child->type() == Edge::Type)
-            {
-                child->setRotation(-aRotation);
+                if (child->type() == Graph::Type)
+                {
+                    list.append(child->childItems());
+                }
+                else if (child->type() == Node::Type)
+                {
+                    Node * node = qgraphicsitem_cast<Node*>(child);
+                    node->setRotation(node->getRotation() + -aRotation);
+                }
+                else if(child->type() == Edge::Type)
+                {
+                    Edge * edge = qgraphicsitem_cast<Edge*>(child);
+                    edge->setRotation(edge->getRotation() + -aRotation);
+                }
+                list.removeOne(child);
             }
         }
     }

@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.8
+ * Version: 1.9
  *
  * Purpose: Declare the node class.
  * 
@@ -35,6 +35,8 @@
  * Jul 3, 2020 (IC V1.8)
  *  (a) Added setter and getter for node pen width to allow user to change
  *      thickness of a node.
+ * Jul 22, 2020 (IC V1.9)
+ *  (a) Add 'checked' to node object.
  */
 
 

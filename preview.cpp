@@ -2,7 +2,7 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.9
+ * Version: 1.10
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
@@ -61,6 +61,8 @@
  *      thickness of nodes.
  *  (b) Display the zoom amount.  Fixed keyPressEvent to require Ctrl+
  *	and Ctrl- to zoom out/in instead of just + and - keys.
+ * Jul 20, 2020 (IC V1.10)
+ *  (a) Simplify the way the display of the zoom amount is done.
  */
 
 #include "basicgraphs.h"
@@ -117,21 +119,6 @@ PreView::PreView(QWidget * parent)
     setRenderHint(QPainter::Antialiasing);
     setTransformationAnchor(AnchorUnderMouse);
     setScene(PV_Scene);
-
-    // Sets up the zoomDisplay
-    zoomDisplay = new QGraphicsTextItem();
-    QFont font;
-    font.setFamily("Arimo");
-    font.setPointSize(14);
-    zoomDisplay->setFont(font);
-    zoomDisplay->setPlainText(zoomDisplayText);
-    zoomDisplay->setVisible(false);
-    scene()->addItem(zoomDisplay);
-
-    // Sets up base settings for our zoomDisplay timer
-    timer = new QTimer;
-    timer->setInterval(2000);
-    timer->setSingleShot(true);
 }
 
 
@@ -195,7 +182,7 @@ PreView::scaleView(qreal scaleFactor)
 
     qreal factor = transform().scale(scaleFactor, scaleFactor)
                 .mapRect(QRectF(0, 0, 1, 1)).width();
-    if (factor < 0.07 || factor > 100)
+    if (factor < 0.07 || factor > 10)	// Arbitrary limits!
         return;
 
     scale(scaleFactor, scaleFactor);
@@ -209,18 +196,8 @@ PreView::scaleView(qreal scaleFactor)
         zoomValue = zoomValue / SCALE_FACTOR;
 
     // Update and show the current zoom
-    zoomDisplayText = "Zoom: " + QString::number(zoomValue) + "%";
-    zoomDisplay->setPlainText(zoomDisplayText);
-    zoomDisplay->adjustSize();
-    zoomDisplay->setVisible(true);
-    connect(timer, SIGNAL(timeout()), this, SLOT(hideZoomDisplay()));
-    timer->start();
-}
-
-void
-PreView::hideZoomDisplay()
-{
-    zoomDisplay->setVisible(false);
+    zoomDisplayText = "Zoom: " + QString::number(zoomValue, 'f', 0) + "%";
+    emit zoomChanged(zoomDisplayText);
 }
 
 
@@ -434,16 +411,6 @@ PreView::Create_Basic_Graph(int graphType, int numOfNodes1, int numOfNodes2,
     }
 
     this->scene()->addItem(g);
-
-    // Re-add the zoomDisplay
-    zoomDisplay = new QGraphicsTextItem();
-    QFont font;
-    font.setFamily("Arimo");
-    font.setPointSize(14);
-    zoomDisplay->setFont(font);
-    zoomDisplay->setPlainText(zoomDisplayText);
-    zoomDisplay->setVisible(false);
-    scene()->addItem(zoomDisplay);
 }
 
 

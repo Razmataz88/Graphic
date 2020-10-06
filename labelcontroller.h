@@ -2,7 +2,7 @@
  * File:    labelcontroller.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose: 
  *
@@ -11,11 +11,13 @@
  *   (a) Rename "Weight" to "Label" for edge function names.
  *  Nov 13, 2019 (JD, V1.2)
  *   (a) Fix incorrect #ifndef string.
- *  June 18, 2020 (IC, V1.3)
+ *  Jun 18, 2020 (IC, V1.3)
  *   (a) Added setEdgeLabel2() and setNodeLabel2() for updating the edit tab
  *       line edits when labels are changed via edit mode on the canvas.
- *  June 23, 2020 (IC, V1.4)
+ *  Jun 23, 2020 (IC, V1.4)
  *   (a) Rename two functions.
+ *  Jul 14, 2020 (IC, V1.5)
+ *   (a) Update ...EditLabel slot names to more meaningful values.
  */
 
 
@@ -36,9 +38,9 @@ public:
 
 private slots:
     void setEdgeLabel(QString string);
-    void setEditLabel1();
+    void setEdgeEditLabel();
     void setNodeLabel(QString string);
-    void setEditLabel2();
+    void setNodeEditLabel();
     void deletedLineEdit();
 
 private:

@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.12
+ * Version: 1.13
  *
  * Purpose: creates a node for the users graph
  *
@@ -68,6 +68,8 @@
  * Jul 3, 2020 (IC V1.12)
  *  (a) Added setter and getter for node pen width and updated the painter
  *      to allow user to change thickness of a node.
+ * Jul 22, 2020 (IC V1.13)
+ *  (a) Initialize 'checked' in node constructor.
  */
 
 #include "defuns.h"
@@ -111,7 +113,7 @@ Node::Node()
     setZValue(2);
     nodeID = -1;
     penStyle = 0;	// What type of pen style to use when drawing outline.
-    penSize = 1;        // Size of node line
+    penSize = 1;        // Size of node outline
     nodeDiameter = 1;
     rotation = 0;
     htmlLabel = new HTML_Label(this);
@@ -119,6 +121,7 @@ Node::Node()
     select = false;		    // TODO: is 'select' of any use?
     QScreen * screen = QGuiApplication::primaryScreen();
     physicalDotsPerInchX = screen->physicalDotsPerInchX();
+    checked = 0;
 
     connect(htmlLabel->document(), SIGNAL(contentsChanged()),
             this, SLOT(setNodeLabel()));

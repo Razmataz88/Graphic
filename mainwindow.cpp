@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.37
+ * Version:	1.38
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -247,6 +247,12 @@
  *      changed.  Added another connection to update the preview and
  *	params when the node thickness is adjusted.
  *  (b) Updated set_Font_Sizes() to include the new thickness widgets.
+ * Jul 22, 2020 (IC V1.38)
+ *  (a) Add signal to update the edit tab when an item is deleted.
+ *  (b) Add signal to update the preview zoom display when zoomIn/Out
+ *	is called.
+ *  (c) Set the font of the zoomDisplay.
+ *  (d) Add "N width" label and widget to edit tab; rearrange edit tab widgets.
  */
 
 #include "mainwindow.h"
@@ -480,7 +486,9 @@ QMainWindow(parent),
     connect(ui->canvas, SIGNAL(nodeCreated(Node*)),
 	    this, SLOT(updateEditTab()));
     connect(ui->canvas, SIGNAL(edgeCreated(Edge*)),
-	    this, SLOT(updateEditTab()));
+            this, SLOT(updateEditTab()));
+    connect(ui->canvas->scene(), SIGNAL(itemDeleted()),
+            this, SLOT(updateEditTab()));
 
     /*connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
             this, SLOT(addGraphToEditTab(Graph*)));
@@ -492,7 +500,11 @@ QMainWindow(parent),
     // Adds a new graph to the preview pane when the previous is dropped onto
     // the canvas.
     connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
-	    this, SLOT(generate_Graph()));
+            this, SLOT(generate_Graph()));
+
+    // Updates the zoomDisplay after zoomIn/zoomOut is called
+    connect(ui->preview, SIGNAL(zoomChanged(QString)),
+            ui->zoomDisplay, SLOT(setText(QString)));
 
     // Initialize the canvas to be in "drag" mode.
     ui->dragMode_radioButton->click();
@@ -2358,6 +2370,7 @@ MainWindow::set_Font_Sizes()
     ui->ptLabel->setFont(font);
     ui->inchesLabel->setFont(font);
     ui->numLabel->setFont(font);
+    ui->zoomDisplay->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE - 1);
     ui->graphType_ComboBox->setFont(font);
@@ -2405,11 +2418,9 @@ MainWindow::set_Interface_Sizes()
     //printf("Scale: %.3f\n", scale);
 
     // Total width of tabWidget borders
-    int borderWidth1 = 50 * scale; // Which is better?
-    //int borderWidth1 = (ui->scrollAreaWidgetContents_2->width()
-      //                  - ui->tabWidget->width());
+    int borderWidth1 = 50 * scale;
 
-    // Total width of mainWindow borders (Not exactly precise yet)
+    // Total width of mainWindow borders
     int borderWidth2 = 30 * scale;
 
     // These three widgets need a max width or they misbehave, so we scale them
@@ -2642,7 +2653,7 @@ MainWindow::on_numOfNodes2_valueChanged(int arg1)
  * Returns:	Nothing.
  * Assumptions: There are no other node params to tell the canvas about.
  * Bugs:	?
- * Notes:	?
+ * Notes:	Should start # be added to this?
  */
 
 void
@@ -2781,24 +2792,26 @@ MainWindow::updateEditTab(int index)
 		    gridLayout->addWidget(label, i, 0);
 		    i++;
 
-		    QLabel * label2 = new QLabel("N Diam");
+		    QLabel * label2 = new QLabel("N width");
 		    gridLayout->addWidget(label2, i, 2);
 		    QLabel * label3 = new QLabel("E width");
 		    gridLayout->addWidget(label3, i+1, 2);
-		    QLabel * label4 = new QLabel("Label");
+		    QLabel * label4 = new QLabel("N diam");
 		    gridLayout->addWidget(label4, i, 3);
-		    QLabel * label5 = new QLabel("Text");
+		    QLabel * label5 = new QLabel("Label");
 		    gridLayout->addWidget(label5, i, 4);
-		    QLabel * label6 = new QLabel("Size");
-		    gridLayout->addWidget(label6, i+1, 4);
-		    QLabel * label7 = new QLabel("Line");
-		    gridLayout->addWidget(label7, i, 5);
-		    QLabel * label8 = new QLabel("Color");
-		    gridLayout->addWidget(label8, i+1, 5);
-		    QLabel * label9 = new QLabel("Fill");
-		    gridLayout->addWidget(label9, i, 6);
-		    QLabel * label10 = new QLabel("Color");
-		    gridLayout->addWidget(label10, i+1, 6);
+		    QLabel * label6 = new QLabel("Text");
+		    gridLayout->addWidget(label6, i, 5);
+		    QLabel * label7 = new QLabel("Size");
+		    gridLayout->addWidget(label7, i+1, 5);
+		    QLabel * label8 = new QLabel("Line");
+		    gridLayout->addWidget(label8, i, 6);
+		    QLabel * label9 = new QLabel("Colour");
+		    gridLayout->addWidget(label9, i+1, 6);
+		    QLabel * label10 = new QLabel("Fill");
+		    gridLayout->addWidget(label10, i, 7);
+		    QLabel * label11 = new QLabel("Colour");
+		    gridLayout->addWidget(label11, i+1, 7);
 		    i += 2;
 
 		    // Horrible, ugly connects....
@@ -2822,6 +2835,8 @@ MainWindow::updateEditTab(int index)
 			    label9, SLOT(deleteLater()));
 		    connect(graph, SIGNAL(destroyed(QObject*)),
 			    label10, SLOT(deleteLater()));
+		    connect(graph, SIGNAL(destroyed(QObject*)),
+			    label11, SLOT(deleteLater()));
 
 		    QList<QGraphicsItem *> list;
 		    foreach (QGraphicsItem * gItem, graph->childItems())
@@ -2850,7 +2865,10 @@ MainWindow::updateEditTab(int index)
 				    connect(node, SIGNAL(destroyed(QObject*)),
 					    label, SLOT(deleteLater()));
 
-				    QDoubleSpinBox * sizeBox
+				    QDoubleSpinBox * diamBox
+					= new QDoubleSpinBox();
+
+				    QDoubleSpinBox * thicknessBox
 					= new QDoubleSpinBox();
 
 				    QPushButton * lineColorButton
@@ -2863,7 +2881,8 @@ MainWindow::updateEditTab(int index)
 
 				    // All controllers handle deleting of widgets
 				    SizeController * sizeController
-					= new SizeController(node, sizeBox);
+					= new SizeController(node, diamBox,
+							     thicknessBox);
 				    ColorLineController * colorLineController
 					= new ColorLineController(node,
 								  lineColorButton);
@@ -2877,11 +2896,12 @@ MainWindow::updateEditTab(int index)
 								  fillColorButton);
 
 				    gridLayout->addWidget(label, i, 1);
-				    gridLayout->addWidget(sizeBox, i, 2);
-				    gridLayout->addWidget(nodeEdit,  i, 3);
-				    gridLayout->addWidget(fontSizeBox, i, 4);
-				    gridLayout->addWidget(lineColorButton, i, 5);
-				    gridLayout->addWidget(fillColorButton, i, 6);
+				    gridLayout->addWidget(thicknessBox, i, 2);
+				    gridLayout->addWidget(diamBox, i, 3);
+				    gridLayout->addWidget(nodeEdit,  i, 4);
+				    gridLayout->addWidget(fontSizeBox, i, 5);
+				    gridLayout->addWidget(lineColorButton, i, 6);
+				    gridLayout->addWidget(fillColorButton, i, 7);
 				    Q_UNUSED(sizeController);
 				    Q_UNUSED(colorLineController);
 				    Q_UNUSED(colorFillController);
@@ -2923,9 +2943,9 @@ MainWindow::updateEditTab(int index)
 
 				    gridLayout->addWidget(label, i, 1);
 				    gridLayout->addWidget(sizeBox, i, 2);
-				    gridLayout->addWidget(editEdge, i, 3);
-				    gridLayout->addWidget(fontSizeBox, i, 4);
-				    gridLayout->addWidget(button, i, 5);
+				    gridLayout->addWidget(editEdge, i, 4);
+				    gridLayout->addWidget(fontSizeBox, i, 5);
+				    gridLayout->addWidget(button, i, 6);
 				    Q_UNUSED(sizeController);
 				    Q_UNUSED(colorController);
 				    Q_UNUSED(weightController);
@@ -3094,7 +3114,7 @@ MainWindow::addNodeToEditTab(Node * node)
         return;
     }
     else
-        ;// i = end index of existing graph on edit tab which should be j?
+        ;// i = end index of existing graph on edit tab
 
     QLineEdit * nodeEdit = new QLineEdit();
     // Q: what was the point of this?
