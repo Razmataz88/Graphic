@@ -3132,6 +3132,9 @@ MainWindow::addNodeToEditTab(Node * node)
     QDoubleSpinBox * sizeBox
         = new QDoubleSpinBox();
 
+    QDoubleSpinBox * sizeBox2
+        = new QDoubleSpinBox();
+
     QPushButton * lineColorButton
         = new QPushButton();
     QPushButton * fillColorButton
@@ -3142,7 +3145,7 @@ MainWindow::addNodeToEditTab(Node * node)
 
     // All controllers handle deleting of widgets
     SizeController * sizeController
-        = new SizeController(node, sizeBox);
+        = new SizeController(node, sizeBox, sizeBox2);
     ColorLineController * colorLineController
         = new ColorLineController(node,
                                   lineColorButton);
@@ -3179,7 +3182,6 @@ MainWindow::addEdgeToEditTab(Edge * edge)
         // Perhaps remove headers from first 3 rows of one graph (first 10 indexes)
         // then move any entries for that graph to be with the other graph
         Graph * parent1 = nullptr;
-        Graph * parent2 = nullptr;
 
         foreach (Graph * graph, graphList)
         {
@@ -3187,8 +3189,6 @@ MainWindow::addEdgeToEditTab(Edge * edge)
             {
                 if (parent1 == nullptr)
                     parent1 = graph;
-                else
-                    parent2 = graph;
             }
         }
         // ..............?

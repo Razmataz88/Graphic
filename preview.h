@@ -29,7 +29,8 @@
  *      thickness of nodes.
  *  (b) Add code to support displaying the zoom amount.
  * Jul 3, 2020 (IC V1.5)
- */ (a) Re-design (and simplify) the display of the zoom amount.
+ *  (a) Re-design (and simplify) the display of the zoom amount.
+ */
 
 #ifndef PREVIEW_H
 #define PREVIEW_H

@@ -104,6 +104,7 @@ public:
 
     HTML_Label * htmlLabel;
     int causedConnect;
+    int checked;
 
 public slots:
     void setEdgeLabel();

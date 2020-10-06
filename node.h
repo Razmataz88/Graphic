@@ -109,6 +109,7 @@ class Node : public QGraphicsObject
     // ~Node();
 
     HTML_Label * htmlLabel;
+    int checked;
 
   public slots:
     void setNodeLabel();
