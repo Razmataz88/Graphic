@@ -2,7 +2,7 @@
  * File:	html-label.cpp	    Formerly label.cpp
  * Author:	Rachel Bood
  * Date:	2014-??-??
- * Version:	1.5
+ * Version:	1.6
  * 
  * Purpose:	Implement the functions relating to node and edge labels.
  *		(Some places in the code use "weight" for "edge label".)
@@ -30,6 +30,9 @@
  *  (a) Add qDeb() / #ifdef DEBUG jazz and a few debug outputs.
  * Jul 9, 2020 (IC V1.5)
  *  (a) Change the Z value of the HTML label to 5.  (JD Q: why?)
+ * Jul 29, 2020 (IC V1.6)
+ *  (a) Added eventFilter() to receive canvas events so we can identify
+ *      the node/edge being edited/looked at in the edit tab list.
  */
 
 #include "html-label.h"
@@ -63,10 +66,10 @@ HTML_Label::HTML_Label(QGraphicsItem * parent)
     qDeb() << "HTML_Label constructor called";
 
     this->setParentItem(parent);
-    htmlLabelText = "";
-    setZValue(3);
-    QFont font;
+    htmlLabelText = ""; // Never updated?
+    setZValue(5);
 
+    QFont font;
     font.setFamily(QStringLiteral("cmmi10"));
     font.setBold(false);
     font.setWeight(50);
@@ -79,6 +82,41 @@ HTML_Label::HTML_Label(QGraphicsItem * parent)
 	       - boundingRect().width() / 2.,
                parentItem()->boundingRect().center().y()
 	       - boundingRect().height() / 2.);
+
+    editTabLabel = nullptr;
+    installEventFilter(this);
+}
+
+
+/*
+ * Name:        eventFilter()
+ * Purpose:     Intercepts events related to canvas labels so we can
+ *              identify the location of the item on the edit tab.
+ * Arguments:
+ * Output:
+ * Modifies:
+ * Returns:
+ * Assumptions:
+ * Bugs:
+ * Notes:       Try using QEvent::HoverEnter and QEvent::HoverLeave
+ */
+
+bool
+HTML_Label::eventFilter(QObject * obj, QEvent * event)
+{
+    if (event->type() == QEvent::FocusIn)
+    {
+        QFont font = editTabLabel->font();
+        font.setBold(true);
+        editTabLabel->setFont(font);
+    }
+    else if (event->type() == QEvent::FocusOut)
+    {
+        QFont font = editTabLabel->font();
+        font.setBold(false);
+        editTabLabel->setFont(font);
+    }
+    return QObject::eventFilter(obj, event);
 }
 
 

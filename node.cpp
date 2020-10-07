@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.13
+ * Version: 1.14
  *
  * Purpose: creates a node for the users graph
  *
@@ -70,6 +70,10 @@
  *      to allow user to change thickness of a node.
  * Jul 22, 2020 (IC V1.13)
  *  (a) Initialize 'checked' in node constructor.
+ * Jul 29, 2020 (IC V1.14)
+ *  (a) Added eventFilter() to receive edit tab events so we can identify
+ *      the node being edited/looked at.
+ *  (b) Fixed findRootParent().
  */
 
 #include "defuns.h"
@@ -365,7 +369,7 @@ Node::getLineColour()
 QGraphicsItem *
 Node::findRootParent()
 {
-    QGraphicsItem * root = this->parentItem();
+    QGraphicsItem * root = this;
     while (root->parentItem() != 0 && root->parentItem() != nullptr)
         root = root->parentItem();
 
@@ -908,8 +912,8 @@ Node::itemChange(GraphicsItemChange change, const QVariant &value)
                 Graph * graph = qgraphicsitem_cast<Graph*>(parentItem());
                 Graph * tempGraph = graph;
                 graph = qgraphicsitem_cast<Graph*>(graph->getRootParent());
-                this->setParentItem(nullptr);
-                this->setParentItem(tempGraph);
+                this->setParentItem(nullptr);  // ???????????
+                this->setParentItem(tempGraph);// Whats the point of this?
             }
 	    else
 		qDeb() << "itemChange(): node does not have a "
@@ -970,6 +974,32 @@ Node::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 
     select = false;
     QGraphicsItem::mouseReleaseEvent(event);
+}
+
+
+
+/*
+ * Name:        eventFilter()
+ * Purpose:     Intercepts events related to edit tab widgets so
+ *              we can identify the node being edited.
+ * Arguments:
+ * Output:
+ * Modifies:
+ * Returns:
+ * Assumptions:
+ * Bugs:
+ * Notes:       Try using QEvent::HoverEnter and QEvent::HoverLeave
+ */
+
+bool
+Node::eventFilter(QObject * obj, QEvent * event)
+{
+    if (event->type() == QEvent::FocusIn)
+        chosen(2);
+    else if (event->type() == QEvent::FocusOut)
+        chosen(0);
+
+    return QObject::eventFilter(obj, event);
 }
 
 

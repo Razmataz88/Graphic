@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.18
+ * Version: 1.19
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -62,9 +62,16 @@
   * (b) Pass the created node or edge to the respective signal.
  * Jul 23, 2020 (IC V1.18)
  *  (a) Initialize modeType in the constructor(!).
- *  (b) Delete empty free style graphs.
+ *  (b) Delete empty free-style graphs.
  *  (c) Don't allow freestyle mode to make edges from a node to itself.
- *  (d) Update addEdgeToScene(), but to what end?
+ *  (d) Removed the graph recursion from addEdgeToScene.  Children of the two
+ *      graphs are now reassigned to a singular graph and the old graph objects
+ *      are deleted.
+ * Jul 24, 2020 (IC V1.19)
+ *  (a) Added clearCanvas() function that removes all items from the canvas.
+ *  (b) Initialize modeType to 0 to prevent accidental deletion of nonexistant
+ *      freestyleGraph on startup.
+ *  (c) Don't allow freestyle to make two edges between a given node pair.
  */
 
 #include "canvasview.h"
@@ -245,11 +252,14 @@ CanvasView::setMode(int m)
 
     if (lastModeType == mode::freestyle) // Deletes empty freestyle graph
     {
-        if (freestyleGraph  != nullptr)
-        {
-            if (freestyleGraph->childItems().isEmpty())
-                delete freestyleGraph;
-        }
+	if (freestyleGraph  != nullptr)
+	{
+	    if (freestyleGraph->childItems().isEmpty())
+	    {
+		aScene->removeItem(freestyleGraph);
+		delete freestyleGraph;
+	    }
+	}
     }
 
     if (node1 != nullptr)
@@ -286,7 +296,7 @@ CanvasView::setMode(int m)
 	break;
 
       default:
-        break;
+	break;
     }
     aScene->setCanvasMode(m);
 }
@@ -329,7 +339,7 @@ CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
 
       default:
 	qDeb() << "\tdefault: call QGV:mouseDoubleClickEvent()";
-        QGraphicsView::mouseDoubleClickEvent(event);
+	QGraphicsView::mouseDoubleClickEvent(event);
     }
 }
 
@@ -379,38 +389,41 @@ CanvasView::mousePressEvent(QMouseEvent * event) // Should this be in CS?
 		// If the user selected two nodes make an edge.
 		if (node1 != nullptr && node2 != nullptr && node1 != node2)
 		{
-		    /*printf("Before edge\n");
-		    foreach (QGraphicsItem * i, aScene->items())
-			printf("%d\n", i->type());
-		    fflush(stdout);*/
-		    qDeb() << "\t\tcalling addEdgeToScene(n1, n2) !";
-		    emit edgeCreated(addEdgeToScene(node1, node2));
-		    // qDeb() << "node1->pos() is " << node1->pos();
-		    // qDeb() << "node1->scenePos() is " << node1->scenePos();
-		    // TODO: without this horrible hack, edges
-		    // connecting two nodes of a library graph
-		    // (dragged over from the preview pane) are drawn
-		    // in the wrong place on the canvas.  Moving one
-		    // node away and back causes the edge to be drawn
-		    // in the correct place.  Q1: why?  Q2: what is
-		    // the Right Thing to do here?
-		    QPointF n1pos = node1->pos();
-		    node1->setPos(n1pos + QPoint(10, 10));
-		    node1->setPos(n1pos);
-		    // qDeb() << "node1->pos() is " << node1->pos();
-		    // qDeb() << "node1->scenePos() is " << node1->scenePos();
+		    // Prevent edges being made if one already exists
+		    // between source and dest.
+		    int exists = 0;
+		    for (int i = 0; i < node1->edgeList.count(); i++)
+			if ((node1->edgeList.at(i)->sourceNode() == node1
+			     && node1->edgeList.at(i)->destNode() == node2)
+			     || (node1->edgeList.at(i)->sourceNode() == node2
+			     && node1->edgeList.at(i)->destNode() == node1))
+			    exists = 1;
 
+		    if (exists == 0)
+		    {
+			qDeb() << "\t\tcalling addEdgeToScene(n1, n2) !";
+			emit edgeCreated(addEdgeToScene(node1, node2));
+			// qDeb() << "node1->pos() is " << node1->pos();
+			// qDeb() << "node1->scenePos() is " << node1->scenePos();
+			// TODO: without this horrible hack, edges
+			// connecting two nodes of a library graph
+			// (dragged over from the preview pane) are drawn
+			// in the wrong place on the canvas.  Moving one
+			// node away and back causes the edge to be drawn
+			// in the correct place.  Q1: why?  Q2: what is
+			// the Right Thing to do here?
+			QPointF n1pos = node1->pos();
+			node1->setPos(n1pos + QPoint(10, 10));
+			node1->setPos(n1pos);
+			// qDeb() << "node1->pos() is " << node1->pos();
+			// qDeb() << "node1->scenePos() is " << node1->scenePos();
+		    }
 		    // Update vars so that another click on a node
 		    // continues a path.
 		    node1->chosen(0);
 		    node2->chosen(1);
 		    node1 = node2;
 		    node2 = nullptr;
-
-		    /*printf("After edge\n");
-		    foreach (QGraphicsItem * i, aScene->items())
-			printf("%d\n", i->type());
-		    fflush(stdout);*/
 		    break;
 		}
 	    }
@@ -461,105 +474,72 @@ CanvasView::addEdgeToScene(Node * source, Node * destination)
 	   << "source label is /" << source->getLabel()
 	   << "/ dest label is /" << destination->getLabel() << "/";
 
-    // Prevent edges being made if one already exists between source and dest
-    int exists = 0;
-    for (int i = 0; i < source->edgeList.count(); i++)
-        if ((source->edgeList.at(i)->sourceNode() == source
-             && source->edgeList.at(i)->destNode() == destination)
-             || (source->edgeList.at(i)->sourceNode() == destination
-             && source->edgeList.at(i)->destNode() == source))
-            exists = 1;
-
-    if (exists == 1)
-    {
-        return nullptr;
-    }
-
     Edge * edge = createEdge(source, destination);
     if (node1->parentItem() == node2->parentItem())
     {
 	// Both nodes are from the same parent item
 	qDeb() << "\taETS: both nodes have the same parentItem";
-        Graph * parent = qgraphicsitem_cast<Graph*>(node1->parentItem());
-        edge->setParentItem(parent);
+	Graph * parent = qgraphicsitem_cast<Graph*>(node1->parentItem());
+	edge->setParentItem(parent);
     }
     else if (node1->findRootParent() != node2->findRootParent())
     {
 	qDeb() << "\taETS: nodes have different parentItems";
-        /*
+	/*
 	 * Each node has a different parent.
-         * Create a graph that will be the parent of the two
-         * graphs that each contain the nodes that the new
-         * edge will be incident to.
+	 * Create a graph that will be the parent of the two
+	 * graphs that each contain the nodes that the new
+	 * edge will be incident to. NOT ANYMORE
 	 * TODO: should we amalgamate the graphs rather than having a
-	 * recursive structure?  Joining doesn't currently (Nov 2019)
+	 * recursive structure?	 Joining doesn't currently (Nov 2019)
 	 * work properly when joining two "recursive" graphs.
-         */
+	 */
 
-        Graph * root = new Graph();
-        Graph * parent1 = nullptr;
-        Graph * parent2 = nullptr;
-        QPointF itemPos;
+	Graph * root = new Graph();
+	Graph * parent1 = nullptr;
+	Graph * parent2 = nullptr;
+	QPointF itemPos;
 
-        parent1 = qgraphicsitem_cast<Graph*>(node1->parentItem());
-        parent2 = qgraphicsitem_cast<Graph*>(node2->parentItem());
+	parent1 = qgraphicsitem_cast<Graph*>(node1->findRootParent());
+	parent2 = qgraphicsitem_cast<Graph*>(node2->findRootParent());
 
-        foreach (QGraphicsItem * item, parent1->childItems())
-        {
-            itemPos = item->scenePos();
-            item->setParentItem(root);
-            item->setPos(itemPos);
-        }
-        foreach (QGraphicsItem * item, parent2->childItems())
-        {
-            itemPos = item->scenePos();
-            item->setParentItem(root);
-            item->setPos(itemPos);
-        }
-        edge->setZValue(0);
-        edge->setParentItem(root);
-        root->setHandlesChildEvents(false);
-        aScene->addItem(root);
+	foreach (QGraphicsItem * item, parent1->childItems())
+	{
+	    itemPos = item->scenePos();
+	    item->setParentItem(root);
+	    item->setPos(itemPos);
+	}
+	foreach (QGraphicsItem * item, parent2->childItems())
+	{
+	    itemPos = item->scenePos();
+	    item->setParentItem(root);
+	    item->setPos(itemPos);
+	}
+	edge->setZValue(-1);
+	edge->setParentItem(root);
+	root->setHandlesChildEvents(false);
+	aScene->addItem(root);
 
-        edge->adjust();
+	edge->adjust();
 
-        if (parent1 == freestyleGraph || parent2 == freestyleGraph)
-            freestyleGraph = nullptr;
+	if (parent1 == freestyleGraph || parent2 == freestyleGraph)
+	{
+	    freestyleGraph = new Graph;
+	    aScene->addItem(freestyleGraph);
+	}
 
-        aScene->removeItem(parent1);
-        delete parent1;
-        aScene->removeItem(parent2);
-        delete parent2;
+	aScene->removeItem(parent1);
+	delete parent1;
+	aScene->removeItem(parent2);
+	delete parent2;
 
-        /*while (parent1->parentItem() != nullptr)
-            parent1 = qgraphicsitem_cast<Graph*>(parent1->parentItem());
-
-        while (parent2->parentItem() != nullptr)
-            parent2 = qgraphicsitem_cast<Graph*>(parent2->parentItem());
-
-        if (parent1 != nullptr && parent2 != nullptr)
-        {
-            edge->setZValue(0);
-            edge->setParentItem(root);
-            parent1->setParentItem(root);
-            parent2->setParentItem(root);
-            root->setHandlesChildEvents(false);
-            aScene->addItem(root);
-
-	    // The following line causes Qt to whine
-	    // "QGraphicsScene::addItem: item has already been added
-	    //		to this scene"
-	    // so in V1.6 it was cautiously commented out.
-            // aScene->addItem(edge);
-            edge->adjust();
-        }*/
-        edge->causedConnect = 1;
+	edge->causedConnect = 1;
     }
     else // A root parent was already made, so don't make another.
-    {
-        edge->setZValue(-1);
-        edge->setParentItem(node1->findRootParent());
-        edge->adjust();
+    { // can this happen anymore?
+	edge->setZValue(-1);
+	edge->setParentItem(node1->findRootParent());
+	edge->adjust();
     }
     qDeb() << "\taETS: done!";
     return edge;
@@ -642,4 +622,47 @@ CanvasView::getModeName(int mode)
     if ((unsigned)mode > sizeof(modes) / sizeof(modes[0]))
 	return "mode " + QString::number(mode) + " is UNKNOWN";
     return modes[mode];
+}
+
+
+
+/*
+ * Name:	clearCanvas()
+ * Purpose:	Removes all items from the canvas.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The canvas.
+ * Returns:	Nothing.
+ * Assumptions:	Something is on the canvas?
+ * Bugs:	?
+ * Notes:	None.
+ */
+
+void
+CanvasView::clearCanvas()
+{
+    QList<Graph *> graphList;
+    foreach (QGraphicsItem * item, aScene->items())
+    {
+	if (item != nullptr || item != 0)
+	{
+	    if (item->type() == Graph::Type)
+	    {
+		Graph * graph = qgraphicsitem_cast<Graph *>(item);
+		graphList.append(graph);
+	    }
+	}
+    }
+    for (Graph * graph: graphList)
+    {
+	aScene->removeItem(graph);
+	delete graph;
+	graph = nullptr;
+    }
+
+    if (getMode() == CanvasView::freestyle)
+    {
+	freestyleGraph = new Graph;
+	aScene->addItem(freestyleGraph);
+    }
 }

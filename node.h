@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.9
+ * Version: 1.10
  *
  * Purpose: Declare the node class.
  * 
@@ -37,6 +37,9 @@
  *      thickness of a node.
  * Jul 22, 2020 (IC V1.9)
  *  (a) Add 'checked' to node object.
+ * Jul 29, 2020 (IC V1.10)
+ *  (a) Added eventFilter() to receive edit tab events so we can identify
+ *      the node being edited/looked at.
  */
 
 
@@ -120,6 +123,7 @@ class Node : public QGraphicsObject
     void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
     void paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
 	       QWidget * widget);
+    bool eventFilter(QObject * obj, QEvent * event);
 
   signals:
     //void nodeDeleted(); // Should be removed? Never used.

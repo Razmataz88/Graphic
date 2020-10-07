@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.12
+ * Version: 1.13
  *
  * Purpose: creates an edge for the users graph
  *
@@ -67,6 +67,11 @@
  *      and remove a presumably-redundant test in Edge::paint().
  * Jul 9, 2020 (IC V1.12)
  *  (a) Corrected the painter to reposition the label whenever an edge moves.
+ * Jul 29, 2020 (IC V1.13)
+ *  (a) Added penStyle variable to change the edge's pen style, like what is
+ *      done in node.cpp.
+ *  (b) Added eventFilter() to receive edit tab events so we can identify
+ *      the edge being edited/looked at.
  */
 
 #include "edge.h"
@@ -86,7 +91,6 @@
 
 static const double Pi = 3.14159265358979323846264338327950288419717;
 static const double offset = 5;		// TO DO: what is this?
-
 
 
 
@@ -114,6 +118,7 @@ Edge::Edge(Node * sourceNode, Node * destNode)
     dest = destNode;
     source->addEdge(this);
     dest->addEdge(this);
+    penStyle = 0;	// What type of pen style to use when drawing outline.
     penSize = 1;
     rotation = 0;
     label = "";
@@ -210,8 +215,8 @@ Edge::editLabel(bool edit)
 QGraphicsItem *
 Edge::getRootParent()
 {
-    QGraphicsItem * parent = this->parentItem();
-    while (parent != nullptr)
+    QGraphicsItem * parent = this;
+    while (parent->parentItem() != nullptr || parent->parentItem() != 0)
         parent = parent->parentItem();
     return parent;
 }
@@ -793,7 +798,12 @@ Edge::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
     pen.setWidthF(penSize);
     pen.setCapStyle(Qt::RoundCap);
     pen.setJoinStyle(Qt::RoundJoin);
-    pen.setStyle(Qt::SolidLine);
+
+    if (penStyle == 1)
+        pen.setStyle(Qt::DashLine);
+    else
+        pen.setStyle(Qt::SolidLine);
+
     painter->setPen(pen);
     painter->drawLine(line);
     edgeLine = line;
@@ -806,6 +816,33 @@ Edge::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
                       - htmlLabel->boundingRect().width() / 2.,
                       (line.p2().ry() + line.p1().ry()) / 2.
                       - htmlLabel->boundingRect().height() / 2.);
+}
+
+
+
+/*
+ * Name:        eventFilter()
+ * Purpose:     Intercepts events related to edit tab widgets so
+ *              we can identify the edge being edited.
+ * Arguments:
+ * Output:
+ * Modifies:
+ * Returns:
+ * Assumptions:
+ * Bugs:
+ * Notes:       Try using QEvent::HoverEnter and QEvent::HoverLeave
+ */
+
+bool
+Edge::eventFilter(QObject * obj, QEvent * event)
+{
+    if (event->type() == QEvent::FocusIn)
+        penStyle = 1;
+    else if (event->type() == QEvent::FocusOut)
+        penStyle = 0;
+
+    update();
+    return QObject::eventFilter(obj, event);
 }
 
 

@@ -2,7 +2,7 @@
  * File:    edge.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.8
+ * Version: 1.9
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -38,6 +38,10 @@
  *  (b) #include <QTextDocument>.  (TODO: Why??)
  * Jul 28, 2020 (IC V1.8)
  *  (a) Add checked member.
+ * Jul 29, 2020 (IC V1.9)
+ *  (a) Added eventFilter() to receive edit tab events so we can identify
+ *      the edge being edited/looked at.
+ *  (b) Added penStyle so edges can be drawn solid or dashed.
  */
 
 #ifndef EDGE_H
@@ -112,6 +116,7 @@ public slots:
 protected:
     void paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
                QWidget * widget);
+    bool eventFilter(QObject * obj, QEvent * event);
 
 signals:
     //void edgeDeleted(); // Should be removed? Never used.
@@ -124,6 +129,7 @@ private:
     qreal	destRadius, sourceRadius, rotation;
     QLineF	edgeLine;
     QString	label;
+    int		penStyle;
     qreal	labelSize, penSize;
     QColor	edgeColour;
 };

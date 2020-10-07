@@ -2230,15 +2230,30 @@
           <property name="cursor">
            <cursorShape>CrossCursor</cursorShape>
           </property>
-          <property name="mouseTracking">
-           <bool>false</bool>
-          </property>
           <property name="acceptDrops">
            <bool>true</bool>
           </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
           </property>
+          <widget class="QPushButton" name="clearCanvas">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>111</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Clear Canvas</string>
+           </property>
+          </widget>
          </widget>
         </item>
        </layout>

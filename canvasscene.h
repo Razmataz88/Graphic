@@ -2,7 +2,7 @@
  * File:	canvasscene.h
  * Author:	Rachel Bood
  * Date:	?
- * Version:	1.5
+ * Version:	1.6
  *
  * Purpose:
  *
@@ -19,6 +19,8 @@
  *  (a) Add graphJoined() signal.
  * Jul 22, 2020 (IC V1.5)
  *  (a) add searchAndSeparate() and itemDeleted().
+ * Jul 30, 2020 (IC V1.6)
+ *  (a) Replace "itemDeleted()" with "graphSeparated()".
  */
 
 #ifndef CANVASSCENE_H
@@ -51,7 +53,7 @@ public:
 signals:
     void graphDropped(Graph * graph);
     void graphJoined();
-    void itemDeleted();
+    void graphSeparated();
 
 protected:
     void dragMoveEvent (QGraphicsSceneDragDropEvent * event);
