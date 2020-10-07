@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.15
+ * Version:	1.16
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -49,6 +49,9 @@
  *  (c) Add graphList to the mainwindow object.
  * Jul 7, 2020 (IC V1.15)
  *  (a) Add generate_Graph() function.
+ * Aug 6, 2020 (IC V1.16)
+ *  (a) Add #includes for settingsdialog.h and ui_settingsdialog.h.
+ *  (b) Add somethingChanged(), promptSave and settingsDialog.
  */
 
 
@@ -63,6 +66,8 @@
 
 #include "defuns.h"
 #include "graph.h"
+#include "settingsdialog.h"
+#include "ui_settingsdialog.h"
 
 namespace Ui
 {
@@ -123,6 +128,8 @@ class MainWindow : public QMainWindow
     void addNodeToEditTab(Node * node);
     void addEdgeToEditTab(Edge * edge);
 
+    void somethingChanged();
+
 private:
     void loadSettings();
     void saveSettings();
@@ -133,6 +140,8 @@ private:
     QGridLayout * gridLayout;
     QScrollArea * scroll;
     QList<Graph *> graphList;
+    bool promptSave = false;
+    SettingsDialog * settingsDialog;
 };
 
 #endif // MAINWINDOW_H

@@ -2,7 +2,7 @@
  * File:    canvasview.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.5
+ * Version: 1.6
  *
  * Purpose: Define the CanvasView class.
  *
@@ -21,6 +21,8 @@
  *  (a) Add params to nodeCreated() and edgeCreated().
  * Jul 24, 2020 (IC V1.5)
  *  (a) Added clearCanvas() function that removes all items from the canvas.
+ * Aug 5, 2020 (IC V1.6)
+ *  (a) Emit the somethingChanged() signal in a number of places.
  */
 
 
@@ -52,6 +54,7 @@ class CanvasView: public QGraphicsView
         qreal labelSize;
         QColor fillColour;
         QColor outlineColour;
+        qreal nodeThickness;
     } Node_Params;
 
     typedef struct eParams
@@ -68,7 +71,8 @@ class CanvasView: public QGraphicsView
 
     void setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
 			 QString label, qreal nodeLabelSize,
-			 QColor nodeFillColour, QColor nodeOutLineColour);
+			 QColor nodeFillColour, QColor nodeOutLineColour,
+			 qreal nodeThickness);
     void setUpEdgeParams(qreal edgeSize, QString edgeLabel,
 			 qreal edgeLabelSize, QColor edgeLineColour);
 

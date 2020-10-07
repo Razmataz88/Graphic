@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.45
+ * Version:	1.46
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -271,6 +271,18 @@
  * Jul 29, 2020 (IC V1.45)
  *  (a) Installed event filters in updateEditTab(int) to send event
  *	handling to node.cpp and edge.cpp.
+ * Aug 7, 2020 (IC V1.46)
+ *  (a) Added many "somethingChanged()" connections.
+ *  (b) Add setting to allow the user to specify their physicalDPI
+ *	setting, a la acroread.
+ *  (c) Save node line thickness when saving graphs.
+ *      THIS DEPRECATES PREVIOUS .grphc FILES and changes .tikz output.
+ *  (d) On exit, don't ask the user if the graph should be saved if it
+ *      has not been changed since the last save.
+ *  (e) In set_Font_Sizes() set the font of the clearCanvas button.
+ *  (f) Make some UI elements scale if the logicalDPI is greater than
+ *      the standard for that OS.
+ *  (g) Add the node thickness to setUpNodeParams().
  */
 
 #include "mainwindow.h"
@@ -314,6 +326,7 @@
 // vertex positions and edge thicknesses, respectively, are written in
 // TikZ output:
 #define VP_PREC_TIKZ  4
+#define VT_PREC_TIKZ  4
 #define ET_PREC_TIKZ  4
 // Similar for vertex precision in .grphc output:
 #define VP_PREC_GRPHC  4
@@ -526,7 +539,20 @@ QMainWindow(parent),
 
     // Clears all items from the canvas
     connect(ui->clearCanvas, SIGNAL(clicked()),
-	    ui->canvas, SLOT(clearCanvas()));
+            ui->canvas, SLOT(clearCanvas()));
+
+    // Ask to save on exit if any changes were made on the canvas since
+    // last save.
+    connect(ui->canvas->scene(), SIGNAL(somethingChanged()),
+            this, SLOT(somethingChanged()));
+    connect(ui->canvas, SIGNAL(nodeCreated(Node*)),
+            this, SLOT(somethingChanged()));
+    connect(ui->canvas, SIGNAL(edgeCreated(Edge*)),
+            this, SLOT(somethingChanged()));
+    connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
+            this, SLOT(somethingChanged()));
+    connect(ui->canvas->scene(), SIGNAL(graphJoined()),
+            this, SLOT(somethingChanged()));
 
     // Initialize the canvas to be in "drag" mode.
     ui->dragMode_radioButton->click();
@@ -556,12 +582,29 @@ QMainWindow(parent),
     on_graphType_ComboBox_currentIndexChanged(-1);
 
     QScreen * screen = QGuiApplication::primaryScreen();
-    screenPhysicalDPI_X = screen->physicalDotsPerInchX();
-    screenPhysicalDPI_Y = screen->physicalDotsPerInchY();
+    if (settings.value("useDefaultResolution") == false)
+    {
+        screenPhysicalDPI_X = settings.value("customResolution").toReal();
+        screenPhysicalDPI_Y = settings.value("customResolution").toReal();
+    }
+    else
+    {
+        screenPhysicalDPI_X = screen->physicalDotsPerInchX();
+        screenPhysicalDPI_Y = screen->physicalDotsPerInchY();
+    }
     screenLogicalDPI_X = screen->logicalDotsPerInchX();
 
     if (settings.contains("windowSize"))
         loadSettings();
+
+    // Don't want a qreal for the settings value
+    int screenPhysicalDpi = screen->physicalDotsPerInch();
+    settings.setValue("systemPhysicalDpi", screenPhysicalDpi);
+
+    settingsDialog = new SettingsDialog(this);
+
+    connect(ui->actionGraph_settings, SIGNAL(triggered()),
+            settingsDialog, SLOT(open()));
 
 
 #ifdef DEBUG
@@ -783,6 +826,7 @@ typedef struct
     int fillR, fillG, fillB;
     int lineR, lineG, lineB;
     qreal nodeDiameter;		// inches
+    qreal penSize;              // pixels (!); thickness of line.
     qreal labelSize;		// points; See Node::setNodeLabelSize()
 } nodeInfo;
 
@@ -814,7 +858,7 @@ findDefaults(QVector<Node *> nodes,
 {
     // Set the default defaults (sic).
     // TODO: These values should really be #defines somewhere.
-    *nodeDefaults_p = {255, 255, 255, 0, 0, 0, (qreal)0.2, 12};
+    *nodeDefaults_p = {255, 255, 255, 0, 0, 0, (qreal)0.2, (qreal)1., 12};
     *edgeDefaults_p = {0, 0, 0, (qreal)1., (qreal)12.};
 
     if (nodes.count() == 0)
@@ -825,6 +869,7 @@ findDefaults(QVector<Node *> nodes,
     std::unordered_map<int, int> vFillColour;
     std::unordered_map<int, int> vLineColour;
     std::unordered_map<qreal, int> vNodeDiam;
+    std::unordered_map<qreal, int> vPenSize;
     std::unordered_map<qreal, int> vLabelSize;
     std::unordered_map<int, int> eLineColour;
     std::unordered_map<qreal, int> ePenSize;
@@ -847,6 +892,7 @@ findDefaults(QVector<Node *> nodes,
 	vLineColour[colour]++;
 
 	vNodeDiam[node->getDiameter()]++;
+	vPenSize[node->getPenWidth()]++;
 	vLabelSize[node->getLabelSize()]++;
     }
 
@@ -892,6 +938,19 @@ findDefaults(QVector<Node *> nodes,
     }
     nodeDefaults_p->nodeDiameter = fresult;
     qDebu("nodeDiam: %.4f count = %d", fresult, max_count);
+
+    max_count = 0;
+    fresult = nodeDefaults_p->penSize;
+    for (auto item : vPenSize)
+    {
+        if (max_count < item.second)
+        {
+            fresult = item.first;
+            max_count = item.second;
+        }
+    }
+    nodeDefaults_p->penSize = fresult;
+    qDebu("nodePenSize: %.4f count = %d", fresult, max_count);
 
     max_count = 0;
     fresult = nodeDefaults_p->labelSize;
@@ -1052,7 +1111,11 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     outfile << "\tminimum size=" << nodeDefaults.nodeDiameter << "in, "
 	    << "inner sep=0, "
 	    << "font=\\fontsize{" << nodeDefaults.labelSize
-	    << "}{1}\\selectfont},\n";
+	    << "}{1}\\selectfont,\n";
+
+    outfile << "\tnode width="
+            << QString::number(nodeDefaults.penSize / screenPhysicalDPI_X,
+                               'f', VT_PREC_TIKZ) << "in},\n";
 
 
     // e style gets 'draw=<colour>' and 'line width=<stroke width>' options
@@ -1194,6 +1257,16 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	if (node->getDiameter() != nodeDefaults.nodeDiameter)
 	{
 	    outfile << ", minimum size=" << QString::number(node->getDiameter())
+		    << "in";
+	    doNewLine = true;
+	}
+
+	if (node->getPenWidth() != nodeDefaults.penSize)
+	{
+	    outfile << ", node width="
+		    << QString::number(node->getPenWidth()
+				       / screenPhysicalDPI_X,
+				       'f', VT_PREC_TIKZ)
 		    << "in";
 	    doNewLine = true;
 	}
@@ -1362,7 +1435,7 @@ saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
     QString nodeInfo = QString::number(nodes.count()) + "\n\n";
 
     outfile << "# The node descriptions; the format is:\n";
-    outfile << "# x,y, diameter, rotation, fill r,g,b,\n";
+    outfile << "# x,y, diameter, pen_width, rotation, fill r,g,b,\n";
     outfile << "#      outline r,g,b[, label font size,label]\n";
 
     // In some cases I have created a graph where all the
@@ -1407,6 +1480,7 @@ saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
 				   - midyInch,
 				   'f', VP_PREC_GRPHC) << ", "
 		<< QString::number(node->getDiameter()) << ", "
+		<< QString::number(node->getPenWidth()) << ", "
 		<< QString::number(node->getRotation()) << ", "
 		<< QString::number(node->getFillColour().redF()) << ","
 		<< QString::number(node->getFillColour().greenF()) << ","
@@ -1489,6 +1563,14 @@ saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
     }
 
     return true;
+}
+
+
+
+void
+MainWindow::somethingChanged()
+{
+    promptSave = true;
 }
 
 
@@ -1605,14 +1687,20 @@ MainWindow::save_Graph()
 	if (selectedFilter == "JPG (*.jpg)")
 	{
 	    if (settings.contains("jpgColor")) // Where should we ask for bg color?
-		image->fill(settings.value("jpgColor").toString());
+	    {
+		QColor color = settings.value("jpgColor").toString();
+		image->fill(color);
+	    }
 	    else
 		image->fill(Qt::white);
 	}
 	else
 	{
-	    if (settings.contains("elseColor")) // Needs better name
-		image->fill(settings.value("elseColor").toString());
+	    if (settings.contains("otherColor")) // Needs better name
+	    {
+		QColor color = settings.value("otherColor").toString();
+		image->fill(color);
+	    }
 	    else
 		image->fill(Qt::transparent);
 	}
@@ -1634,6 +1722,7 @@ MainWindow::save_Graph()
 	image->save(fileName); // Requires file extension or it won't save :-/
 	ui->canvas->snapToGrid(saveStatus);
 	ui->canvas->update();
+	promptSave = false;
 	return true;
     }
 
@@ -1673,6 +1762,7 @@ MainWindow::save_Graph()
 	QFileInfo fi(fileName);
 	ui->graphType_ComboBox->insertItem(ui->graphType_ComboBox->count(),
 					   fi.baseName());
+	promptSave = false;
 	return true && success;
     }
 
@@ -1682,6 +1772,7 @@ MainWindow::save_Graph()
 	outputFile.close();
 	ui->canvas->snapToGrid(saveStatus);
 	ui->canvas->update();
+	promptSave = false;
 	return true && success;
     }
 
@@ -1691,6 +1782,7 @@ MainWindow::save_Graph()
 	outputFile.close();
 	ui->canvas->snapToGrid(saveStatus);
 	ui->canvas->update();
+	promptSave = false;
 	return true && success;
     }
 
@@ -1711,6 +1803,7 @@ MainWindow::save_Graph()
 				    Qt::IgnoreAspectRatio);
 	ui->canvas->snapToGrid(saveStatus);
 	ui->canvas->update();
+	promptSave = false;
 	return true;
     }
 
@@ -1877,13 +1970,13 @@ MainWindow::select_Custom_Graph(QString graphName)
 	    QStringList fields = line.split(",");
 
 	    // Nodes may or may not have label info.  Accept both.
-	    // Nominally, we want 10 or 12 (and this assumes we don't
+	    // Nominally, we want 11 or 13 (and this assumes we don't
 	    // want to record the label size if there is no label,
 	    // which is possibly not what we will eventually realize
 	    // we want).  But to avoid complex quoting of commas in
-	    // labels, we just glue all the fields past #11 into the
+	    // labels, we just glue all the fields past #12 into the
 	    // label.
-	    if (fields.count() < 10 || fields.count() == 11)
+	    if (fields.count() < 11 || fields.count() == 12)
 	    {
 		QMessageBox::information(0, "Error",
 					 "Node " + QString::number(i)
@@ -1902,9 +1995,11 @@ MainWindow::select_Custom_Graph(QString graphName)
 	    qreal y = fields.at(1).toDouble();
 	    qreal d = fields.at(2).toDouble();
 	    qreal r = d / 2.;
+	    qreal t = fields.at(3).toDouble();
 	    node->setPos(x * screenPhysicalDPI_X, y * screenPhysicalDPI_Y);
 	    node->setDiameter(d);
-	    node->setRotation(fields.at(3).toDouble());
+	    node->setPenWidth(t);
+	    node->setRotation(fields.at(4).toDouble());
 	    node->setID(i++);
 	    // Record information about the extremal nodes for use below.
 	    if (x - r < minX)
@@ -1931,23 +2026,23 @@ MainWindow::select_Custom_Graph(QString graphName)
 		  "Y [%.4f, %.4f]", i-1, x, y, minX, maxX, minY, maxY);
 
 	    QColor fillColor;
-	    fillColor.setRedF(fields.at(4).toDouble());
-	    fillColor.setGreenF(fields.at(5).toDouble());
-	    fillColor.setBlueF(fields.at(6).toDouble());
+	    fillColor.setRedF(fields.at(5).toDouble());
+	    fillColor.setGreenF(fields.at(6).toDouble());
+	    fillColor.setBlueF(fields.at(7).toDouble());
 	    node->setFillColour(fillColor);
 
 	    QColor lineColor;
-	    lineColor.setRedF(fields.at(7).toDouble());
-	    lineColor.setGreenF(fields.at(8).toDouble());
-	    lineColor.setBlueF(fields.at(9).toDouble());
+	    lineColor.setRedF(fields.at(8).toDouble());
+	    lineColor.setGreenF(fields.at(9).toDouble());
+	    lineColor.setBlueF(fields.at(10).toDouble());
 	    node->setLineColour(lineColor);
-	    if (fields.count() >= 12)
+	    if (fields.count() >= 13)
 	    {
 		// If the label has one or more commas, we must glue
 		// the fields back together.
-		node->setNodeLabelSize(fields.at(10).toFloat());
-		QString l = fields.at(11);
-		for (int i = 12; i < fields.count(); i++)
+		node->setNodeLabelSize(fields.at(11).toFloat());
+		QString l = fields.at(12);
+		for (int i = 13; i < fields.count(); i++)
 		    l += "," + fields.at(i);
 		node->setNodeLabel(l);
 	    }
@@ -2393,6 +2488,7 @@ MainWindow::set_Font_Sizes()
     ui->inchesLabel->setFont(font);
     ui->numLabel->setFont(font);
     ui->zoomDisplay->setFont(font);
+    ui->clearCanvas->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE - 1);
     ui->graphType_ComboBox->setFont(font);
@@ -2432,12 +2528,27 @@ MainWindow::set_Font_Sizes()
 void
 MainWindow::set_Interface_Sizes()
 {
-    qreal scale;
+    qreal scale = -1;
+    #ifdef _WIN32 // Windows default logical DPI is 96
     if (screenLogicalDPI_X > 96)
         scale = screenLogicalDPI_X/96;
     else
         scale = 1;
-    //printf("Scale: %.3f\n", scale);
+    #endif
+    #ifdef __APPLE__ // Apple default logical DPI is 72
+    if (screenLogicalDPI_X > 72)
+        scale = screenLogicalDPI_X/72;
+    else
+        scale = 1;
+    #endif
+    // What about other systems? Default to 96 for now...
+    if (scale == -1)
+    {
+        if (screenLogicalDPI_X > 96)
+            scale = screenLogicalDPI_X/96;
+        else
+            scale = 1;
+    }
 
     // Total width of tabWidget borders
     int borderWidth1 = 50 * scale;
@@ -2689,7 +2800,8 @@ MainWindow::nodeParamsUpdated()
 	ui->NodeLabel1->text(),		    // Useful?
 	ui->NodeLabelSize->value(),
 	ui->NodeFillColor->palette().window().color(),
-	ui->NodeOutlineColor->palette().window().color());
+	ui->NodeOutlineColor->palette().window().color(),
+	ui->nodeThickness->value());
 }
 
 
@@ -3358,7 +3470,8 @@ MainWindow::saveSettings()
 void
 MainWindow::closeEvent(QCloseEvent * event)
 {
-    if (!ui->canvas->scene()->itemsBoundingRect().isEmpty())
+    if (!ui->canvas->scene()->itemsBoundingRect().isEmpty()
+        && promptSave == true)
     {
         QMessageBox::StandardButton closeBtn
 	    = QMessageBox::question(this, "Graphic",

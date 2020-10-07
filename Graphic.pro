@@ -29,6 +29,7 @@ SOURCES += \
     mainwindow.cpp \
     node.cpp \
     preview.cpp \
+    settingsdialog.cpp \
     sizecontroller.cpp
 
 HEADERS += \
@@ -37,6 +38,8 @@ HEADERS += \
     canvasview.h \
     colourfillcontroller.h \
     colourlinecontroller.h \
+    cornergrabber.h \
+    defuns.h \
     edge.h \
     graph.h \
     graphmimedata.h \
@@ -46,10 +49,12 @@ HEADERS += \
     mainwindow.h \
     node.h \
     preview.h \
+    settingsdialog.h \
     sizecontroller.h
 
 
-FORMS += mainwindow.ui
+FORMS += mainwindow.ui \
+    settingsdialog.ui
 
 CONFIG += c++11 \
     thread

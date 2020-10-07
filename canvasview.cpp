@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.19
+ * Version: 1.20
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -72,6 +72,8 @@
  *  (b) Initialize modeType to 0 to prevent accidental deletion of nonexistant
  *      freestyleGraph on startup.
  *  (c) Don't allow freestyle to make two edges between a given node pair.
+ * Aug 5, 2020 (IC V1.20)
+ *  (a) Add the ability to change the thickness of the node circle.
  */
 
 #include "canvasview.h"
@@ -167,7 +169,8 @@ CanvasView::CanvasView(QWidget * parent)
 void
 CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
 			    QString label, qreal nodeLabelSize,
-			    QColor nodeFillColour, QColor nodeOutLineColour)
+			    QColor nodeFillColour, QColor nodeOutLineColour,
+			    qreal nodeThickness)
 {
     qDeb() << "CV::setUpNodeParams(): nodeDiameter = " << nodeDiameter;
     qDeb() << "CV::setUpNodeParams(): nodeLabel = /" << label << "/";
@@ -181,6 +184,7 @@ CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
     nodeParams->labelSize = nodeLabelSize;
     nodeParams->fillColour = nodeFillColour;
     nodeParams->outlineColour = nodeOutLineColour;
+    nodeParams->nodeThickness = nodeThickness;
 }
 
 
@@ -190,6 +194,7 @@ CanvasView::createNode(QPointF pos)
 {
     Node * node = new Node();
     node->setDiameter(nodeParams->diameter);
+    node->setPenWidth(nodeParams->nodeThickness);
     node->setNodeLabelSize(nodeParams->labelSize);
     node->setRotation(0);
     node->setFillColour(nodeParams->fillColour);
@@ -491,7 +496,7 @@ CanvasView::addEdgeToScene(Node * source, Node * destination)
 	 * graphs that each contain the nodes that the new
 	 * edge will be incident to. NOT ANYMORE
 	 * TODO: should we amalgamate the graphs rather than having a
-	 * recursive structure?	 Joining doesn't currently (Nov 2019)
+	 * recursive structure?  Joining doesn't currently (Nov 2019)
 	 * work properly when joining two "recursive" graphs.
 	 */
 

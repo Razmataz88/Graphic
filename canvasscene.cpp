@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.14
+ * Version: 1.15
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -65,6 +65,8 @@
  *      graph objects are deleted, atleast in the case of 2 nodes selected!
  *      4 nodes selected is still WIP, as it messes up the rotations somehow.
  *  (b) For 4-node joins, ensure that all 4 nodes are distinct.
+ * Aug 5, 2020 (IC V1.15)
+ *  (a) Emit the somethingChanged() signal in a number of places.
  */
 
 #include "canvasscene.h"
@@ -315,6 +317,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 			    }
 			    parent = tempParent;
 			}
+			emit somethingChanged();
 			break;
 		    }
 		    else if (item->type() == Edge::Type)
@@ -335,6 +338,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 
 			delete edge;
 			edge = nullptr;
+			emit somethingChanged();
 			break;
 		    }
 		}
@@ -477,6 +481,9 @@ CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 	    mDragged->setPos(x , y);
         }
         moved = false;
+
+        if (getMode() == CanvasView::edit)
+            emit somethingChanged();
     }
     mDragged = nullptr;
     clearSelection();
@@ -512,6 +519,8 @@ CanvasScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
 		  removeItem(graph);
 		  delete graph;
 		  graph = nullptr;
+
+		  emit somethingChanged();
 	      }
 	  }
 	  break;
@@ -879,6 +888,8 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 	{
 	    undoPositions.last()->node->setPos(undoPositions.last()->pos);
 	    undoPositions.removeLast();
+
+	    emit somethingChanged();
 	}
 
       default:

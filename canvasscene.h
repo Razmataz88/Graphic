@@ -2,7 +2,7 @@
  * File:	canvasscene.h
  * Author:	Rachel Bood
  * Date:	?
- * Version:	1.6
+ * Version:	1.7
  *
  * Purpose:
  *
@@ -16,11 +16,15 @@
  * Jun 26, 2020 (IC V1.3)
  *  (a) Added moved field and Graph * param to graphDropped().
  * Jul 8, 2020 (IC V1.4)
- *  (a) Add graphJoined() signal.
+ *  (a) Added graphJoined() signal to tell mainWindow to update the edit tab.
  * Jul 22, 2020 (IC V1.5)
- *  (a) add searchAndSeparate() and itemDeleted().
+ *  (a) Added searchAndSeparate() function to determine if a graph needs to be
+ *      split into individual graphs following a node/edge deletion.
+ *  (b) Also added itemDeleted() to tell mainwindow to update edit tab.
  * Jul 30, 2020 (IC V1.6)
  *  (a) Replace "itemDeleted()" with "graphSeparated()".
+ * Aug 3, 2020 (IC V1.7)
+ *  (a) Add somethingChanged() signal.
  */
 
 #ifndef CANVASSCENE_H
@@ -54,6 +58,7 @@ signals:
     void graphDropped(Graph * graph);
     void graphJoined();
     void graphSeparated();
+    void somethingChanged();
 
 protected:
     void dragMoveEvent (QGraphicsSceneDragDropEvent * event);
