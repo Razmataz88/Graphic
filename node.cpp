@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.15
+ * Version: 1.16
  *
  * Purpose: creates a node for the users graph
  *
@@ -76,6 +76,9 @@
  *  (b) Fixed findRootParent().
  * Aug 7, 2020 (IC V1.15)
  *  (a) Use settings custom resolution (if desired) for physicalDotsPerInchX.
+ * Aug 12, 2020 (IC V1.13)
+ *  (a) Updated the constructor to use global physicalDPI variable for node
+ *      DPI.
  */
 
 #include "defuns.h"
@@ -125,11 +128,7 @@ Node::Node()
     htmlLabel = new HTML_Label(this);
     setHandlesChildEvents(true);
     select = false;		    // TODO: is 'select' of any use?
-    QScreen * screen = QGuiApplication::primaryScreen();
-    if (settings.value("useDefaultResolution") == false)
-        physicalDotsPerInchX = settings.value("customResolution").toReal();
-    else
-        physicalDotsPerInchX = screen->physicalDotsPerInchX();
+    physicalDotsPerInchX = currentPhysicalDPI_X;
     checked = 0;
 
     connect(htmlLabel->document(), SIGNAL(contentsChanged()),
@@ -993,7 +992,7 @@ Node::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
  * Returns:
  * Assumptions:
  * Bugs:
- * Notes:       Try using QEvent::HoverEnter and QEvent::HoverLeave
+ * Notes:       Try using QEvent::HoverEnter and QEvent::HoverLeave?
  */
 
 bool

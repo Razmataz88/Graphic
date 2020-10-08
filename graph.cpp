@@ -2,7 +2,7 @@
  * File:    graph.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.2
+ * Version: 1.3
  *
  * Purpose:
  *
@@ -13,6 +13,10 @@
  * July 30, 2020 (IC & JD V1.2)
  *  (a) Fix getRootParent().
  *  (b) Clean up formatting and improve comments.
+ * August 12, 2020 (IC V1.3)
+ *  (b) Reversed the previous change to setRotation since it was only needed
+ *      when graphs could be children of other graphs which can no longer
+ *      happen.
  */
 
 #include "graph.h"
@@ -186,12 +190,12 @@ Graph::setRotation(qreal aRotation)
                 else if (child->type() == Node::Type)
                 {
                     Node * node = qgraphicsitem_cast<Node*>(child);
-                    node->setRotation(node->getRotation() + -aRotation);
+                    node->setRotation(-aRotation);
                 }
                 else if(child->type() == Edge::Type)
                 {
                     Edge * edge = qgraphicsitem_cast<Edge*>(child);
-                    edge->setRotation(edge->getRotation() + -aRotation);
+                    edge->setRotation(-aRotation);
                 }
                 list.removeOne(child);
             }

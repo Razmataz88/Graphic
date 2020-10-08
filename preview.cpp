@@ -2,7 +2,7 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.11
+ * Version: 1.12
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
@@ -61,11 +61,16 @@
  *      thickness of nodes.
  *  (b) Display the zoom amount.  Fixed keyPressEvent to require Ctrl+
  *	and Ctrl- to zoom out/in instead of just + and - keys.
- * Jul 20, 2020 (IC V1.10)
- *  (a) Simplify the way the display of the zoom amount is done.
+ * Jul 7, 2020 (IC V1.10)
+ *  (a) Updated scaleView to accomodate for the new visible zoomDisplay on the
+ *      preview pane ui.
  * Aug 11, 2020 (IC V1.11)
- *  (a) Update names for (the former) node size and edge thickness.
- *  (b) Add function to handle mouse wheel events.
+ *  (a) Added wheelEvent to allow for zooming using the mouse wheel.
+ *  (b) Update names for (the former) node size and edge thickness.
+ * August 12, 2020 (IC V1.12)
+ *  (a) Updated Style_Graph() to use global physicalDPI values for xDPI and
+ *      yDPI.
+ *  (b) Created macros to be used for zoom level min and max for clarity.
  */
 
 #include "basicgraphs.h"
@@ -94,6 +99,11 @@
 #define SCALE_FACTOR    1.1
 static qreal zoomValue = 100;
 static QString zoomDisplayText = "Zoom: " + QString::number(zoomValue) + "%";
+
+// Empirically chosen values, modify as you see fit:
+#define MIN_ZOOM_LEVEL  0.07
+#define MAX_ZOOM_LEVEL  10.0
+
 
 
 /*
@@ -147,21 +157,18 @@ PreView::keyPressEvent(QKeyEvent * event)
     {
         switch (event->key())
         {
-          //case Qt::Key_Plus:
           case Qt::Key_Equal:
             zoomIn();
             break;
-          //case Qt::Key_Underscore:
           case Qt::Key_Minus:
             zoomOut();
-            break;
-          case Qt::Key_Delete:
-	    // TODO: why is this here??
             break;
           default:
             QGraphicsView::keyPressEvent(event);
 	}
     }
+    else
+        QGraphicsView::keyPressEvent(event);
 }
 
 
@@ -175,7 +182,7 @@ PreView::keyPressEvent(QKeyEvent * event)
  * Returns:     Nothing.
  * Assumptions: ?
  * Bugs:        ?
- * Notes:       Unhandled key events are passed on to ...?
+ * Notes:       Unhandled key events are passed on to QGraphics View
  */
 
 void
@@ -189,7 +196,11 @@ PreView::wheelEvent(QWheelEvent * event)
             zoomIn();
         else if (event->angleDelta().y() < 0)
             zoomOut();
+        else
+            QGraphicsView::wheelEvent(event);
     }
+    else
+        QGraphicsView::wheelEvent(event);
 }
 
 
@@ -213,7 +224,7 @@ PreView::scaleView(qreal scaleFactor)
 
     qreal factor = transform().scale(scaleFactor, scaleFactor)
                 .mapRect(QRectF(0, 0, 1, 1)).width();
-    if (factor < 0.07 || factor > 10)	// Arbitrary limits!
+    if (factor < MIN_ZOOM_LEVEL || factor > MAX_ZOOM_LEVEL)
         return;
 
     scale(scaleFactor, scaleFactor);
@@ -486,19 +497,6 @@ PreView::Style_Graph(Graph * graph,		    int graphType,
     int i = numStart;
     int j = numStart;
 
-    QScreen * screen = QGuiApplication::primaryScreen();
-    qreal xDPI, yDPI;
-    if (settings.value("useDefaultResolution") == false)
-    {
-	xDPI = settings.value("customResolution").toReal();
-	yDPI = settings.value("customResolution").toReal();
-    }
-    else
-    {
-	xDPI = screen->physicalDotsPerInchX();
-	yDPI = screen->physicalDotsPerInchY();
-    }
-
     // The w & h args are *total* w & h for the graph, but we need to
     // locate the center of the nodes.  So first calculate the
     // nodecenter-to-nodecenter dimensions, then calculate the scale
@@ -507,11 +505,11 @@ PreView::Style_Graph(Graph * graph,		    int graphType,
     qreal centerWidth = totalWidth - nodeDiameter;
     if (centerWidth < 0.1)
 	centerWidth = 0.1;
-    qreal widthScaleFactor = centerWidth * xDPI;
+    qreal widthScaleFactor = centerWidth * currentPhysicalDPI_X;
     qreal centerHeight = totalHeight - nodeDiameter;
     if (centerHeight < 0.1)
 	centerHeight = 0.1;
-    qreal heightScaleFactor = centerHeight * yDPI;
+    qreal heightScaleFactor = centerHeight * currentPhysicalDPI_Y;
 
     qDeb() << "    Desired total width: " << totalWidth
 	   << "; desired center width " << centerWidth
@@ -527,12 +525,7 @@ PreView::Style_Graph(Graph * graph,		    int graphType,
 	    Node * node = qgraphicsitem_cast<Node *>(item);
 	    node->setParentItem(nullptr);	    // ?? Eh?
 
-	    if (settings.value("useDefaultResolution") == false)
-		node->physicalDotsPerInchX
-			= settings.value("customResolution").toReal();
-	    else
-		node->physicalDotsPerInchX
-			= settings.value("defaultResolution").toReal();
+	    node->physicalDotsPerInchX = currentPhysicalDPI_X;
 
 	    GUARD(nodeThickness_WGT) node->setPenWidth(nodeThickness);
 	    GUARD(nodeDiam_WGT) node->setDiameter(nodeDiameter);

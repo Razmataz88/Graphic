@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.15
+ * Version: 1.16
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -65,8 +65,16 @@
  *      graph objects are deleted, atleast in the case of 2 nodes selected!
  *      4 nodes selected is still WIP, as it messes up the rotations somehow.
  *  (b) For 4-node joins, ensure that all 4 nodes are distinct.
- * Aug 5, 2020 (IC V1.15)
- *  (a) Emit the somethingChanged() signal in a number of places.
+ * Jul 31, 2020 (IC V1.15)
+ *  (a) Added somethingChanged() signal to be used along with the other signals
+ *      to tell mainWindow that something has changed on the canvas and thus a
+ *      new save prompt is necessary.
+ * Aug 12, 2020 (IC V1.16)
+ *  (a) Fully removed graph recursion from keyReleaseEvent.  Graphs
+ *	should no longer find themselves children of other graphs.
+ *	Because of this, nodes and edges need to always have their
+ *	rotation reset to 0 whenever they are transferred to a new
+ *	parent graph.
  */
 
 #include "canvasscene.h"
@@ -142,7 +150,7 @@ CanvasScene::dropEvent(QGraphicsSceneDragDropEvent * event)
         addItem(graphItem);
         graphItem->isMoved();
         clearSelection();
-        emit graphDropped(graphItem);
+        emit graphDropped();
     }
 }
 
@@ -175,6 +183,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 
     bool nodeFound = false;
     bool labelFound = false;
+    bool something_changed = false;
 
     if (itemAt(event->scenePos(), QTransform()) != nullptr)
     {
@@ -317,7 +326,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 			    }
 			    parent = tempParent;
 			}
-			emit somethingChanged();
+			something_changed = true;
 			break;
 		    }
 		    else if (item->type() == Edge::Type)
@@ -338,11 +347,13 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 
 			delete edge;
 			edge = nullptr;
-			emit somethingChanged();
+			something_changed = true;
 			break;
 		    }
 		}
 	    }
+	    if (something_changed)
+		emit somethingChanged();
 	    break;
 
 	  case CanvasView::edit:
@@ -707,8 +718,22 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		    }
 		}
 
-		root2->setParentItem(newRoot);
-		root1->setParentItem(newRoot);
+                foreach (QGraphicsItem * item, root1->childItems())
+                {
+                    itemPos = item->scenePos(); // MUST BE scenePos(), NOT pos()
+                    item->setParentItem(newRoot);
+                    item->setPos(itemPos);
+                    item->setRotation(0);
+                }
+
+                foreach (QGraphicsItem * item, root2->childItems())
+                {
+                    itemPos = item->scenePos(); // MUST BE scenePos(), NOT pos()
+                    item->setParentItem(newRoot);
+                    item->setPos(itemPos);
+                    item->setRotation(0);
+                }
+
 		addItem(newRoot);
 
 		// Dispose of unneeded nodes
@@ -826,6 +851,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
                     itemPos = item->scenePos(); // MUST BE scenePos(), NOT pos()
                     item->setParentItem(newRoot);
                     item->setPos(itemPos);
+                    item->setRotation(0);
                 }
 
                 foreach (QGraphicsItem * item, root2->childItems())
@@ -833,6 +859,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
                     itemPos = item->scenePos(); // MUST BE scenePos(), NOT pos()
                     item->setParentItem(newRoot);
                     item->setPos(itemPos);
+                    item->setRotation(0);
                 }
 
                 addItem(newRoot);
@@ -1055,6 +1082,7 @@ CanvasScene::searchAndSeparate(QList<Node *> Nodes)
                 itemPos = item->scenePos(); // MUST BE scenePos(), NOT pos()
                 item->setParentItem(graph);
                 item->setPos(itemPos);
+                item->setRotation(0); // Reset rotation to 0
             }
         }
         // Reset all the checked items.

@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.17
+ * Version:	1.18
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -54,6 +54,11 @@
  *  (b) Add somethingChanged(), promptSave and settingsDialog.
  * Aug 11, 2020 (IC V1.17)
  *  (a) Add updateDpiAndPreview().
+ *  (b) Added settingsDialog variable to be used in conjunction with
+ *      the new settingsDialog window which allows the user to use a
+ *	custom DPI value instead of the system default.
+ * Aug 13, 2020 (IC V1.18)
+ *  (a) Removed addGraphToEditTab(), addNodeToEditTab() and addEdgeToEditTab().
  */
 
 
@@ -125,10 +130,6 @@ class MainWindow : public QMainWindow
 
     void updateEditTab(int index);
     void updateEditTab();
-
-    void addGraphToEditTab(Graph * graph);
-    void addNodeToEditTab(Node * node);
-    void addEdgeToEditTab(Edge * edge);
 
     void somethingChanged();
     void updateDpiAndPreview();

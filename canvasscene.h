@@ -2,7 +2,7 @@
  * File:	canvasscene.h
  * Author:	Rachel Bood
  * Date:	?
- * Version:	1.7
+ * Version:	1.8
  *
  * Purpose:
  *
@@ -25,6 +25,8 @@
  *  (a) Replace "itemDeleted()" with "graphSeparated()".
  * Aug 3, 2020 (IC V1.7)
  *  (a) Add somethingChanged() signal.
+ * Aug 13, 2020 (IC V1.8)
+ *  (a) Remove Graph * param from graphDropped().
  */
 
 #ifndef CANVASSCENE_H
@@ -55,7 +57,7 @@ public:
     void searchAndSeparate(QList<Node *> adjacentNodes);
 
 signals:
-    void graphDropped(Graph * graph);
+    void graphDropped();
     void graphJoined();
     void graphSeparated();
     void somethingChanged();

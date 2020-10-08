@@ -2,7 +2,7 @@
  * File:    canvasview.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.7
+ * Version: 1.8
  *
  * Purpose: Define the CanvasView class.
  *
@@ -24,8 +24,12 @@
  * Aug 5, 2020 (IC V1.6)
  *  (a) Emit the somethingChanged() signal in a number of places.
  * Aug 11, 2020 (IC V1.7)
- *  (a) Add zoomIn() and zoomOut() to implement zooming,
- *  (b) Add zoomChanged(),  scaleView() and wheelEvent() to support zooming.
+ *  (a) Added scaleView, wheelEvent, zoomIn, zoomOut and zoomChanged
+ *	as well as updated keyPressEvent to allow for zooming on the
+ *	canvas, similar to the zoom from preview.cpp, using either a
+ *	key press or mouse wheel scroll.
+ * Aug 13, 2020 (IC V1.8)
+ *  (a) Removed params from nodeCreated() and edgeCreated().
  */
 
 
@@ -95,8 +99,8 @@ class CanvasView: public QGraphicsView
   signals:
 	void setKeyStatusLabelText(QString text);
 	void resetDragMode();
-	void nodeCreated(Node * node);
-	void edgeCreated(Edge * edge);
+	void nodeCreated();
+	void edgeCreated();
 	void zoomChanged(QString zoomText);
 
   protected:

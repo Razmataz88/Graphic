@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.47
+ * Version:	1.50
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -234,7 +234,8 @@
  *      when graphs/nodes/edges are created.
  * Jun 26, 2020 (IC V1.35)
  *  (a) Update some connections to take a node or edge param.
- *  (b) When getting a colour ensure that getColor() returned a valid color.
+ *  (b) Fixed a bug that would set the colour to black if user exited the
+ *      colour select window without selecting a colour.
  *  (c) Rename on_tabWidget_currentChanged(int) to updateEditTab(int).
  *      Do some UI tweaking there.
  *  (d) Implement addGraphToEditTab(), addNodeToEditTab() and
@@ -271,25 +272,40 @@
  * Jul 29, 2020 (IC V1.45)
  *  (a) Installed event filters in updateEditTab(int) to send event
  *	handling to node.cpp and edge.cpp.
- * Aug 7, 2020 (IC V1.46)
- *  (a) Added many "somethingChanged()" connections.
+ * Jul 31, 2020 (IC V1.46)
+ *  (a) Added connections to somethingChanged() slot and bool promptSave that
+ *      detects if any change has been made on the canvas since the last save
+ *      and thus a new save prompt is needed on exit.
  *  (b) Add setting to allow the user to specify their physicalDPI
  *	setting, a la acroread.
- *  (c) Save node line thickness when saving graphs.
+ * Aug 5, 2020 (IC V1.47)
+ *  (a) Node thickness is now be included in the save code and is passed
+ *      to nodeParam functions.
  *      THIS DEPRECATES PREVIOUS .grphc FILES and changes .tikz output.
+ *  (b) Added updateDpiAndPreview slot and settingsDialog variable to be used
+ *      in conjunction with the new settingsDialog window which allows the user
+ *      to use a custom DPI value instead of the system default.
+ *  (c) Renamed nodeSize widget to nodeDiameter and edgeSize widget to
+ *      edgeThickness for clarity.  Corresponding changes also in UI.
  *  (d) On exit, don't ask the user if the graph should be saved if it
  *      has not been changed since the last save.
  *  (e) In set_Font_Sizes() set the font of the clearCanvas button.
- *  (f) Make some UI elements scale if the logicalDPI is greater than
- *      the standard for that OS.
- *  (g) Add the node thickness to setUpNodeParams().
- * Aug 11, 2020 (IC V1.47)
- *  (a) Change some attribute and widget names (node size is now node diam,
- *      and edgeSize is now edgeThickness).  Corresponding changes also in UI.
+ * Aug 7, 2020 (IC V1.48)
+ *  (a) save_Graph() now uses the saved background colours from settingsDialog
+ *      to colour saved graphs.
+ * Aug 11, 2020 (IC V1.49)
+ *  (a) A zoom function was added to the canvas similar to the one for the
+ *      preview so zoomDisplay_2 needs to be scaled in set_Interface_Sizes().
  *  (b) New connection for zoomChanged() signal.
  *  (c) Update preview when settings DPI is changed.  Add
  *	updateDpiAndPreview() function.
  *  (d) Handraulically scale clearCanvas and zoomDisplay{,_2} widgets.
+ * August 12, 2020 (IC V1.50)
+ *  (a) Cleaned up set_Interface_Sizes() to make the default scale code more
+ *      readable. Currently, the scale is based on logicalDPI / 72 for apple
+ *      and logicalDPI/96 for any other machine.
+ *  (b) Major code removal: addEdgeToEditTab(), addNodeToEditTab() and
+ *      addGraphToEditTab() all went away.
  */
 
 #include "mainwindow.h"
@@ -338,13 +354,10 @@
 // Similar for vertex precision in .grphc output:
 #define VP_PREC_GRPHC  4
 
-static qreal screenPhysicalDPI_X, screenPhysicalDPI_Y;
 static qreal screenLogicalDPI_X;
-static int j = 0; // # of rows in edit tab
 
 QSettings settings("Acadia", "Graphic");
-
-
+qreal currentPhysicalDPI, currentPhysicalDPI_X, currentPhysicalDPI_Y;
 
 /*
  * Name:	MainWindow
@@ -517,27 +530,20 @@ QMainWindow(parent),
 
     // These connects update the edit tab when the number of items on the
     // canvas changes.
-    connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
+    connect(ui->canvas->scene(), SIGNAL(graphDropped()),
 	    this, SLOT(updateEditTab()));
     connect(ui->canvas->scene(), SIGNAL(graphJoined()),
 	    this, SLOT(updateEditTab()));
-    connect(ui->canvas, SIGNAL(nodeCreated(Node*)),
-	    this, SLOT(updateEditTab()));
-    connect(ui->canvas, SIGNAL(edgeCreated(Edge*)),
-	    this, SLOT(updateEditTab()));
     connect(ui->canvas->scene(), SIGNAL(graphSeparated()),
 	    this, SLOT(updateEditTab()));
-
-    /*connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
-            this, SLOT(addGraphToEditTab(Graph*)));
-    connect(ui->canvas, SIGNAL(nodeCreated(Node*)),
-            this, SLOT(addNodeToEditTab(Node*)));
-    connect(ui->canvas, SIGNAL(edgeCreated(Edge*)),
-            this, SLOT(addEdgeToEditTab(Edge*)));*/
+    connect(ui->canvas, SIGNAL(nodeCreated()),
+	    this, SLOT(updateEditTab()));
+    connect(ui->canvas, SIGNAL(edgeCreated()),
+	    this, SLOT(updateEditTab()));
 
     // Adds a new graph to the preview pane when the previous is dropped onto
     // the canvas.
-    connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
+    connect(ui->canvas->scene(), SIGNAL(graphDropped()),
 	    this, SLOT(generate_Graph()));
 
     // Updates the zoomDisplays after zoomIn/zoomOut is called
@@ -553,13 +559,13 @@ QMainWindow(parent),
     // Ask to save on exit if any changes were made on the canvas since
     // last save.
     connect(ui->canvas->scene(), SIGNAL(somethingChanged()),
-            this, SLOT(somethingChanged()));
-    connect(ui->canvas, SIGNAL(nodeCreated(Node*)),
-            this, SLOT(somethingChanged()));
-    connect(ui->canvas, SIGNAL(edgeCreated(Edge*)),
-            this, SLOT(somethingChanged()));
-    connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
-            this, SLOT(somethingChanged()));
+	    this, SLOT(somethingChanged()));
+    connect(ui->canvas, SIGNAL(nodeCreated()),
+	    this, SLOT(somethingChanged()));
+    connect(ui->canvas, SIGNAL(edgeCreated()),
+	    this, SLOT(somethingChanged()));
+    connect(ui->canvas->scene(), SIGNAL(graphDropped()),
+	    this, SLOT(somethingChanged()));
     connect(ui->canvas->scene(), SIGNAL(graphJoined()),
             this, SLOT(somethingChanged()));
 
@@ -593,13 +599,15 @@ QMainWindow(parent),
     QScreen * screen = QGuiApplication::primaryScreen();
     if (settings.value("useDefaultResolution") == false)
     {
-        screenPhysicalDPI_X = settings.value("customResolution").toReal();
-        screenPhysicalDPI_Y = settings.value("customResolution").toReal();
+        currentPhysicalDPI = settings.value("customResolution").toReal();
+        currentPhysicalDPI_X = settings.value("customResolution").toReal();
+        currentPhysicalDPI_Y = settings.value("customResolution").toReal();
     }
     else
     {
-        screenPhysicalDPI_X = screen->physicalDotsPerInchX();
-        screenPhysicalDPI_Y = screen->physicalDotsPerInchY();
+        currentPhysicalDPI = screen->physicalDotsPerInch();
+        currentPhysicalDPI_X = screen->physicalDotsPerInchX();
+        currentPhysicalDPI_Y = screen->physicalDotsPerInchY();
     }
     screenLogicalDPI_X = screen->logicalDotsPerInchX();
 
@@ -1122,10 +1130,10 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     outfile << "\tminimum size=" << nodeDefaults.nodeDiameter << "in, "
 	    << "inner sep=0, "
 	    << "font=\\fontsize{" << nodeDefaults.labelSize
-	    << "}{1}\\selectfont,\n";
+	    << "}{1}\\selectfont},\n";
 
     outfile << "\tnode width="
-            << QString::number(nodeDefaults.penSize / screenPhysicalDPI_X,
+            << QString::number(nodeDefaults.penSize / currentPhysicalDPI_X,
                                'f', VT_PREC_TIKZ) << "in},\n";
 
 
@@ -1147,7 +1155,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	outfile << "    e/.style={draw=" << defEdgeLineColourName;
 
     outfile << ", line width="
-	    << QString::number(edgeDefaults.penSize / screenPhysicalDPI_X,
+	    << QString::number(edgeDefaults.penSize / currentPhysicalDPI_X,
 			       'f', ET_PREC_TIKZ) << "in},\n";
     outfile << "    l/.style={font=\\fontsize{" << edgeDefaults.labelSize
 	    << "}{1}\\selectfont}]\n";
@@ -1257,11 +1265,11 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	// Use (x,y) coordinate system for node positions.
 	outfile << "\\node (v" << QString::number(i) << ") at ("
 		<< QString::number((node->scenePos().rx() - midx)
-				   / screenPhysicalDPI_X,
+				   / currentPhysicalDPI_X,
 				   'f', VP_PREC_TIKZ)
 		<< ","
 		<< QString::number((node->scenePos().ry() - midy)
-				   / -screenPhysicalDPI_Y,
+				   / -currentPhysicalDPI_Y,
 				   'f', VP_PREC_TIKZ)
 		<< ") [n";
 	outfile << fillColour << lineColour;
@@ -1276,7 +1284,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	{
 	    outfile << ", node width="
 		    << QString::number(node->getPenWidth()
-				       / screenPhysicalDPI_X,
+				       / currentPhysicalDPI_X,
 				       'f', VT_PREC_TIKZ)
 		    << "in";
 	    doNewLine = true;
@@ -1365,7 +1373,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 		{
 		    outfile << ", line width="
 			    << QString::number(edge->getPenWidth()
-					       / screenPhysicalDPI_X,
+					       / currentPhysicalDPI_X,
 					       'f', ET_PREC_TIKZ)
 			    << "in";
 		    wroteExtra = true;
@@ -1477,17 +1485,17 @@ saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
 	    miny = y;
     }
 
-    qreal midxInch = (maxx + minx) / (screenPhysicalDPI_X * 2.);
-    qreal midyInch = (maxy + miny) / (screenPhysicalDPI_Y * 2.);
+    qreal midxInch = (maxx + minx) / (currentPhysicalDPI_X * 2.);
+    qreal midyInch = (maxy + miny) / (currentPhysicalDPI_Y * 2.);
     for (int i = 0; i < nodes.count(); i++)
     {
 	// TODO: s/,/\\/ before writing out label.  Undo this when reading.
 	Node * node = nodes.at(i);
 	outfile << "# Node " + QString::number(i) + ":\n";
-	outfile << QString::number(node->scenePos().rx() / screenPhysicalDPI_X
+	outfile << QString::number(node->scenePos().rx() / currentPhysicalDPI_X
 				   - midxInch,
 				   'f', VP_PREC_GRPHC) << ","
-		<< QString::number(node->scenePos().ry() / screenPhysicalDPI_Y
+		<< QString::number(node->scenePos().ry() / currentPhysicalDPI_Y
 				   - midyInch,
 				   'f', VP_PREC_GRPHC) << ", "
 		<< QString::number(node->getDiameter()) << ", "
@@ -1697,9 +1705,9 @@ MainWindow::save_Graph()
 				      ->itemsBoundingRect().size().toSize());
 	if (selectedFilter == "JPG (*.jpg)")
 	{
-	    if (settings.contains("jpgColor")) // Where should we ask for bg color?
+	    if (settings.contains("jpgBgColour"))
 	    {
-		QColor color = settings.value("jpgColor").toString();
+		QColor color = settings.value("jpgBgColour").toString();
 		image->fill(color);
 	    }
 	    else
@@ -1707,9 +1715,9 @@ MainWindow::save_Graph()
 	}
 	else
 	{
-	    if (settings.contains("otherColor")) // Needs better name
+	    if (settings.contains("otherImageBgColour"))
 	    {
-		QColor color = settings.value("otherColor").toString();
+		QColor color = settings.value("otherImageBgColour").toString();
 		image->fill(color);
 	    }
 	    else
@@ -1942,7 +1950,7 @@ MainWindow::select_Custom_Graph(QString graphName)
     // so they take into account both the node center location and the
     // node diameter.  (These are the two values stored in the .grphc file.)
     qreal minX = 1E10, maxX = -1E10, minY = 1E10, maxY = -1E10;
-    // These 4 variables hold the radii of the vertices which give the 
+    // These 4 variables hold the radii of the vertices which give the
     // extremal positions stored above.
     qreal minXr = 0, maxXr = 0, minYr = 0, maxYr = 0;
 
@@ -2007,7 +2015,7 @@ MainWindow::select_Custom_Graph(QString graphName)
 	    qreal d = fields.at(2).toDouble();
 	    qreal r = d / 2.;
 	    qreal t = fields.at(3).toDouble();
-	    node->setPos(x * screenPhysicalDPI_X, y * screenPhysicalDPI_Y);
+	    node->setPos(x * currentPhysicalDPI_X, y * currentPhysicalDPI_Y);
 	    node->setDiameter(d);
 	    node->setPenWidth(t);
 	    node->setRotation(fields.at(4).toDouble());
@@ -2126,13 +2134,13 @@ MainWindow::select_Custom_Graph(QString graphName)
     for (int i = 0; i < nodes.count(); i++)
     {
 	Node * n = nodes.at(i);
-	n->setPreviewCoords(n->x() / width / screenPhysicalDPI_X,
-			    n->y() / height / screenPhysicalDPI_Y);
+	n->setPreviewCoords(n->x() / width / currentPhysicalDPI_X,
+			    n->y() / height / currentPhysicalDPI_Y);
 	qDebu("    nodes[%s] coords: screen (%.4f, %.4f); "
 	      "preview set to (%.4f, %.4f)", n->getLabel().toLatin1().data(),
 	      n->x(), n->y(), n->getPreviewX(), n->getPreviewY());
     }
-	
+
     qDeb() << "MW::select_Custom_Graph: graph->childItems().length() ="
 	   << graph->childItems().length();
 
@@ -2150,7 +2158,7 @@ MainWindow::select_Custom_Graph(QString graphName)
     // clear to me how those numbers get set.
     graph->setPos(49, 15);
     qDeb() << "    graph NEW position is " << graph->x() << ", "
-	   << graph->y(); 
+	   << graph->y();
     graph->setRotation(-1 * ui->graphRotation->value());
 
     ui->preview->scene()->clear();
@@ -2200,7 +2208,7 @@ MainWindow::style_Graph(enum widget_ID what_changed)
 		ui->EdgeLabelSize->value(),
 		ui->EdgeLineColor->palette().window().color(),
 		ui->graphWidth->value(),
-		ui->graphHeight->value(), 
+		ui->graphHeight->value(),
 		ui->graphRotation->value(),
 		ui->NumLabelStart->value(),
 		ui->nodeThickness->value());
@@ -2265,8 +2273,8 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 	int numOfNodes1 = ui->numOfNodes1->value();
 	int numOfNodes2 = ui->numOfNodes2->value();
 	qreal nodeDiameter = ui->nodeDiameter->value();
-	bool drawEdges = ui->complete_checkBox->isChecked();	
-	
+	bool drawEdges = ui->complete_checkBox->isChecked();
+
 	if (currentGraphIndex != graphIndex
 	    || currentNumOfNodes1 != numOfNodes1
 	    || currentNumOfNodes2 != numOfNodes2
@@ -2534,33 +2542,20 @@ MainWindow::set_Font_Sizes()
  * Returns:
  * Assumptions:
  * Bugs:
- * Notes:       Still missing height corrections
+ * Notes:       Qt will scale fonts automatically according to logicalDPI
+ *              so we must handraulically scale some of the widgets that don't
+ *              scale well (or at all).
  */
 
 void
 MainWindow::set_Interface_Sizes()
 {
-    qreal scale = -1;
-    #ifdef _WIN32 // Windows default logical DPI is 96
-    if (screenLogicalDPI_X > 96)
-        scale = screenLogicalDPI_X/96;
-    else
-        scale = 1;
-    #endif
-    #ifdef __APPLE__ // Apple default logical DPI is 72
-    if (screenLogicalDPI_X > 72)
-        scale = screenLogicalDPI_X/72;
-    else
-        scale = 1;
-    #endif
-    // What about other systems? Default to 96 for now...
-    if (scale == -1)
-    {
-        if (screenLogicalDPI_X > 96)
-            scale = screenLogicalDPI_X/96;
-        else
-            scale = 1;
-    }
+#ifdef __APPLE__
+    #define SYSTEM_DEFAULT_LOGICAL_DPI 72
+#else
+    #define SYSTEM_DEFAULT_LOGICAL_DPI 96
+#endif
+    qreal scale = screenLogicalDPI_X / SYSTEM_DEFAULT_LOGICAL_DPI;
 
     // Total width of tabWidget borders
     int borderWidth1 = 50 * scale;
@@ -2572,6 +2567,12 @@ MainWindow::set_Interface_Sizes()
     ui->EdgeLabel->setMaximumWidth(ui->EdgeLabel->maximumWidth() * scale);
     ui->NodeLabel1->setMaximumWidth(ui->NodeLabel1->maximumWidth() * scale);
     ui->NodeLabel2->setMaximumWidth(ui->NodeLabel2->maximumWidth() * scale);
+
+    // These widgets don't belong to any layout, so they won't scale
+    // automatically.
+    ui->clearCanvas->resize(ui->clearCanvas->sizeHint());
+    ui->zoomDisplay->resize(ui->zoomDisplay->sizeHint());
+    ui->zoomDisplay_2->resize(ui->zoomDisplay_2->sizeHint());
 
     // Fix tabWidgets minimum width
     ui->tabWidget->setMinimumWidth(
@@ -2807,7 +2808,7 @@ MainWindow::nodeParamsUpdated()
     qDeb() << "MW::nodeParamsUpdated() called.";
 
     ui->canvas->setUpNodeParams(
-        ui->nodeDiameter->value(),
+	ui->nodeDiameter->value(),
 	ui->NumLabelCheckBox->isChecked(),  // Useful?
 	ui->NodeLabel1->text(),		    // Useful?
 	ui->NodeLabelSize->value(),
@@ -2837,7 +2838,7 @@ MainWindow::edgeParamsUpdated()
 	   << ui->EdgeLabelSize->value();
 
     ui->canvas->setUpEdgeParams(
-        ui->edgeThickness->value(),
+	ui->edgeThickness->value(),
 	ui->EdgeLabel->text(),
 	ui->EdgeLabelSize->value(),
 	ui->EdgeLineColor->palette().window().color());
@@ -3161,246 +3162,6 @@ MainWindow::updateEditTab(int index)
 
 
 
-/*
- * Name:	addGraphToEditTab()
- * Purpose:	Should be used to dynamically update the edit tab. The dream.
- * Arguments:	None.
- * Output:	None.
- * Modifies:	The edit tab.
- * Returns:	None.
- * Assumptions: ?
- * Bugs:	?
- * Notes:	Still need to decrement j when graphs/nodes/edges are deleted.
- *              ... or do I? Also need to adjust graphs as nodes/edges are added.
- */
-
-
-void
-MainWindow::addGraphToEditTab(Graph * graph)
-{
-    graphList.append(graph);
-
-    QLabel * label = new QLabel("Graph");
-    gridLayout->addWidget(label, j, 1);
-    j++;
-
-    QLabel * label2 = new QLabel("N Diam");
-    gridLayout->addWidget(label2, j, 2);
-    QLabel * label3 = new QLabel("E width");
-    gridLayout->addWidget(label3, j+1, 2);
-    QLabel * label4 = new QLabel("Label");
-    gridLayout->addWidget(label4, j, 3);
-    QLabel * label5 = new QLabel("Text");
-    gridLayout->addWidget(label5, j, 4);
-    QLabel * label6 = new QLabel("Size");
-    gridLayout->addWidget(label6, j+1, 4);
-    QLabel * label7 = new QLabel("Line");
-    gridLayout->addWidget(label7, j, 5);
-    QLabel * label8 = new QLabel("Color");
-    gridLayout->addWidget(label8, j+1, 5);
-    QLabel * label9 = new QLabel("Fill");
-    gridLayout->addWidget(label9, j, 6);
-    QLabel * label10 = new QLabel("Color");
-    gridLayout->addWidget(label10, j+1, 6);
-    j += 2;
-
-    // Horrible, ugly connects....
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label, SLOT(deleteLater()));
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label2, SLOT(deleteLater()));
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label3, SLOT(deleteLater()));
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label4, SLOT(deleteLater()));
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label5, SLOT(deleteLater()));
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label6, SLOT(deleteLater()));
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label7, SLOT(deleteLater()));
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label8, SLOT(deleteLater()));
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label9, SLOT(deleteLater()));
-    connect(graph, SIGNAL(destroyed(QObject*)),
-            label10, SLOT(deleteLater()));
-
-    QList<QGraphicsItem *> list;
-    foreach (QGraphicsItem * gItem, graph->childItems())
-        list.append(gItem);
-
-    while (!list.isEmpty())
-    {
-        foreach (QGraphicsItem * gItem, list)
-        {
-            if (gItem != nullptr)
-            {
-                if (gItem->type() == Graph::Type)
-                    list.append(gItem->childItems());
-
-		else if (gItem->type() == Node::Type)
-		{
-		    Node * node = qgraphicsitem_cast<Node*>(gItem);
-		    addNodeToEditTab(node);
-		}
-		else if (gItem->type() == Edge::Type)
-		{
-		    Edge * edge
-			= qgraphicsitem_cast<Edge*>(gItem);
-		    addEdgeToEditTab(edge);
-		}
-	    }
-	    list.removeFirst();
-	}
-    }
-}
-
-
-void
-MainWindow::addNodeToEditTab(Node * node)
-{
-    int exists = 0;
-    Graph * nodeParent = qgraphicsitem_cast<Graph*>(node->parentItem());
-    foreach (Graph * graph, graphList)
-    {
-        if (nodeParent == graph)
-            exists = 1;
-    }
-
-    if (exists == 0)
-    {
-        addGraphToEditTab(nodeParent);
-        return;
-    }
-    else
-        ;// i = end index of existing graph on edit tab
-
-    QLineEdit * nodeEdit = new QLineEdit();
-    // Q: what was the point of this?
-    // nodeEdit->setText("Node\n");
-    // gridLayout->addWidget(nodeEdit);
-
-    QLabel * label = new QLabel("Node");
-    // When this node is deleted, also
-    // delete its label in the edit tab.
-    connect(node, SIGNAL(destroyed(QObject*)),
-            label, SLOT(deleteLater()));
-    //connect(node, SIGNAL(isSelected()),
-    //        label, SLOT(setBold(bool)));
-
-    QDoubleSpinBox * sizeBox
-        = new QDoubleSpinBox();
-
-    QDoubleSpinBox * sizeBox2
-        = new QDoubleSpinBox();
-
-    QPushButton * lineColorButton
-        = new QPushButton();
-    QPushButton * fillColorButton
-        = new QPushButton();
-
-    QSpinBox * fontSizeBox
-        = new QSpinBox();
-
-    // All controllers handle deleting of widgets
-    SizeController * sizeController
-        = new SizeController(node, sizeBox, sizeBox2);
-    ColorLineController * colorLineController
-        = new ColorLineController(node,
-                                  lineColorButton);
-    LabelController * weightController
-        = new LabelController(node, nodeEdit);
-    LabelSizeController * weightSizeController
-        = new LabelSizeController(node,
-                                  fontSizeBox);
-    ColorFillController * colorFillController
-        = new ColorFillController(node,
-                                  fillColorButton);
-
-    gridLayout->addWidget(label, j, 1);
-    gridLayout->addWidget(sizeBox, j, 2);
-    gridLayout->addWidget(nodeEdit,  j, 3);
-    gridLayout->addWidget(fontSizeBox, j, 4);
-    gridLayout->addWidget(lineColorButton, j, 5);
-    gridLayout->addWidget(fillColorButton, j, 6);
-    Q_UNUSED(sizeController);
-    Q_UNUSED(colorLineController);
-    Q_UNUSED(colorFillController);
-    Q_UNUSED(weightController);
-    Q_UNUSED(weightSizeController);
-    j++;
-}
-
-
-void
-MainWindow::addEdgeToEditTab(Edge * edge)
-{
-    // Check if edge connected two separate graphs
-    if (edge->causedConnect == 1)
-    {   // If so, we need to amalgate the two in the edit tab only...
-        // Perhaps remove headers from first 3 rows of one graph (first 10 indexes)
-        // then move any entries for that graph to be with the other graph
-        Graph * parent1 = nullptr;
-
-        foreach (Graph * graph, graphList)
-        {
-            if (graph->parentItem() != nullptr)
-            {
-                if (parent1 == nullptr)
-                    parent1 = graph;
-            }
-        }
-        // ..............?
-        ; // i = end index of the other graph
-    }
-    else
-        ; // i = end index of edge's root parent graph
-
-    QLineEdit * editEdge = new QLineEdit();
-    // Q: what were these for??
-    // editEdge->setText("Edge\n");
-    // gridLayout->addWidget(editEdge);
-
-    QLabel * label = new QLabel("Edge");
-    // When this edge is deleted, also
-    // delete its label in the edit tab.
-    connect(edge, SIGNAL(destroyed(QObject*)),
-            label, SLOT(deleteLater()));
-    //connect(edge, SIGNAL(isSelected()),
-    //        label, SLOT(setBold(bool)));
-
-    QPushButton * button = new QPushButton();
-    QDoubleSpinBox * sizeBox
-        = new QDoubleSpinBox();
-    QSpinBox * fontSizeBox
-        = new QSpinBox();
-
-    // All controllers handle deleting of widgets
-    SizeController * sizeController
-        = new SizeController(edge, sizeBox);
-    ColorLineController * colorController
-        = new ColorLineController(edge, button);
-    LabelController * weightController
-        = new LabelController(edge, editEdge);
-    LabelSizeController * weightSizeController
-        = new LabelSizeController(edge,
-                                  fontSizeBox);
-
-    gridLayout->addWidget(label, j, 1);
-    gridLayout->addWidget(sizeBox, j, 2);
-    gridLayout->addWidget(editEdge, j, 3);
-    gridLayout->addWidget(fontSizeBox, j, 4);
-    gridLayout->addWidget(button, j, 5);
-    Q_UNUSED(sizeController);
-    Q_UNUSED(colorController);
-    Q_UNUSED(weightController);
-    Q_UNUSED(weightSizeController);
-    j++;
-}
-
-
-
 void
 MainWindow::dumpTikZ()
 {
@@ -3416,7 +3177,7 @@ MainWindow::dumpTikZ()
 	    nodes.append(node);
 	}
     }
-    
+
     qDeb() << "%%========== TikZ dump of current graph follows: ============";
     QTextStream tty(stdout);
     saveTikZ(tty, nodes);
@@ -3440,7 +3201,7 @@ MainWindow::dumpGraphIc()
 	    nodes.append(node);
 	}
     }
-    
+
     qDeb() << "%%========= graphIc dump of current graph follows: ===========";
     QTextStream tty(stdout);
     saveGraphIc(tty, nodes, true);
@@ -3483,16 +3244,20 @@ MainWindow::saveSettings()
 void
 MainWindow::updateDpiAndPreview()
 {
-    if (settings.value("useDefaultResolution") == false)
+    QScreen * screen = QGuiApplication::primaryScreen();
+    if (settings.value("useDefaultResolution").toBool() == true)
     {
-        screenPhysicalDPI_X = settings.value("customResolution").toReal();
-        screenPhysicalDPI_Y = settings.value("customResolution").toReal();
+        currentPhysicalDPI = screen->physicalDotsPerInch();
+        currentPhysicalDPI_X = screen->physicalDotsPerInchX();
+        currentPhysicalDPI_Y = screen->physicalDotsPerInchY();
     }
     else
     {
-        screenPhysicalDPI_X = settings.value("defaultResolution").toReal();
-        screenPhysicalDPI_Y = settings.value("defaultResolution").toReal();
+        currentPhysicalDPI = settings.value("customResolution").toReal();
+        currentPhysicalDPI_X = settings.value("customResolution").toReal();
+        currentPhysicalDPI_Y = settings.value("customResolution").toReal();
     }
+
     generate_Graph(nodeDiam_WGT);
 }
 
