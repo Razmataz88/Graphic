@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.16
+ * Version:	1.17
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -52,6 +52,8 @@
  * Aug 6, 2020 (IC V1.16)
  *  (a) Add #includes for settingsdialog.h and ui_settingsdialog.h.
  *  (b) Add somethingChanged(), promptSave and settingsDialog.
+ * Aug 11, 2020 (IC V1.17)
+ *  (a) Add updateDpiAndPreview().
  */
 
 
@@ -129,6 +131,7 @@ class MainWindow : public QMainWindow
     void addEdgeToEditTab(Edge * edge);
 
     void somethingChanged();
+    void updateDpiAndPreview();
 
 private:
     void loadSettings();

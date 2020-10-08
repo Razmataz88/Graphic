@@ -2,7 +2,7 @@
  * File:    preview.h
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07 (?)
- * Version: 1.5
+ * Version: 1.6
  *
  * Purpose: define the fields of the preview class.
  *
@@ -30,6 +30,9 @@
  *  (b) Add code to support displaying the zoom amount.
  * Jul 3, 2020 (IC V1.5)
  *  (a) Re-design (and simplify) the display of the zoom amount.
+ *      Added zoomChanged signal to tell the mainwindow to update zoomDisplay.
+ * Aug 11, 2020 (IC V1.6)
+ *  (a) Add wheelEvent().
  */
 
 #ifndef PREVIEW_H
@@ -72,6 +75,7 @@ class PreView: public QGraphicsView
     virtual void keyPressEvent(QKeyEvent * event);
     virtual void scaleView(qreal scaleFactor);
     virtual void mousePressEvent(QMouseEvent * event);
+    virtual void wheelEvent(QWheelEvent * event);
 
   private:
     QGraphicsScene * PV_Scene;

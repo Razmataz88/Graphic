@@ -68,20 +68,20 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="colorBox">
+    <widget class="QGroupBox" name="colourBox">
      <property name="title">
-      <string>Image Background Color</string>
+      <string>Image Background Colour</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
       <item row="0" column="0">
-       <widget class="QLabel" name="jpgLabel">
+       <widget class="QLabel" name="jpgBgLabel">
         <property name="text">
          <string>JPG</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QPushButton" name="jpgColor">
+       <widget class="QPushButton" name="jpgBgColour">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -101,7 +101,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QPushButton" name="otherColor">
+       <widget class="QPushButton" name="otherImageBgColour">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>

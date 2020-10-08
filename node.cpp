@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.14
+ * Version: 1.15
  *
  * Purpose: creates a node for the users graph
  *
@@ -74,6 +74,8 @@
  *  (a) Added eventFilter() to receive edit tab events so we can identify
  *      the node being edited/looked at.
  *  (b) Fixed findRootParent().
+ * Aug 7, 2020 (IC V1.15)
+ *  (a) Use settings custom resolution (if desired) for physicalDotsPerInchX.
  */
 
 #include "defuns.h"
@@ -124,7 +126,10 @@ Node::Node()
     setHandlesChildEvents(true);
     select = false;		    // TODO: is 'select' of any use?
     QScreen * screen = QGuiApplication::primaryScreen();
-    physicalDotsPerInchX = screen->physicalDotsPerInchX();
+    if (settings.value("useDefaultResolution") == false)
+        physicalDotsPerInchX = settings.value("customResolution").toReal();
+    else
+        physicalDotsPerInchX = screen->physicalDotsPerInchX();
     checked = 0;
 
     connect(htmlLabel->document(), SIGNAL(contentsChanged()),

@@ -2,7 +2,7 @@
  * File:    canvasview.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.6
+ * Version: 1.7
  *
  * Purpose: Define the CanvasView class.
  *
@@ -23,6 +23,9 @@
  *  (a) Added clearCanvas() function that removes all items from the canvas.
  * Aug 5, 2020 (IC V1.6)
  *  (a) Emit the somethingChanged() signal in a number of places.
+ * Aug 11, 2020 (IC V1.7)
+ *  (a) Add zoomIn() and zoomOut() to implement zooming,
+ *  (b) Add zoomChanged(),  scaleView() and wheelEvent() to support zooming.
  */
 
 
@@ -86,18 +89,23 @@ class CanvasView: public QGraphicsView
     public slots:
 	void snapToGrid(bool snap);
 	void clearCanvas();
+	void zoomIn();
+	void zoomOut();
 
   signals:
 	void setKeyStatusLabelText(QString text);
 	void resetDragMode();
 	void nodeCreated(Node * node);
 	void edgeCreated(Edge * edge);
+	void zoomChanged(QString zoomText);
 
   protected:
 	void dragEnterEvent(QDragEnterEvent * event);
 	void mouseDoubleClickEvent(QMouseEvent * event);
 	void mousePressEvent(QMouseEvent * event);
 	void keyPressEvent(QKeyEvent * event);
+	virtual void scaleView(qreal scaleFactor);
+	virtual void wheelEvent(QWheelEvent *event);
 
   private:
 	int modeType;

@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.10
+ * Version: 1.11
  *
  * Purpose: Declare the node class.
  * 
@@ -40,7 +40,10 @@
  * Jul 29, 2020 (IC V1.10)
  *  (a) Added eventFilter() to receive edit tab events so we can identify
  *      the node being edited/looked at.
+ * Aug 7, 2020 (IC V1.11)
+ *  (a) Make the physicalDotsPerInchX attribute public.
  */
+
 
 
 #ifndef NODE_H
@@ -113,6 +116,7 @@ class Node : public QGraphicsObject
 
     HTML_Label * htmlLabel;
     int checked;
+    qreal physicalDotsPerInchX;
 
   public slots:
     void setNodeLabel();
@@ -137,7 +141,6 @@ class Node : public QGraphicsObject
     int		penStyle;
     qreal	penSize;
     bool	select;
-    qreal	physicalDotsPerInchX;
     void	labelToHtml();
     qreal	previewX;
     qreal	previewY;

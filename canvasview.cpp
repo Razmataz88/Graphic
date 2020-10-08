@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.20
+ * Version: 1.21
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -74,6 +74,9 @@
  *  (c) Don't allow freestyle to make two edges between a given node pair.
  * Aug 5, 2020 (IC V1.20)
  *  (a) Add the ability to change the thickness of the node circle.
+ * Aug 11, 2020 (IC V1.21)
+ *  (a) Support zooming of the canvas.
+ *  (b) Allow zooming with the mouse wheel.
  */
 
 #include "canvasview.h"
@@ -116,6 +119,11 @@ static const QString DRAG_DESCRIPTION =
     "Drag mode: Hold the mouse down over any part of a graph and move "
     "the mouse to drag that graph around the canvas.";
 
+// This is the factor by which the canvas is zoomed for each
+// zoom in or zoom out operation.
+#define SCALE_FACTOR    1.1
+static qreal zoomValue = 100;
+static QString zoomDisplayText = "Zoom: " + QString::number(zoomValue) + "%";
 
 
 /*
@@ -207,21 +215,120 @@ CanvasView::createNode(QPointF pos)
 
 
 /*
- * Name:        keyPressEvent()
- * Purpose:	?
- * Arguments:   A QKeyEvent.
+ * Name:        keyPressEvent
+ * Purpose:     Perform the appropriate action for known key presses.
+ * Arguments:   QKeyEvent
  * Output:      Nothing.
- * Modifies:    Nothing.
+ * Modifies:    The scale of the canvas window for the zoom operations.
  * Returns:     Nothing.
  * Assumptions: ?
  * Bugs:        ?
- * Notes:       ?
+ * Notes:       Unhandled key events are passed on to QGraphicsView.
  */
 
 void
 CanvasView::keyPressEvent(QKeyEvent * event)
 {
-    QGraphicsView::keyPressEvent(event);
+    qDeb() << "CV:keyPressEvent(" << event->key() << ") called.";
+
+    if (event->modifiers().testFlag(Qt::ControlModifier))
+    {
+        switch (event->key())
+        {
+          //case Qt::Key_Plus:
+          case Qt::Key_Equal:
+            zoomIn();
+            break;
+          //case Qt::Key_Underscore:
+          case Qt::Key_Minus:
+            zoomOut();
+            break;
+          default:
+            QGraphicsView::keyPressEvent(event);
+        }
+    }
+}
+
+
+
+/*
+ * Name:        wheelEvent
+ * Purpose:     Perform the appropriate action for wheel scroll.
+ * Arguments:   QWheelEvent
+ * Output:      Nothing.
+ * Modifies:    The scale of the canvas window for the zoom operations.
+ * Returns:     Nothing.
+ * Assumptions: ?
+ * Bugs:        ?
+ * Notes:       Unhandled key events are passed on to ...?
+ */
+
+void
+CanvasView::wheelEvent(QWheelEvent * event)
+{
+    qDeb() << "PV:wheelEvent(" << event->angleDelta() << ") called.";
+
+    if (event->modifiers().testFlag(Qt::ControlModifier))
+    {
+        if (event->angleDelta().y() > 0)
+            zoomIn();
+        else if (event->angleDelta().y() < 0)
+            zoomOut();
+    }
+}
+
+
+
+/*
+ * Name:        scaleView()
+ * Purpose:     Scales the view of the QGraphicsScene
+ * Arguments:   A qreal
+ * Output:      Nothing.
+ * Modifies:    The scale view of the QGraphicsScene
+ * Returns:     Nothing.
+ * Assumptions: None.
+ * Bugs:        ?
+ * Notes:       None.
+ */
+
+void
+CanvasView::scaleView(qreal scaleFactor)
+{
+    qDeb() << "CV::scaleView(" << scaleFactor << ") called";
+
+    qreal factor = transform().scale(scaleFactor, scaleFactor)
+                .mapRect(QRectF(0, 0, 1, 1)).width();
+    if (factor < 0.07 || factor > 10) // Arbitrary limits.
+        return;
+    scale(scaleFactor, scaleFactor);
+
+    // Determine how displayed zoom value needs to update
+    qreal afterFactor = transform().scale(scaleFactor, scaleFactor)
+            .mapRect(QRectF(0, 0, 1, 1)).width();
+    if (afterFactor > factor)
+        zoomValue = zoomValue * SCALE_FACTOR;
+    else
+        zoomValue = zoomValue / SCALE_FACTOR;
+
+    // Update and show the current zoom.
+    zoomDisplayText = "Zoom: " + QString::number(zoomValue, 'f', 0) + "%";
+    emit zoomChanged(zoomDisplayText);
+}
+
+
+
+void
+CanvasView::zoomIn()
+{
+    scaleView(qreal(SCALE_FACTOR));
+}
+
+
+
+void
+CanvasView::zoomOut()
+{
+    scaleView(1. / qreal(SCALE_FACTOR));
 }
 
 

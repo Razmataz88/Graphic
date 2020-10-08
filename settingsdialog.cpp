@@ -2,11 +2,14 @@
  * File:    settingsdialog.cpp
  * Author:  Ian Cathcart
  * Date:    2020/08/07
- * Version: 1.0
+ * Version: 1.1
  *
  * Purpose: Implements the settings dialog.
  *
  * Modification history:
+ * Aug 5, 2020 (IC V1.1)
+ *  (a) Fix spelling of "colour".  Add "Bg" into background colour var names.
+ *  (b) Move some code into loadSettings().  Further update loadSettings().
  */
 
 #include "settingsdialog.h"
@@ -24,15 +27,10 @@ SettingsDialog::SettingsDialog(QWidget * parent) :
 
     // Initialize colour buttons.
     QString s("background: #ffffff;" BUTTON_STYLE);
-    ui->jpgColor->setStyleSheet(s);
-    ui->otherColor->setStyleSheet(s);
+    ui->jpgBgColour->setStyleSheet(s);
+    ui->otherImageBgColour->setStyleSheet(s);
 
-    ui->defaultLabel->setText(settings.value("systemPhysicalDpi").toString()
-			      + " pixels/inch");
-    ui->customSpinBox->setValue(settings.value("systemPhysicalDpi").toInt());
-
-    if (settings.contains("useDefaultResolution"))
-        loadSettings();
+    loadSettings();
 
     connect(this, SIGNAL(accepted()), this, SLOT(saveSettings()));
 }
@@ -49,22 +47,33 @@ SettingsDialog::~SettingsDialog()
 void
 SettingsDialog::loadSettings()
 {
-    // First one redundant? Perhaps...
-    ui->defaultButton->setChecked(
-	settings.value("useDefaultResolution").toBool());
-    ui->customButton->setChecked(
-	!settings.value("useDefaultResolution").toBool());
+    // Always set this label to defaultResolution
+    ui->defaultLabel->setText(settings.value("defaultResolution").toString()
+                              + " pixels/inch");
 
-    ui->customSpinBox->setValue(settings.value("customResolution").toInt());
+    // If no settings founds, initialize to defaults
+    if (!settings.contains("useDefaultResolution"))
+    {
+        ui->customSpinBox->setValue(settings.value("defaultResolution").toInt());
+    }
+    else // load saved settings
+    {
+        if (settings.value("useDefaultResolution").toBool() == true)
+            ui->defaultButton->setChecked(true);
+        else
+            ui->customButton->setChecked(true);
 
-    if (settings.contains("jpgColor"))
-	ui->jpgColor->setStyleSheet("background: "
-				    + settings.value("jpgColor").toString()
-				    + ";" + BUTTON_STYLE);
-    if (settings.contains("otherColor"))
-	ui->otherColor->setStyleSheet("background: "
-				      + settings.value("otherColor").toString()
-				      + ";" + BUTTON_STYLE);
+        ui->customSpinBox->setValue(settings.value("customResolution").toInt());
+
+        if (settings.contains("jpgBgColour"))
+            ui->jpgBgColour->setStyleSheet("background: "
+                                        + settings.value("jpgBgColour").toString()
+                                        + ";" + BUTTON_STYLE);
+        if (settings.contains("otherImageBgColour"))
+            ui->otherImageBgColour->setStyleSheet("background: "
+                                        + settings.value("otherImageBgColour").toString()
+                                        + ";" + BUTTON_STYLE);
+    }
 }
 
 
@@ -73,54 +82,55 @@ void
 SettingsDialog::saveSettings()
 {
     settings.setValue("useDefaultResolution", ui->defaultButton->isChecked());
-
     settings.setValue("customResolution", ui->customSpinBox->value());
+
+    emit saveDone();
 }
 
 
 
 void
-SettingsDialog::on_jpgColor_clicked()
+SettingsDialog::on_jpgBgColour_clicked()
 {
-    QColor color = QColorDialog::getColor();
+    QColor colour = QColorDialog::getColor();
 
-    if (!color.isValid())
+    if (!colour.isValid())
 	return;
 
     QString s("background: #"
-	      + QString(color.red() < 16 ? "0" : "")
-	      + QString::number(color.red(), 16)
-	      + QString(color.green() < 16 ? "0" : "")
-	      + QString::number(color.green(), 16)
-	      + QString(color.blue() < 16 ? "0" : "")
-	      + QString::number(color.blue(), 16) + ";"
+	      + QString(colour.red() < 16 ? "0" : "")
+	      + QString::number(colour.red(), 16)
+	      + QString(colour.green() < 16 ? "0" : "")
+	      + QString::number(colour.green(), 16)
+	      + QString(colour.blue() < 16 ? "0" : "")
+	      + QString::number(colour.blue(), 16) + ";"
 	      BUTTON_STYLE);
-    qDeb() << "MW::on_jpgColor_clicked(): background color set to" << s;
-    settings.setValue("jpgColor", color.name());
-    ui->jpgColor->setStyleSheet(s);
-    ui->jpgColor->update();
+    qDeb() << "MW::on_jpgBgColour_clicked(): background colour set to" << s;
+    settings.setValue("jpgBgColour", colour.name());
+    ui->jpgBgColour->setStyleSheet(s);
+    ui->jpgBgColour->update();
 }
 
 
 
 void
-SettingsDialog::on_otherColor_clicked()
+SettingsDialog::on_otherImageBgColour_clicked()
 {
-    QColor color = QColorDialog::getColor();
+    QColor colour = QColorDialog::getColor();
 
-    if (!color.isValid())
+    if (!colour.isValid())
 	return;
 
     QString s("background: #"
-	      + QString(color.red() < 16 ? "0" : "")
-	      + QString::number(color.red(), 16)
-	      + QString(color.green() < 16 ? "0" : "")
-	      + QString::number(color.green(), 16)
-	      + QString(color.blue() < 16 ? "0" : "")
-	      + QString::number(color.blue(), 16) + ";"
+	      + QString(colour.red() < 16 ? "0" : "")
+	      + QString::number(colour.red(), 16)
+	      + QString(colour.green() < 16 ? "0" : "")
+	      + QString::number(colour.green(), 16)
+	      + QString(colour.blue() < 16 ? "0" : "")
+	      + QString::number(colour.blue(), 16) + ";"
 	      BUTTON_STYLE);
-    qDeb() << "MW::on_otherColor_clicked(): background color set to" << s;
-    settings.setValue("otherColor", color.name());
-    ui->otherColor->setStyleSheet(s);
-    ui->otherColor->update();
+    qDeb() << "MW::on_otherImageBgColour_clicked(): BG colour set to" << s;
+    settings.setValue("otherImageBgColour", colour.name());
+    ui->otherImageBgColour->setStyleSheet(s);
+    ui->otherImageBgColour->update();
 }

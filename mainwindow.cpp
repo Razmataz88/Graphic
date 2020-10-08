@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.46
+ * Version:	1.47
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -283,6 +283,13 @@
  *  (f) Make some UI elements scale if the logicalDPI is greater than
  *      the standard for that OS.
  *  (g) Add the node thickness to setUpNodeParams().
+ * Aug 11, 2020 (IC V1.47)
+ *  (a) Change some attribute and widget names (node size is now node diam,
+ *      and edgeSize is now edgeThickness).  Corresponding changes also in UI.
+ *  (b) New connection for zoomChanged() signal.
+ *  (c) Update preview when settings DPI is changed.  Add
+ *	updateDpiAndPreview() function.
+ *  (d) Handraulically scale clearCanvas and zoomDisplay{,_2} widgets.
  */
 
 #include "mainwindow.h"
@@ -404,9 +411,9 @@ QMainWindow(parent),
 
     // Redraw the preview pane graph (if any) when these NODE
     // parameters are modified:
-    connect(ui->nodeSize,
+    connect(ui->nodeDiameter,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(nodeSize_WGT); });
+	    this, [this]() { generate_Graph(nodeDiam_WGT); });
     connect(ui->nodeThickness,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(nodeThickness_WGT); });
@@ -434,9 +441,9 @@ QMainWindow(parent),
 
     // Redraw the preview pane graph (if any) when these EDGE
     // parameters are modified:
-    connect(ui->edgeSize,
+    connect(ui->edgeThickness,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(edgeSize_WGT); });
+	    this, [this]() { generate_Graph(edgeThickness_WGT); });
     connect(ui->EdgeLabel,
 	    (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
 	    this, [this]() { generate_Graph(edgeLabel_WGT); });
@@ -475,7 +482,7 @@ QMainWindow(parent),
     // values are passed to the canvas view, so that nodes and edges
     // drawn in "Freestyle" mode are styled as per the settings in the
     // "Create Graph" tab.
-    connect(ui->nodeSize, SIGNAL(valueChanged(double)),
+    connect(ui->nodeDiameter, SIGNAL(valueChanged(double)),
 	    this, SLOT(nodeParamsUpdated()));
     connect(ui->nodeThickness, SIGNAL(valueChanged(double)),
 	    this, SLOT(nodeParamsUpdated()));
@@ -492,7 +499,7 @@ QMainWindow(parent),
     connect(ui->NodeOutlineColor, SIGNAL(clicked(bool)),
 	    this, SLOT(nodeParamsUpdated()));
 
-    connect(ui->edgeSize, SIGNAL(valueChanged(double)),
+    connect(ui->edgeThickness, SIGNAL(valueChanged(double)),
 	    this, SLOT(edgeParamsUpdated()));
     connect(ui->EdgeLabel, SIGNAL(textChanged(QString)),
 	    this, SLOT(edgeParamsUpdated()));
@@ -533,9 +540,11 @@ QMainWindow(parent),
     connect(ui->canvas->scene(), SIGNAL(graphDropped(Graph*)),
 	    this, SLOT(generate_Graph()));
 
-    // Updates the zoomDisplay after zoomIn/zoomOut is called
+    // Updates the zoomDisplays after zoomIn/zoomOut is called
     connect(ui->preview, SIGNAL(zoomChanged(QString)),
 	    ui->zoomDisplay, SLOT(setText(QString)));
+    connect(ui->canvas, SIGNAL(zoomChanged(QString)),
+            ui->zoomDisplay_2, SLOT(setText(QString)));
 
     // Clears all items from the canvas
     connect(ui->clearCanvas, SIGNAL(clicked()),
@@ -597,14 +606,16 @@ QMainWindow(parent),
     if (settings.contains("windowSize"))
         loadSettings();
 
-    // Don't want a qreal for the settings value
-    int screenPhysicalDpi = screen->physicalDotsPerInch();
-    settings.setValue("systemPhysicalDpi", screenPhysicalDpi);
+    // Unfortunately qreal QVariants can't convert... so we store an int...
+    int defaultDPI = screen->physicalDotsPerInch();
+    settings.setValue("defaultResolution", defaultDPI);
 
     settingsDialog = new SettingsDialog(this);
 
     connect(ui->actionGraph_settings, SIGNAL(triggered()),
             settingsDialog, SLOT(open()));
+    connect(settingsDialog, SIGNAL(saveDone()),
+            this, SLOT(updateDpiAndPreview()));
 
 
 #ifdef DEBUG
@@ -2177,14 +2188,14 @@ MainWindow::style_Graph(enum widget_ID what_changed)
 		graphItem,
 		ui->graphType_ComboBox->currentIndex(),
 		what_changed,
-		ui->nodeSize->value(),
+		ui->nodeDiameter->value(),
 		ui->NodeLabel1->text(),
 		ui->NodeLabel2->text(),
 		ui->NumLabelCheckBox->isChecked(),
 		ui->NodeLabelSize->value(),
 		ui->NodeFillColor->palette().window().color(),
 		ui->NodeOutlineColor->palette().window().color(),
-		ui->edgeSize->value(),
+		ui->edgeThickness->value(),
 		ui->EdgeLabel->text(),
 		ui->EdgeLabelSize->value(),
 		ui->EdgeLineColor->palette().window().color(),
@@ -2253,7 +2264,7 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
     {
 	int numOfNodes1 = ui->numOfNodes1->value();
 	int numOfNodes2 = ui->numOfNodes2->value();
-	qreal nodeDiameter = ui->nodeSize->value();
+	qreal nodeDiameter = ui->nodeDiameter->value();
 	bool drawEdges = ui->complete_checkBox->isChecked();	
 	
 	if (currentGraphIndex != graphIndex
@@ -2474,7 +2485,7 @@ MainWindow::set_Font_Sizes()
     ui->colorLabel->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE);
-    ui->thicknessLabel->setFont(font);
+    ui->edgeThicknessLabel->setFont(font);
     ui->rotationLabel->setFont(font);
     ui->widthLabel->setFont(font);
     ui->heightLabel->setFont(font);
@@ -2484,10 +2495,11 @@ MainWindow::set_Font_Sizes()
     ui->textSizeLabel_2->setFont(font);
     ui->fillLabel->setFont(font);
     ui->outlineLabel->setFont(font);
-    ui->ptLabel->setFont(font);
-    ui->inchesLabel->setFont(font);
+    ui->nodeThicknessLabel->setFont(font);
+    ui->nodeDiameterLabel->setFont(font);
     ui->numLabel->setFont(font);
     ui->zoomDisplay->setFont(font);
+    ui->zoomDisplay_2->setFont(font);
     ui->clearCanvas->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE - 1);
@@ -2506,9 +2518,9 @@ MainWindow::set_Font_Sizes()
     ui->nodeThickness->setFont(font);
     ui->graphRotation->setFont(font);
     ui->EdgeLabelSize->setFont(font);
-    ui->edgeSize->setFont(font);
+    ui->edgeThickness->setFont(font);
     ui->NodeLabelSize->setFont(font);
-    ui->nodeSize->setFont(font);
+    ui->nodeDiameter->setFont(font);
 }
 
 
@@ -2795,7 +2807,7 @@ MainWindow::nodeParamsUpdated()
     qDeb() << "MW::nodeParamsUpdated() called.";
 
     ui->canvas->setUpNodeParams(
-	ui->nodeSize->value(),
+        ui->nodeDiameter->value(),
 	ui->NumLabelCheckBox->isChecked(),  // Useful?
 	ui->NodeLabel1->text(),		    // Useful?
 	ui->NodeLabelSize->value(),
@@ -2825,7 +2837,7 @@ MainWindow::edgeParamsUpdated()
 	   << ui->EdgeLabelSize->value();
 
     ui->canvas->setUpEdgeParams(
-	ui->edgeSize->value(),
+        ui->edgeThickness->value(),
 	ui->EdgeLabel->text(),
 	ui->EdgeLabelSize->value(),
 	ui->EdgeLineColor->palette().window().color());
@@ -3148,6 +3160,7 @@ MainWindow::updateEditTab(int index)
 }
 
 
+
 /*
  * Name:	addGraphToEditTab()
  * Purpose:	Should be used to dynamically update the edit tab. The dream.
@@ -3465,6 +3478,23 @@ MainWindow::saveSettings()
     }
 }
 
+
+
+void
+MainWindow::updateDpiAndPreview()
+{
+    if (settings.value("useDefaultResolution") == false)
+    {
+        screenPhysicalDPI_X = settings.value("customResolution").toReal();
+        screenPhysicalDPI_Y = settings.value("customResolution").toReal();
+    }
+    else
+    {
+        screenPhysicalDPI_X = settings.value("defaultResolution").toReal();
+        screenPhysicalDPI_Y = settings.value("defaultResolution").toReal();
+    }
+    generate_Graph(nodeDiam_WGT);
+}
 
 
 void
