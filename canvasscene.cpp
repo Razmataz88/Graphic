@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.17
+ * Version: 1.18
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -78,6 +78,10 @@
  * Aug 14, 2020 (IC V1.17)
  *  (a) Fix two of the known "join" bugs in keyReleaseEvent(), note
  *	one more one. 
+ * Aug 19, 2020 (IC V1.18)
+ *  (a) Changed the way drag mode works slightly.  The drag will
+ *	prioritize moving graphs that had items at the point of click
+ *	before defaulting to moving the first graph bounding box found.
  */
 
 #include "canvasscene.h"
@@ -184,6 +188,7 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
     qDeb() << "CS::mousePressEvent(" << event->screenPos() << ")";
 
+    bool itemFound = false;
     bool nodeFound = false;
     bool labelFound = false;
     bool something_changed = false;
@@ -392,6 +397,9 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 		    }
 		}
 	    }
+	    if (!labelFound)
+		clearFocus();
+
 	    // Crash ensues if this is left uncommented, not sure why.
 	    /*if (mDragged != nullptr)
 		if (mDragged->type() == Node::Type)
@@ -401,11 +409,14 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 	  case CanvasView::drag:
 	    foreach (QGraphicsItem * item, itemList)
 	    {
+		// First we search for any node/edge/label at point of click.
 		if (item != nullptr || item != 0)
+		{
 		    if (item->type() == Node::Type
 			|| item->type() == Edge::Type
 			|| item->type() == HTML_Label::Type)
 		    {
+			itemFound = true;
 			mDragged = item;
 			while (mDragged->parentItem() != nullptr)
 			    mDragged = mDragged->parentItem();
@@ -415,7 +426,28 @@ CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 			QGraphicsScene::mousePressEvent(event);
 			break;
 		    }
+		}
 	    }
+	    if (!itemFound)
+	    { // If no graph item was clicked, then find first graph in list
+		foreach (QGraphicsItem * item, itemList)
+		{
+		    if (item != nullptr || item != 0)
+		    {
+			if (item->type() == Graph::Type)
+			{
+			    mDragged = item;
+			    while (mDragged->parentItem() != nullptr)
+				mDragged = mDragged->parentItem();
+
+			    mDragOffset = event->scenePos() - mDragged->pos();
+
+                            QGraphicsScene::mousePressEvent(event);
+                            break;
+                        }
+                    }
+                }
+            }
 	    break;
 
 	  default:

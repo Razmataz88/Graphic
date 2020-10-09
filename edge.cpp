@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.13
+ * Version: 1.14
  *
  * Purpose: creates an edge for the users graph
  *
@@ -72,6 +72,10 @@
  *      done in node.cpp.
  *  (b) Added eventFilter() to receive edit tab events so we can identify
  *      the edge being edited/looked at.
+ * Aug 19, 2020 (IC V1.14)
+ *  (a) Change the way in which labels are updated when the canvas
+ *	value is changed.  This eliminates the need for the
+ *	setEdgeLabel() function.
  */
 
 #include "edge.h"
@@ -129,8 +133,8 @@ Edge::Edge(Node * sourceNode, Node * destNode)
     htmlLabel = new HTML_Label(this);
     checked = 0;
 
-    connect(htmlLabel->document(), SIGNAL(contentsChanged()),
-            this, SLOT(setEdgeLabel()));
+    connect(htmlLabel, SIGNAL(editDone(QString)),
+            this, SLOT(setLabel(QString)));
 }
 
 
@@ -266,8 +270,9 @@ Edge::getRootParent()
 void
 Edge::setLabel(QString aLabel)
 {
-    htmlLabel->setHtmlLabel(aLabel);
     label = aLabel;
+    htmlLabel->texLabelText = aLabel;
+    htmlLabel->setHtmlLabel(aLabel);
 
 // TODO: why has this been commented out?  It seems we don't need it,
 // at least if we are not using subscripts in edge labels/htmlLabels.
@@ -280,27 +285,6 @@ Edge::setLabel(QString aLabel)
 //        htmlLabel->setHtml("<font face=\"cmmi10\">" + aLabel + "</font>");
 }
 
-
-/*
- * Name:        setEdgeLabel()
- * Purpose:     Specifically used to update the label when changes are made
- *              to the htmllabel on the canvas in edit mode.
- * Argument:    QString
- * Output:      Nothing.
- * Modifies:    The edge's label.
- * Returns:     Nothing.
- * Assumptions: None.
- * Bugs:        Sets the lineEdit text to u1 instead of u_{1} for subscripts.
- * Notes:       Not sure if anything should be done to htmlLabel.
- *              Edge.cpp and Node.cpp are very inconsistent in how they handle
- *              labels.
- */
-
-void
-Edge::setEdgeLabel()
-{
-    label = htmlLabel->document()->toPlainText().toLatin1().data();
-}
 
 
 /*
@@ -828,7 +812,8 @@ Edge::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
  * Output:
  * Modifies:
  * Returns:
- * Assumptions:
+ * Assumptions: The focusIn events pertain to edit tab widgets, not the
+ *              edge itself.
  * Bugs:
  * Notes:       Try using QEvent::HoverEnter and QEvent::HoverLeave
  */

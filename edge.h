@@ -2,7 +2,7 @@
  * File:    edge.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.9
+ * Version: 1.10
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -42,6 +42,9 @@
  *  (a) Added eventFilter() to receive edit tab events so we can identify
  *      the edge being edited/looked at.
  *  (b) Added penStyle so edges can be drawn solid or dashed.
+ * Aug 19, 2020 (IC V1.10)
+ *  (a) Remove now-unneeded setEdgeLabel() function.
+ *  (b) Move setLabel() from public to public slots.
  */
 
 #ifndef EDGE_H
@@ -88,7 +91,6 @@ public:
     QRectF boundingRect() const;
     QPainterPath shape() const;
 
-    void setLabel(QString label);
     QString getLabel();
 
     void adjust();
@@ -111,7 +113,7 @@ public:
     int checked;
 
 public slots:
-    void setEdgeLabel();
+    void setLabel(QString label);
 
 protected:
     void paint(QPainter * painter, const QStyleOptionGraphicsItem * option,

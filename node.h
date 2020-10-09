@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.11
+ * Version: 1.12
  *
  * Purpose: Declare the node class.
  * 
@@ -42,6 +42,9 @@
  *      the node being edited/looked at.
  * Aug 7, 2020 (IC V1.11)
  *  (a) Make the physicalDotsPerInchX attribute public.
+ * Aug 19, 2020 (IC V1.12)
+ *  (a) Make the setNodeLabel(QString) a slot.
+ *      Remove the now-unneeded setNodeLabel(void) function.
  */
 
 
@@ -89,7 +92,6 @@ class Node : public QGraphicsObject
     int getID();
 
     void setNodeLabel(int number);
-    void setNodeLabel(QString aLabel);
     void setNodeLabel(QString aLabel, int number);
     void setNodeLabel(QString aLabel, QString subscript);
     void setNodeLabelSize(qreal labelSize);
@@ -116,10 +118,10 @@ class Node : public QGraphicsObject
 
     HTML_Label * htmlLabel;
     int checked;
-    qreal physicalDotsPerInchX;
+    qreal physicalDotsPerInchX; // This should be private with getter/setter.
 
   public slots:
-    void setNodeLabel();
+    void setNodeLabel(QString aLabel);
 
   protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);

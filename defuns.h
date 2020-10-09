@@ -2,7 +2,7 @@
  * File:	defuns.h
  * Author:	Jim Diamond
  * Date:	2019-12-10
- * Version:	1.6
+ * Version:	1.7
  *
  * Purpose:	Hold definitions that are needed by multiple classes
  *		and yet don't seem to meaningfully fit anywhere else.
@@ -33,6 +33,9 @@
  * Aug 12, 2020 (IC V1.6)
  *  (a) Moved the physicalDPI variables here so they may also be used
  *      globally. They are also defined at the beginning of mainwindow.cpp.
+ * Aug 18, 2020 (JD V1.7)
+ *  (a) Add '#include <QDebug>' when DEBUG is defined, otherwise in some
+ *      cases the compiler whines bitterly and pukes on your shoes.
  */
 
 #ifndef DEFUNS_H
@@ -43,14 +46,15 @@
 // Use qDeb() and qDebu() for debugging, and then the statements can
 // be turned on and off with a re-compile but no source-code editing.
 #ifdef DEBUG
-static const bool debug = true;
-#define qDeb() qDebug().nospace().noquote() << fixed \
-    << qSetRealNumberPrecision(4)
-#define qDebu(...) qDebug(__VA_ARGS__)
+    #include <QDebug>
+    static const bool debug = true;
+    #define qDeb() qDebug().nospace().noquote() << Qt::fixed	\
+        << qSetRealNumberPrecision(4)
+    #define qDebu(...) qDebug(__VA_ARGS__)
 #else
-static const bool debug = false;
-#define qDeb() if (false) qDebug()
-#define qDebu(...) 
+    static const bool debug = false;
+    #define qDeb() if (false) qDebug()
+    #define qDebu(...) 
 #endif
 
 #define BUTTON_STYLE "border-style: outset; border-width: 2px; " \
