@@ -1,15 +1,22 @@
 /*
  * File:    settingsdialog.cpp
  * Author:  Ian Cathcart
- * Date:    2020/08/07
- * Version: 1.1
+ * Date:    2020/08/05
+ * Version: 1.2
  *
  * Purpose: Implements the settings dialog.
  *
  * Modification history:
  * Aug 5, 2020 (IC V1.1)
  *  (a) Fix spelling of "colour".  Add "Bg" into background colour var names.
- *  (b) Move some code into loadSettings().  Further update loadSettings().
+ *  (b) Lots of tweaks to saveSettings() and loadSettings() to make sure
+ *      they properly save and load custom DPI settings.
+ *  (c) Added a signal to tell mainWindow that the user OK'd the dialog.
+ * Aug 7, 2020 (IC V1.2)
+ *  (a) Added background colour buttons to settingsdialog.ui so their code
+ *      is reflected here.  They should prompt the user to select a colour
+ *      for saved graph backgrounds.  TODO: Allow a transparent background
+ *      option for non-JPEG image types.
  */
 
 #include "settingsdialog.h"

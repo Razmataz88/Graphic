@@ -2,7 +2,7 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.12
+ * Version: 1.13
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
@@ -67,10 +67,12 @@
  * Aug 11, 2020 (IC V1.11)
  *  (a) Added wheelEvent to allow for zooming using the mouse wheel.
  *  (b) Update names for (the former) node size and edge thickness.
- * August 12, 2020 (IC V1.12)
+ * Aug 12, 2020 (IC V1.12)
  *  (a) Updated Style_Graph() to use global physicalDPI values for xDPI and
  *      yDPI.
  *  (b) Created macros to be used for zoom level min and max for clarity.
+ * Aug 14, 2020 (IC V1.13)
+ *  (a) Add new param to setRotation().
  */
 
 #include "basicgraphs.h"
@@ -595,5 +597,5 @@ PreView::Style_Graph(Graph * graph,		    int graphType,
     graph->setPos(mapToScene(viewport()->rect().center()));
     qDeb() << "   graph NOW located at " << graph->x() << ", "
 	   << graph->y(); 
-    graph->setRotation(-1 * rotation);
+    graph->setRotation(-1 * rotation, false);
 }

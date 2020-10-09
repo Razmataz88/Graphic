@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.50
+ * Version:	1.51
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -300,12 +300,15 @@
  *  (c) Update preview when settings DPI is changed.  Add
  *	updateDpiAndPreview() function.
  *  (d) Handraulically scale clearCanvas and zoomDisplay{,_2} widgets.
- * August 12, 2020 (IC V1.50)
+ * Aug 12, 2020 (IC V1.50)
  *  (a) Cleaned up set_Interface_Sizes() to make the default scale code more
  *      readable. Currently, the scale is based on logicalDPI / 72 for apple
  *      and logicalDPI/96 for any other machine.
  *  (b) Major code removal: addEdgeToEditTab(), addNodeToEditTab() and
  *      addGraphToEditTab() all went away.
+ * Aug 14, 2020 (IC V1.51)
+ *  (a) Update call to setRotation() with new param.
+ *  (b) Remove a now-bogus comment.
  */
 
 #include "mainwindow.h"
@@ -2159,7 +2162,7 @@ MainWindow::select_Custom_Graph(QString graphName)
     graph->setPos(49, 15);
     qDeb() << "    graph NEW position is " << graph->x() << ", "
 	   << graph->y();
-    graph->setRotation(-1 * ui->graphRotation->value());
+    graph->setRotation(-1 * ui->graphRotation->value(), false);
 
     ui->preview->scene()->clear();
     ui->preview->scene()->addItem(graph);
@@ -3122,9 +3125,6 @@ MainWindow::updateEditTab(int index)
 	// TODO: the setRowStretch() was added 2019/11/18 because
 	// the extra vertical space was being distributed *between*
 	// the rows, rather than at the end.
-	// But by itself it only "works" after something was deleted
-	// from the graph and then we switch into the edit pane (or
-	// out & back in).  After that it is OK.  Go figure.
 	// Dumps core if setRowStretch(i - 1, 40) is called when i == 0.
 	// So to get it to work I added a label with a blank at the
 	// end of the section, and then it works.  Kludge.

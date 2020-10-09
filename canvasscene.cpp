@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.16
+ * Version: 1.17
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -75,6 +75,9 @@
  *	Because of this, nodes and edges need to always have their
  *	rotation reset to 0 whenever they are transferred to a new
  *	parent graph.
+ * Aug 14, 2020 (IC V1.17)
+ *  (a) Fix two of the known "join" bugs in keyReleaseEvent(), note
+ *	one more one. 
  */
 
 #include "canvasscene.h"
@@ -558,17 +561,12 @@ CanvasScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
  * Modifies:	Possibly the graph in major ways.
  * Returns:	Nothing.
  * Assumptions:	?
- * Bugs:	TODO: (1) when the first node selected in a 2-node
- *		join has a numeric label, this is supposed to
- *		re-number all the nodes.  But if n2 is in a graph item
- *		which itself contains graphs (e.g., it was formed by
- *		joining two other graphs), the code does not
- *		recursively delve into the second graph.
- *		(2) Joining a graph to a graph which is a result of a
- *		previous join does not do the right thing.  Various
- *		difficult to describe things happen.
+ * Bugs:	TODO:
  *		(3) If somehow connectedNode<x> doesn't have a parentItem,
  *		root<n> will be nullptr and eventually dereferenced.
+ *              (4) Joining 4 nodes together causes improper rotations
+ *              after the two graphs have been assigned to the same parent.
+ *
  * Notes:	
  */
 
@@ -640,7 +638,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		    while (root2->parentItem() != nullptr)
 			root2 = qgraphicsitem_cast<Graph*>(
 			    root2->parentItem());
-		    root2->setRotation(qRadiansToDegrees(-angle));
+		    root2->setRotation(qRadiansToDegrees(-angle), false);
 		}
 
 		if (connectNode1a->parentItem() != nullptr)
@@ -744,6 +742,15 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		connectNode2b->setParentItem(nullptr);
 		removeItem(connectNode2b);
 		delete connectNode2b;
+
+                // Dispose of old roots
+		removeItem(root1);
+		delete root1;
+		root1 = nullptr;
+
+		removeItem(root2);
+		delete root2;
+		root2 = nullptr;
 
 		connectNode1a->chosen(0);
 		connectNode1b->chosen(0);

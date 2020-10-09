@@ -2,7 +2,7 @@
  * File:    graph.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.3
+ * Version: 1.4
  *
  * Purpose:
  *
@@ -14,9 +14,15 @@
  *  (a) Fix getRootParent().
  *  (b) Clean up formatting and improve comments.
  * August 12, 2020 (IC V1.3)
- *  (b) Reversed the previous change to setRotation since it was only needed
+ *  (a) Reversed the previous change to setRotation since it was only needed
  *      when graphs could be children of other graphs which can no longer
  *      happen.
+ * August 14, 2020 (IC V1.4)
+ *  (a) Initialize rotation in constructor.
+ *  (b) Once again changed setRotation() back to the July 20 change.
+ *	The issue was that the GraphicsItem rotation call at the end
+ *	of the function wasn't using the additive rotation value but
+ *	instead the passed value.
  */
 
 #include "graph.h"
@@ -59,6 +65,7 @@ Graph::Graph()
     setFlag(ItemIsFocusable);
     setCacheMode(DeviceCoordinateCache);
     moved = 0;
+    rotation = 0;
     setAcceptHoverEvents(true);
     setZValue(0);
 }
@@ -170,7 +177,7 @@ Graph::boundingRect() const
  */
 
 void
-Graph::setRotation(qreal aRotation)
+Graph::setRotation(qreal aRotation, bool keepRotation)
 {
     QList<QGraphicsItem *> list;
 
@@ -190,19 +197,50 @@ Graph::setRotation(qreal aRotation)
                 else if (child->type() == Node::Type)
                 {
                     Node * node = qgraphicsitem_cast<Node*>(child);
-                    node->setRotation(-aRotation);
+                    if (keepRotation)
+                        node->setRotation(node->getRotation() + -aRotation);
+                    else
+                        node->setRotation(-aRotation);
                 }
                 else if(child->type() == Edge::Type)
                 {
                     Edge * edge = qgraphicsitem_cast<Edge*>(child);
-                    edge->setRotation(-aRotation);
+                    if (keepRotation)
+                        edge->setRotation(edge->getRotation() + -aRotation);
+                    else
+                        edge->setRotation(-aRotation);
                 }
                 list.removeOne(child);
             }
         }
     }
 
+    if (keepRotation)
+        rotation = getRotation() + aRotation;
+    else
+        rotation = aRotation;
+
     QGraphicsItem::setRotation(aRotation);
+}
+
+
+
+/*
+ * Name:	getRotation()
+ * Purpose:	Getter for the graph's rotation.
+ * Arguments:	None.
+ * Output:	Nothing.
+ * Modifies:	Nothing.
+ * Returns:	The graph rotation.
+ * Assumptions:	None.
+ * Bugs:	Hard to imagine.
+ * Notes:	None.
+ */
+
+qreal
+Graph::getRotation()
+{
+    return rotation;
 }
 
 

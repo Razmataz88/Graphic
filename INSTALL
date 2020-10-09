@@ -3,33 +3,83 @@ pre-compiled versions of this software for various operating systems.
 If you don't find one that works for you, or if you prefer to compile
 from source, instructions which may get you going are found below.
 
+Should you wish or need to compile Graphic from source, the
+instructions below ask you to install Qt.  Your operating system 
+supplier may have packages ready for you to install Qt 5.15.0 (or
+newer), and, if so, that is likely to be the easiest way to get
+going.  If there is a choice of packages, install the "development"
+package, which may have "dev" or "development" as part of the name.
+
+If your operating system supplier does not supply development packages
+for Qt5.15.0 (or newer), to compile Graphic from source you will need
+to need to download and install Qt yourself.  There are currently two
+ways to do this.
+
+(a) If you have some expertise with compiling software from source,
+    you can visit https://www.qt.io/offline-installers and download
+    the Qt source code package.  Then you can compile Qt and install
+    it on your system.  This approach is not recommended for people
+    without considerable software development experience.
+
+(b) Visit https://www.qt.io/download-qt-installer and click the
+    download button near the bottom of the page.  This will download a
+    program suitable for your operating system.  When you run this
+    program it will guide you through the process of installing Qt on
+    your system.
+    At time of writing, note that using this program requires you to
+    create a (free) Qt account, but you do not need to specify a
+    company name.
+
+    A few screens in, the installation program will display a "Select
+    Components" screen.  Click the triangle to open the Qt 5.15.1 (or
+    newer) menu.  For Linux, select the "Desktop gcc 64-bit" check box.
+    Near the bottom of the window you can see how much disk space the
+    installation will take; make sure you have enough free disk space.
+    Then select "Next", where you will be asked to accept their
+    license.  After accepting the license, you get a screen with an
+    Install button, which you should press to complete the
+    installation.
+
+
 To compile (and optionally install) Graphic on Linux:
 -----------------------------------------------------
-0. Copy down the source files found here.
+0. Download the source files found here.
 1. Install the Qt5 package for your version of Linux
    -> you must install the development tools, so if you have a choice
-      to just select a "run-time" package, don't pick that one.
-2. Run
+      to just select a "run-time" package, do not pick that one.
+   If there is no suitable package for your Linux distribution,
+   install Qt as described above.
+2. If you have an older Qt4-based Linux distribution, or you aren't
+   sure which Qt version is the primary one for your distribution,
+   try running
       qmake-qt5
-   (or try plain  qmake  if your distro doesn't have qmake-qt5).
-3. Assuming that is all good, run
+   If your distribution uses Qt5, or the above didn't work, run
+      qmake
+3. Assuming that is all good (i.e., no error messages show up), run
       make
-   or optionally, if you want to keep many of your CPUs busy
+   or optionally, if you want to keep many of your CPUs busy,
       make -j 8
    On a fast-ish CPU the latter should finish in 10 or 15 seconds.
-4. The executable is the program "Graphic" in this directory.
-   You can "install" it by copying it to the directory of your choice,
-   such as
+4. The executable is the program "Graphic" in the directory from which
+   you ran "qmake" or "qmake-qt5".
+   You can "install" Graphic by copying it to the directory of your
+   choice, such as
       /usr/local/bin
-   or
+   or (if you already have your own "bin" directory)
       $HOME/bin
 
 
 To compile (and optionally install) Graphic on MacOS:
 -----------------------------------------------------
-0. Copy down the source files found here.
+0. Download the source files found here.
 1. Install Qt5
-   -> you must install the Qt development tools, not just the run-time support.
+   -> you must install the Qt development tools, not just the run-time
+      support.
+   If you have "brew" (https://brew.sh/) installed on your MacOS
+   system, you can simply run the following command (from a terminal
+   window) to install the Qt command-line tools:
+      brew install qt
+   Otherwise install Qt as described above.
 2. Run
       qmake
 3. Clean up old versions of files:
@@ -47,22 +97,49 @@ To compile (and optionally install) Graphic on MacOS:
 
 
 To compile (and optionally install) Graphic on Windows 10:
------------------------------------------------------
-0. Copy down the source files found here.
-1. Download the Qt installer from https://www.qt.io/offline-installers .
-   -> You must install the Qt development tools, not just the run-time support.
-   -> If you don't intend on building with MSVC as your environment/compiler,
-      select a version of MinGW to install when prompted by the Qt installer.
-2. Open graphic.pro in Qt Creator, select your environment when prompted,
+----------------------------------------------------------
+0. Download the source files found here.
+1. Install Qt5
+   -> you must install the Qt development tools, not just the run-time support.
+   If you can not find a Qt package for your system from a known
+   reliable source, install Qt as described above.
+2. Install Visual Studio for access to MSVC and nmake.
+3. From the developer command prompt for MSVC, run
+      qmake
+4. If no errors are reported, run
+      nmake
+   For qmake or nmake to work, you will likely need to add to your PATH
+   variable both the build location and the Qt bin folder for your
+   environment found in this directory path
+      Qt/version/enviroment/bin/
+5. The executable is the program "Graphic" in the build directory.
+   You can "install" it by copying it to the directory of your choice.
+
+
+
+
+If the above instructions for your operating system did not work, or if
+none apply, the following generic instructions might get you going.
+
+To compile (and optionally install) Graphic through QT Creator:
+---------------------------------------------------------------
+0. Download the source files found here.
+1. Download and install Qt as described near the top of this file.
+   -> you must install the Qt development tools, not just the run-time
+   support.
+2. Open Graphic.pro in Qt Creator, select your environment when prompted,
    press configure project, and then run Build.
 3. The executable is the program "Graphic" in the folder called
-      "build-Graphic-Desktop_Qt_5_14_2_*"
-   (or similar, the version number may be newer than 5.14.2) where "*"
-   stands for the environment you chose.  Move Graphic.exe from this
-   folder to the bin of the environment you chose in this directory path
-      Qt/5_14_2/*/bin/
-   where "*" stands for the environment you chose.
-4. Optionally, create a shortcut to copy to the directory of your choice.
+      "build-Graphic-Desktop_Qt"
+4. Depending on your machine, you may need to move the executable
+   (i.e., Graphic or Graphic.exe) from the build directory to the bin
+   of the environment you chose in this directory path:
+      Qt/version/environment/bin/
+   or add that bin directory and the build folder to your PATH variable.
+5. Optionally, create a symbolic link (or shortcut) to the directory
+   of your choice.
+
+
 
 
 
@@ -74,4 +151,3 @@ I have no other OSes on any of my computers with which to compile
 Graphic.  If you compile the sources for another OS and wish to share
 your knowledge, please e-mail me (Jim Diamond) the details of what you
 did.  (See the e-mail link found at http://graph-drawing.acadiau.ca/.)
-

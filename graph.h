@@ -2,7 +2,7 @@
  * File:	graph.h
  * Author:	Rachel Bood
  * Date:	2014 or 2015?
- * Version:	1.1
+ * Version:	1.2
  *
  * Purpose:	Define the graph class.
  *
@@ -11,9 +11,12 @@
  *  (a) Add this header comment.
  *  (b) Remove unused field "point_star" from the graph struct.
  *  (c) Minor reformatting.
- * June 17, 2020 (IC V1.1)
+ * Jun 17, 2020 (IC V1.1)
  *  (a) Changed class type from QGraphicsItem to QGraphicsObject for access to
  *      destroyed() signal in connect statements for graphs.
+ * Aug 14, 2020 (IC V1.2)
+ *  (a) Add "keepRotation" param to setRotation().
+ *  (b) Add a private "rotation" variable and its "getRotation()" getter.
  */
 
 #ifndef GRAPH_H
@@ -49,7 +52,8 @@ public:
     Nodes nodes;
 
     QRectF boundingRect() const;
-    void setRotation(qreal aRotation);
+    void setRotation(qreal aRotation, bool keepRotation);
+    qreal getRotation();
     QGraphicsItem * getRootParent();
 
 protected:
@@ -60,6 +64,7 @@ protected:
 
 private:
      int moved;		// 1 means the graph was dropped onto the canvas.
+     qreal rotation;
 };
 
 #endif // GRAPH_H

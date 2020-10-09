@@ -1,15 +1,18 @@
 /*
  * File:    settingsdialog.h
  * Author:  Ian Cathcart
- * Date:    2020/08/07
- * Version: 1.1
+ * Date:    2020/08/05
+ * Version: 1.2
  *
- * Purpose: Definitions for the settings dialog.
+ * Purpose: Define the behaviour of the settings dialog window.
  *
  * Modification history:
  * Aug 7, 2020 (IC V1.1)
  *  (a) Rename background colour fields.
- *  (b) Add saveDone() signal.
+ *  (b) Add saveDone() signal to tell mainWindow that the user OK'd the dialog.
+ * Aug 7, 2020 (IC V1.2)
+ *  (a) Renamed functions to on_jpgBgColour_clicked() and
+ *	on_otherImageBgColour_clicked().
  */
 
 #ifndef SETTINGSDIALOG_H
