@@ -2,7 +2,7 @@
  * File:    labelsizecontroller.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
@@ -26,6 +26,8 @@
  *	below in LabelSizeController(edge, box) comment.
  * June 9, 2020 (IC V1.4)
  *  (a) Changed QDoubleSpinBox to QSpinBox and Double to Int where applicable.
+ * Aug 21, 2020 (IC V1.5)
+ *  (a) Use new name of the function which sets an edge label.
  */
 
 #include "labelsizecontroller.h"
@@ -131,5 +133,5 @@ void
 LabelSizeController::setEdgeLabelSize(int ptSize)
 {
     if (edge != nullptr)
-        edge->setLabelSize(ptSize);
+        edge->setEdgeLabelSize(ptSize);
 }

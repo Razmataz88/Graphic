@@ -2,7 +2,7 @@
  * File:	basicgraphs.h
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.4
+ * Version:	1.5
  *
  * Purpose:	Declare the basicgraphs class.
  *
@@ -19,6 +19,8 @@
  *	graph type is selected.
  * Dec 14, 2019 (JD V1.4):
  *  (a) Remove "#include defuns.h" from here.
+ * Aug 24, 2020 (IC V1.5):
+ *  (a) Add circulant graph type.
  */
 
 
@@ -40,6 +42,8 @@ class BasicGraphs
 				       bool drawEdges);
     void generate_bipartite(Graph * g, int topNodes,int bottomNodes,
 			    bool drawEdges);
+    void generate_circulant(Graph * g, int numOfNodes, QString offsets,
+                            bool drawEdges);
     void generate_complete(Graph * g, int numOfNodes, bool drawEdges);
     void generate_crown(Graph * g, int numOfNodes, bool drawEdges);
     void generate_cycle(Graph * g, int numOfNodes, bool drawEdges);
@@ -56,9 +60,9 @@ class BasicGraphs
     void generate_wheel(Graph * g, int numOfNodes, bool drawEdges);
 
     // This must agree with Graph_Type_Name set in the BG constructor.
-    enum Graph_Type {Nothing = 0, Antiprism, BBTree, Bipartite, Complete,
-		     Crown, Cycle, Dutch_Windmill, Gear, Grid, Helm, Path,
-		     Petersen, Prism, Star, Wheel, Count};
+    enum Graph_Type {Nothing = 0, Antiprism, BBTree, Bipartite, Circulant,
+                     Complete, Crown, Cycle, Dutch_Windmill, Gear, Grid,
+                     Helm, Path, Petersen, Prism, Star, Wheel, Count};
     static QString getGraphName(int enumValue);
 
   private:

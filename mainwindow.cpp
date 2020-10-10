@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.51
+ * Version:	1.53
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -302,13 +302,26 @@
  *  (d) Handraulically scale clearCanvas and zoomDisplay{,_2} widgets.
  * Aug 12, 2020 (IC V1.50)
  *  (a) Cleaned up set_Interface_Sizes() to make the default scale code more
- *      readable. Currently, the scale is based on logicalDPI / 72 for apple
- *      and logicalDPI/96 for any other machine.
+ *      readable.  Currently, the scale is based on logicalDPI / 72 for apple
+ *      and logicalDPI / 96 for any other machine.
  *  (b) Major code removal: addEdgeToEditTab(), addNodeToEditTab() and
  *      addGraphToEditTab() all went away.
  * Aug 14, 2020 (IC V1.51)
  *  (a) Update call to setRotation() with new param.
  *  (b) Remove a now-bogus comment.
+ * Aug 21, 2020 (IC V1.52)
+ *  (a) Added the ability to number edge labels similar to nodes.  Edge labels
+ *      can now have numbered subscripts or simply numbered labels and the user
+ *      can specify the start number with EdgeNumLabelStart.
+ *  (b) Widgets and functions related to numbering slightly renamed (for
+ *	clarity) to indicate whether they are related to an edge or a node.
+ * Aug 24, 2020 (IC V1.53)
+ *  (a) Changed the wording on some edit tab labels for clarity and
+ *	added one more label.
+ *  (b) For circulant graph, added connection for offsets widget and
+ *	pass the offsets text to Create_Basic_Graph().  Set the
+ *	offsets widget's font.  Show or hide that widget as desired.
+ *  (c) Deleted some old commented-out code.
  */
 
 #include "mainwindow.h"
@@ -357,10 +370,12 @@
 // Similar for vertex precision in .grphc output:
 #define VP_PREC_GRPHC  4
 
-static qreal screenLogicalDPI_X;
-
 QSettings settings("Acadia", "Graphic");
 qreal currentPhysicalDPI, currentPhysicalDPI_X, currentPhysicalDPI_Y;
+
+static qreal screenLogicalDPI_X;
+
+
 
 /*
  * Name:	MainWindow
@@ -384,7 +399,7 @@ QMainWindow(parent),
     if (!dir.exists())
 	if (!dir.mkdir(fileDirectory))
 	{
-	    QMessageBox::information(0, "Error", 
+	    QMessageBox::information(0, "Error",
 				     "Unable to create the subdirectory ./"
 				     GRAPHiCS_SAVE_SUBDIR
 				     " (where the graphs you create are "
@@ -403,13 +418,6 @@ QMainWindow(parent),
 
     // Ctrl-Q quits.
     new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q), this, SLOT(close()));
-
-    // Ctrl-O pops up the open file dialog. REDUNDANT
-    //new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_O),
-    //              this, SLOT(load_Graphic_File()));
-
-    // Save dialog pops up via Ctrl-S. REDUNDANT
-    //new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_S), this, SLOT(save_Graph()));
 
     // DEBUG HELP:
     // Dump TikZ to stdout
@@ -442,12 +450,12 @@ QMainWindow(parent),
     connect(ui->NodeLabelSize,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(nodeLabelSize_WGT); });
-    connect(ui->NumLabelCheckBox,
+    connect(ui->NodeNumLabelCheckBox,
 	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
-	    this, [this]() { generate_Graph(numLabelCheckBox_WGT); });
-    connect(ui->NumLabelStart,
+	    this, [this]() { generate_Graph(nodeNumLabelCheckBox_WGT); });
+    connect(ui->NodeNumLabelStart,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
-	    this, [this]() { generate_Graph(numLabelStart_WGT); });
+	    this, [this]() { generate_Graph(nodeNumLabelStart_WGT); });
     connect(ui->NodeFillColor,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
 	    this, [this]() { generate_Graph(nodeFillColour_WGT); });
@@ -466,6 +474,12 @@ QMainWindow(parent),
     connect(ui->EdgeLabelSize,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(edgeLabelSize_WGT); });
+    connect(ui->EdgeNumLabelCheckBox,
+            (void(QCheckBox::*)(bool))&QCheckBox::clicked,
+            this, [this]() { generate_Graph(edgeNumLabelCheckBox_WGT); });
+    connect(ui->EdgeNumLabelStart,
+            (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
+            this, [this]() { generate_Graph(edgeNumLabelStart_WGT); });
     connect(ui->EdgeLineColor,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
 	    this, [this]() { generate_Graph(edgeLineColour_WGT); });
@@ -493,6 +507,9 @@ QMainWindow(parent),
     connect(ui->graphType_ComboBox,
 	    (void(QComboBox::*)(int))&QComboBox::activated,
 	    this, [this]() { generate_Graph(graphTypeComboBox_WGT); });
+    connect(ui->offsets,
+            (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
+            this, [this]() { generate_Graph(offsets_WGT); });
 
     // When these NODE and EDGE parameters are changed, the updated
     // values are passed to the canvas view, so that nodes and edges
@@ -508,7 +525,7 @@ QMainWindow(parent),
 	    this, SLOT(nodeParamsUpdated()));
     connect(ui->NodeLabelSize, SIGNAL(valueChanged(int)),
 	    this, SLOT(nodeParamsUpdated()));
-    connect(ui->NumLabelCheckBox, SIGNAL(clicked(bool)),
+    connect(ui->NodeNumLabelCheckBox, SIGNAL(clicked(bool)),
 	    this, SLOT(nodeParamsUpdated()));
     connect(ui->NodeFillColor, SIGNAL(clicked(bool)),
 	    this, SLOT(nodeParamsUpdated()));
@@ -521,6 +538,8 @@ QMainWindow(parent),
 	    this, SLOT(edgeParamsUpdated()));
     connect(ui->EdgeLabelSize, SIGNAL(valueChanged(int)),
 	    this, SLOT(edgeParamsUpdated()));
+    connect(ui->EdgeNumLabelCheckBox, SIGNAL(clicked(bool)),
+            this, SLOT(edgeParamsUpdated()));
     connect(ui->EdgeLineColor, SIGNAL(clicked(bool)),
 	    this, SLOT(edgeParamsUpdated()));
 
@@ -553,11 +572,11 @@ QMainWindow(parent),
     connect(ui->preview, SIGNAL(zoomChanged(QString)),
 	    ui->zoomDisplay, SLOT(setText(QString)));
     connect(ui->canvas, SIGNAL(zoomChanged(QString)),
-            ui->zoomDisplay_2, SLOT(setText(QString)));
+	    ui->zoomDisplay_2, SLOT(setText(QString)));
 
     // Clears all items from the canvas
     connect(ui->clearCanvas, SIGNAL(clicked()),
-            ui->canvas, SLOT(clearCanvas()));
+	    ui->canvas, SLOT(clearCanvas()));
 
     // Ask to save on exit if any changes were made on the canvas since
     // last save.
@@ -570,7 +589,7 @@ QMainWindow(parent),
     connect(ui->canvas->scene(), SIGNAL(graphDropped()),
 	    this, SLOT(somethingChanged()));
     connect(ui->canvas->scene(), SIGNAL(graphJoined()),
-            this, SLOT(somethingChanged()));
+	    this, SLOT(somethingChanged()));
 
     // Initialize the canvas to be in "drag" mode.
     ui->dragMode_radioButton->click();
@@ -1113,10 +1132,10 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     if (defNodeFillColourName == nullptr)
     {
 	defineDefNodeFillColour = true;
-	outfile << "    n/.style={fill=defNodeFillColour, "; 
+	outfile << "    n/.style={fill=defNodeFillColour, ";
     }
     else
-	outfile << "    n/.style={fill=" << defNodeFillColourName << ", "; 
+	outfile << "    n/.style={fill=" << defNodeFillColourName << ", ";
 
     bool defineDefNodeLineColour = false;
     QColor defNodeLineColour
@@ -1128,7 +1147,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	outfile << "draw=defNodeLineColour, shape=circle,\n";
     }
     else
-	outfile << "draw=" << defNodeLineColourName << ", shape=circle,\n"; 
+	outfile << "draw=" << defNodeLineColourName << ", shape=circle,\n";
 
     outfile << "\tminimum size=" << nodeDefaults.nodeDiameter << "in, "
 	    << "inner sep=0, "
@@ -1429,7 +1448,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
  * Modifies:	Nothing.
  * Returns:	True on success.
  * Assumptions:	Args are valid.
- * Bugs:	
+ * Bugs:
  * Notes:	Currently always returns T, but maybe in the future ...
  *		Normally vertex and edge label info is not output if
  *		the label is empty, but if outputExtra = T these
@@ -1525,7 +1544,7 @@ saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
     outfile << "\n# Edge descriptions; the format is:\n"
 	    << "# u, v, dest_radius, source_radius, rotation, pen_width,\n"
 	    << "#       line r,g,b[, label font size, label]\n";
-	    
+
     for (int i = 0; i < nodes.count(); i++)
     {
 	for (int j = 0; j < nodes.at(i)->edgeList.count(); j++)
@@ -1638,9 +1657,9 @@ MainWindow::save_Graph()
 	    continue;
 	if (QString(format).toUpper() == "PPM")	    // Portable pixmap
 	    continue;
-	if (QString(format).toUpper() == "XBM")	    // X bitmap 
+	if (QString(format).toUpper() == "XBM")	    // X bitmap
 	    continue;
-	if (QString(format).toUpper() == "XBM")	    // X bitmap 
+	if (QString(format).toUpper() == "XBM")	    // X bitmap
 	    continue;
 	if (QString(format).toUpper() == "XPM")	    // X pixmap
 	    continue;
@@ -2107,13 +2126,13 @@ MainWindow::select_Custom_Graph(QString graphName)
 	    edge->setColour(lineColor);
 	    if (fields.count() >= 11)
 	    {
-		edge->setLabelSize(fields.at(9).toFloat());
+		edge->setEdgeLabelSize(fields.at(9).toFloat());
 		// If the label has one or more commas, we must glue
 		// the fields back together.
 		QString l = fields.at(10);
 		for (int i = 11; i < fields.count(); i++)
 		    l += "," + fields.at(i);
-		edge->setLabel(l);
+		edge->setEdgeLabel(l);
 	    }
 	    edge->setParentItem(graph);
 	}
@@ -2202,7 +2221,7 @@ MainWindow::style_Graph(enum widget_ID what_changed)
 		ui->nodeDiameter->value(),
 		ui->NodeLabel1->text(),
 		ui->NodeLabel2->text(),
-		ui->NumLabelCheckBox->isChecked(),
+		ui->NodeNumLabelCheckBox->isChecked(),
 		ui->NodeLabelSize->value(),
 		ui->NodeFillColor->palette().window().color(),
 		ui->NodeOutlineColor->palette().window().color(),
@@ -2213,8 +2232,10 @@ MainWindow::style_Graph(enum widget_ID what_changed)
 		ui->graphWidth->value(),
 		ui->graphHeight->value(),
 		ui->graphRotation->value(),
-		ui->NumLabelStart->value(),
-		ui->nodeThickness->value());
+		ui->NodeNumLabelStart->value(),
+		ui->nodeThickness->value(),
+		ui->EdgeNumLabelCheckBox->isChecked(),
+		ui->EdgeNumLabelStart->value());
 	}
     }
 }
@@ -2277,6 +2298,7 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 	int numOfNodes2 = ui->numOfNodes2->value();
 	qreal nodeDiameter = ui->nodeDiameter->value();
 	bool drawEdges = ui->complete_checkBox->isChecked();
+	QString offsets = ui->offsets->text();
 
 	if (currentGraphIndex != graphIndex
 	    || currentNumOfNodes1 != numOfNodes1
@@ -2288,7 +2310,8 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 		   << ui->graphType_ComboBox->currentText() << ")";
 	    ui->preview->Create_Basic_Graph(graphIndex,
 					    numOfNodes1, numOfNodes2,
-					    nodeDiameter, drawEdges);
+					    nodeDiameter, drawEdges,
+					    offsets);
 	    this->style_Graph(ALL_WGT);
 	    currentNumOfNodes1 = numOfNodes1;
 	    currentNumOfNodes2 = numOfNodes2;
@@ -2339,7 +2362,7 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 
 /*
  * Name:	on_NodeOutlineColor_clicked()
- * Purpose:	
+ * Purpose:
  * Arguments:	None.
  * Outputs:	Nothing.
  * Modifies:	ui->NodeOutlineColor.
@@ -2374,7 +2397,7 @@ MainWindow::on_NodeOutlineColor_clicked()
 
 /*
  * Name:	on_NodeFillColor_clicked()
- * Purpose:	
+ * Purpose:
  * Arguments:	None.
  * Outputs:	Nothing.
  * Modifies:	ui->NodeFillColor
@@ -2443,7 +2466,7 @@ MainWindow::on_EdgeLineColor_clicked()
 
 
 /*
- * Name:	on_NumLabelCheckBox_clicked()
+ * Name:	on_NodeNumLabelCheckBox_clicked()
  * Purpose:
  * Arguments:
  * Outputs:
@@ -2456,10 +2479,30 @@ MainWindow::on_EdgeLineColor_clicked()
  */
 
 void
-MainWindow::on_NumLabelCheckBox_clicked(bool checked)
+MainWindow::on_NodeNumLabelCheckBox_clicked(bool checked)
 {
     ui->NodeLabel1->setDisabled(checked);
     ui->NodeLabel2->setDisabled(checked);
+}
+
+
+
+/*
+ * Name:	on_EdgeNumLabelCheckBox_clicked()
+ * Purpose:
+ * Arguments:
+ * Outputs:
+ * Modifies:
+ * Returns:
+ * Assumptions:
+ * Bugs:
+ * Notes:
+ */
+
+void
+MainWindow::on_EdgeNumLabelCheckBox_clicked(bool checked)
+{
+    ui->EdgeLabel->setDisabled(checked);
 }
 
 
@@ -2516,7 +2559,8 @@ MainWindow::set_Font_Sizes()
     font.setPointSize(SUB_SUB_TITLE_SIZE - 1);
     ui->graphType_ComboBox->setFont(font);
     ui->complete_checkBox->setFont(font);
-    ui->NumLabelCheckBox->setFont(font);
+    ui->NodeNumLabelCheckBox->setFont(font);
+    ui->EdgeNumLabelCheckBox->setFont(font);
     ui->EdgeLabel->setFont(font);
     ui->NodeLabel1->setFont(font);
     ui->NodeLabel2->setFont(font);
@@ -2532,6 +2576,9 @@ MainWindow::set_Font_Sizes()
     ui->edgeThickness->setFont(font);
     ui->NodeLabelSize->setFont(font);
     ui->nodeDiameter->setFont(font);
+    ui->NodeNumLabelStart->setFont(font);
+    ui->EdgeNumLabelStart->setFont(font);
+    ui->offsets->setFont(font);
 }
 
 
@@ -2637,6 +2684,8 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 
     ui->complete_checkBox->show();
 
+    ui->offsets->hide();
+
     if (index <= 0)
 	return;
 
@@ -2659,6 +2708,11 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 	ui->numOfNodes2->show();
 	ui->NodeLabel2->show();
 	break;
+
+      case BasicGraphs::Circulant:
+        ui->numOfNodes2->hide();
+        ui->offsets->show();
+        break;
 
       case BasicGraphs::Cycle:
       case BasicGraphs::Crown:
@@ -2812,7 +2866,7 @@ MainWindow::nodeParamsUpdated()
 
     ui->canvas->setUpNodeParams(
 	ui->nodeDiameter->value(),
-	ui->NumLabelCheckBox->isChecked(),  // Useful?
+	ui->NodeNumLabelCheckBox->isChecked(),  // Useful?
 	ui->NodeLabel1->text(),		    // Useful?
 	ui->NodeLabelSize->value(),
 	ui->NodeFillColor->palette().window().color(),
@@ -2844,7 +2898,8 @@ MainWindow::edgeParamsUpdated()
 	ui->edgeThickness->value(),
 	ui->EdgeLabel->text(),
 	ui->EdgeLabelSize->value(),
-	ui->EdgeLineColor->palette().window().color());
+	ui->EdgeLineColor->palette().window().color(),
+	ui->EdgeNumLabelCheckBox->isChecked());  // Useful?
 }
 
 
@@ -2942,26 +2997,28 @@ MainWindow::updateEditTab(int index)
 		    gridLayout->addWidget(label, i, 0);
 		    i++;
 
-		    QLabel * label2 = new QLabel("N width");
+		    QLabel * label2 = new QLabel("Line");
 		    gridLayout->addWidget(label2, i, 2);
-		    QLabel * label3 = new QLabel("E width");
+		    QLabel * label3 = new QLabel("Width");
 		    gridLayout->addWidget(label3, i+1, 2);
-		    QLabel * label4 = new QLabel("N diam");
+		    QLabel * label4 = new QLabel("Node");
 		    gridLayout->addWidget(label4, i, 3);
-		    QLabel * label5 = new QLabel("Label");
-		    gridLayout->addWidget(label5, i, 4);
-		    QLabel * label6 = new QLabel("Text");
-		    gridLayout->addWidget(label6, i, 5);
-		    QLabel * label7 = new QLabel("Size");
-		    gridLayout->addWidget(label7, i+1, 5);
-		    QLabel * label8 = new QLabel("Line");
-		    gridLayout->addWidget(label8, i, 6);
-		    QLabel * label9 = new QLabel("Colour");
-		    gridLayout->addWidget(label9, i+1, 6);
-		    QLabel * label10 = new QLabel("Fill");
-		    gridLayout->addWidget(label10, i, 7);
-		    QLabel * label11 = new QLabel("Colour");
-		    gridLayout->addWidget(label11, i+1, 7);
+		    QLabel * label5 = new QLabel("Diam");
+		    gridLayout->addWidget(label5, i+1, 3);
+		    QLabel * label6 = new QLabel("Label");
+		    gridLayout->addWidget(label6, i, 4);
+		    QLabel * label7 = new QLabel("Text");
+		    gridLayout->addWidget(label7, i, 5);
+		    QLabel * label8 = new QLabel("Size");
+		    gridLayout->addWidget(label8, i+1, 5);
+		    QLabel * label9 = new QLabel("Line");
+		    gridLayout->addWidget(label9, i, 6);
+		    QLabel * label10 = new QLabel("Colour");
+		    gridLayout->addWidget(label10, i+1, 6);
+		    QLabel * label11 = new QLabel("Fill");
+		    gridLayout->addWidget(label11, i, 7);
+		    QLabel * label12 = new QLabel("Colour");
+		    gridLayout->addWidget(label12, i+1, 7);
 		    i += 2;
 
 		    // Horrible, ugly connects....
@@ -2987,6 +3044,8 @@ MainWindow::updateEditTab(int index)
 			    label10, SLOT(deleteLater()));
 		    connect(graph, SIGNAL(destroyed(QObject*)),
 			    label11, SLOT(deleteLater()));
+		    connect(graph, SIGNAL(destroyed(QObject*)),
+			    label12, SLOT(deleteLater()));
 
 		    QList<QGraphicsItem *> list;
 		    foreach (QGraphicsItem * gItem, graph->childItems())

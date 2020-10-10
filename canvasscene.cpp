@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.18
+ * Version: 1.19
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -82,6 +82,11 @@
  *  (a) Changed the way drag mode works slightly.  The drag will
  *	prioritize moving graphs that had items at the point of click
  *	before defaulting to moving the first graph bounding box found.
+ * August 20, 2020 (IC V1.19)
+ *  (a) Fixed the rotation issue, although the change was made in graph.cpp.
+ *      The rotation of root2 needs to take into account any previous rotation.
+ *  (b) Added code to the keyReleaseEvent that checks if both sets of nodes
+ *      in a 4-node join were connected by an edge and, if so, removes one.
  */
 
 #include "canvasscene.h"
@@ -670,7 +675,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		    while (root2->parentItem() != nullptr)
 			root2 = qgraphicsitem_cast<Graph*>(
 			    root2->parentItem());
-		    root2->setRotation(qRadiansToDegrees(-angle), false);
+		    root2->setRotation(qRadiansToDegrees(-angle), true);
 		}
 
 		if (connectNode1a->parentItem() != nullptr)
@@ -708,6 +713,30 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		    else
 			edge->setDestNode(connectNode1b);
 		    connectNode1b->addEdge(edge);
+		}
+
+		// Now we need to check if node1a and node1b have two edges
+		// connecting them and delete one.
+		Edge * existingEdge = nullptr;
+		foreach (Edge * edge, connectNode1a->edges())
+		{
+		    if (edge->sourceNode() == connectNode1b ||
+			edge->destNode() == connectNode1b)
+		    {
+			if (existingEdge == nullptr)
+			    existingEdge = edge;
+			else
+			{
+			    connectNode1a->removeEdge(edge);
+			    connectNode1b->removeEdge(edge);
+			    connectNode2a->removeEdge(edge);
+			    connectNode2b->removeEdge(edge);
+			    removeItem(edge);
+			    delete(edge);
+			    edge = nullptr;
+			    break;
+			}
+		    }
 		}
 
 		// See comments above about the buggyness of this code.

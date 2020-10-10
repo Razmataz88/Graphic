@@ -2,7 +2,7 @@
  * File:	basicgraphs.cpp
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.5
+ * Version:	1.6
  *
  * Purpose:	Implement functions which draw all the "known" graph types.
  *
@@ -54,6 +54,8 @@
  *  (e) Modify generate_gear() so that the gear is as large as
  *	possible while still fitting inside the bounding box (as with
  *	all the above, while scaling X and Y equally).
+ * Aug 24, 2020 (IC + JD V1.6):
+ *  (a) Add circulant graph.
  */
 
 #include "basicgraphs.h"
@@ -62,6 +64,7 @@
 #include "edge.h"
 #include <qmath.h>
 #include <QDebug>
+#include <QRegularExpression>
 
 
 static const double PI = 3.14159265358979323846264338327950288419717;
@@ -76,10 +79,10 @@ BasicGraphs::BasicGraphs()
 {
     // This must agree with the Graph_Type enum defined in basicgraphs.h.
     Graph_Type_Name = { "None", "Antiprism", "Balanced Binary Tree",
-			"Bipartite", "Complete", "Crown", "Cycle",
-			"Dutch Windmill", "Gear (generalized)", "Grid",
-			"Helm", "Path", "Petersen (generalized)",
-			"Prism", "Star", "Wheel"
+                        "Bipartite", "Circulant", "Complete", "Crown",
+                        "Cycle", "Dutch Windmill", "Gear (generalized)",
+                        "Grid", "Helm", "Path", "Petersen (generalized)",
+                        "Prism", "Star", "Wheel"
     };
 }
 
@@ -417,6 +420,54 @@ BasicGraphs::generate_bipartite(Graph * g, int topNodes, int bottomNodes,
 				   g->nodes.bipartite_bottom.at(j));
 	    edge->setParentItem(g);
 	}
+}
+
+
+
+void
+BasicGraphs::generate_circulant(Graph * g, int numOfNodes, QString offsets,
+                                bool drawEdges)
+{
+    qreal width = 0.5;
+    qreal height = 0.5;
+    QList<int> offsetsList;
+    QRegularExpression re("\\d");
+    QRegularExpressionMatch match;
+
+    // Need to parse the offsets string into a list of numbers
+    // The string format should either be "d,d,d" or "d d d"
+    for (int i = 0; i < offsets.count(); i++)
+    {
+        match = re.match(offsets.at(i));
+        if (match.hasMatch())
+        {
+            int num = offsets.at(i).digitValue();
+            offsetsList.append(num);
+        }
+    }
+
+    g->nodes.cycle = create_cycle(g, width, height, numOfNodes);
+
+    if (! drawEdges)
+        return;
+
+    for (int i = 0; i < g->nodes.cycle.count(); i++)
+    {
+        Edge * edge = new Edge(g->nodes.cycle.at(i),
+                               g->nodes.cycle.at(i + 1));
+        edge->setParentItem(g);
+
+        foreach (int num, offsetsList)
+        {
+            if (num > 1 && num < g->nodes.cycle.count() - 1)
+            {
+		int otherEnd = (i + num) % g->nodes.cycle.count();
+                Edge * edge = new Edge(g->nodes.cycle.at(i),
+                                       g->nodes.cycle.at(otherEnd));
+                edge->setParentItem(g);
+            }
+        }
+    }
 }
 
 
@@ -1047,8 +1098,6 @@ BasicGraphs::generate_wheel(Graph * g, int numOfNodes, bool drawEdges)
 	edge->setParentItem(g);
     }
 }
-
-
 
 
 

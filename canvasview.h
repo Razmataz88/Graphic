@@ -2,7 +2,7 @@
  * File:    canvasview.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.8
+ * Version: 1.9
  *
  * Purpose: Define the CanvasView class.
  *
@@ -30,6 +30,8 @@
  *	key press or mouse wheel scroll.
  * Aug 13, 2020 (IC V1.8)
  *  (a) Removed params from nodeCreated() and edgeCreated().
+ * Aug 21, 2020 (IC V1.9)
+ *  (a) Add code to support sequential numbering of edges, a la nodes.
  */
 
 
@@ -70,6 +72,7 @@ class CanvasView: public QGraphicsView
         QString label;
         qreal LabelSize;
         QColor color;
+        bool isNumbered;
     } Edge_Params;
 
     CanvasView(QWidget * parent = 0);
@@ -81,7 +84,8 @@ class CanvasView: public QGraphicsView
 			 QColor nodeFillColour, QColor nodeOutLineColour,
 			 qreal nodeThickness);
     void setUpEdgeParams(qreal edgeSize, QString edgeLabel,
-			 qreal edgeLabelSize, QColor edgeLineColour);
+                         qreal edgeLabelSize, QColor edgeLineColour,
+                         bool numberedLabels);
 
     Node * createNode(QPointF pos);
     Edge * createEdge(Node * source, Node * destination);

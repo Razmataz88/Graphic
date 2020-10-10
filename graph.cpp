@@ -2,7 +2,7 @@
  * File:    graph.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose:
  *
@@ -17,12 +17,16 @@
  *  (a) Reversed the previous change to setRotation since it was only needed
  *      when graphs could be children of other graphs which can no longer
  *      happen.
- * August 14, 2020 (IC V1.4)
+ * Aug 14, 2020 (IC V1.4)
  *  (a) Initialize rotation in constructor.
  *  (b) Once again changed setRotation() back to the July 20 change.
  *	The issue was that the GraphicsItem rotation call at the end
  *	of the function wasn't using the additive rotation value but
  *	instead the passed value.
+ * Aug 20, 2020 (IC V1.5)
+ *  (a) Once again changed setRotation back to the July 20 change.  The issue
+ *      was that the GraphicsItem rotation call at the end of the function
+ *      wasn't using the additive rotation value but instead the passed value.
  */
 
 #include "graph.h"
@@ -220,7 +224,7 @@ Graph::setRotation(qreal aRotation, bool keepRotation)
     else
         rotation = aRotation;
 
-    QGraphicsItem::setRotation(aRotation);
+    QGraphicsItem::setRotation(rotation);
 }
 
 

@@ -2,7 +2,7 @@
  * File:    labelcontroller.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.6
+ * Version: 1.7
  *
  * Purpose: ?
  *
@@ -23,6 +23,8 @@
  *  (b) Update/fix connections in label controllers accordingly.
  * Jul 14, 2020 (IC V1.6)
  *  (a) Update ...EditLabel slot names to more meaningful values.
+ * Aug 21, 2020 (IC V1.7)
+ *  (a) Use new name of the function which sets an edge label.
  */
 
 
@@ -77,7 +79,7 @@ LabelController::setEdgeLabel(QString string)
 {
     if (edge != nullptr || edge != 0)
         if (edit->hasFocus())
-            edge->setLabel(string);
+            edge->setEdgeLabel(string);
 }
 
 
@@ -92,7 +94,7 @@ LabelController::setNodeLabel(QString string)
 
 void
 LabelController::setEdgeEditLabel()
-{ // Sets the line edit text to u1 instead of u_{1} for subscripts.
+{
     if (edge->htmlLabel->hasFocus())
         edit->setText(edge->htmlLabel->toPlainText());
 }
@@ -100,7 +102,7 @@ LabelController::setEdgeEditLabel()
 
 void
 LabelController::setNodeEditLabel()
-{ // Sets the line edit text to u1 instead of u_{1} for subscripts.
+{
     if (node->htmlLabel->hasFocus())
         edit->setText(node->htmlLabel->toPlainText());
 }

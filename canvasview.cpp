@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.22
+ * Version: 1.23
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -82,6 +82,10 @@
  *  (a) Created macros to be used for zoom level min and max for clarity.
  *  (b) Delete the help text from here; similar text is now in mainwindow.ui.
  *  (c) Remove some old commented code.
+ * Aug 21, 2020 (IC V1.23)
+ *  (a) Update the names setLabelSize() -> setEdgeLabelSize() and
+ *       setLabel() -> setEdgeLabel().
+ *  (b) Add code to allow edges to be sequentially numbered, a la nodes.
  */
 
 #include "canvasview.h"
@@ -163,10 +167,12 @@ CanvasView::setUpNodeParams(qreal nodeDiameter, bool numberedLabels,
 			    qreal nodeThickness)
 {
     qDeb() << "CV::setUpNodeParams(): nodeDiameter = " << nodeDiameter;
+    qDeb() << "CV::setUpNodeParams(): nodeLabelsNumbered = " << numberedLabels;
     qDeb() << "CV::setUpNodeParams(): nodeLabel = /" << label << "/";
     qDeb() << "CV::setUpNodeParams(): nodeLabelSize = " << nodeLabelSize;
     qDeb() << "CV::setUpNodeParams(): nodeOutLineColour = " << nodeOutLineColour;
     qDeb() << "CV::setUpNodeParams(): nodeFillColour = " << nodeFillColour;
+    qDeb() << "CV::setUpNodeParams(): nodeThickness = " << nodeThickness;
 
     nodeParams->diameter = nodeDiameter;
     nodeParams->isNumbered = numberedLabels;
@@ -625,9 +631,9 @@ CanvasView::createEdge(Node * source, Node * destination)
     Edge * edge = new Edge(source, destination);
     edge->setPenWidth(edgeParams->size);
     edge->setColour(edgeParams->color);
-    edge->setLabelSize((edgeParams->LabelSize > 0)
+    edge->setEdgeLabelSize((edgeParams->LabelSize > 0)
 			     ? edgeParams->LabelSize : 1);
-    edge->setLabel(edgeParams->label);
+    edge->setEdgeLabel(edgeParams->label);
     edge->setDestRadius(node2->getDiameter() / 2.);
     edge->setSourceRadius(node1->getDiameter() / 2.);
     return edge;
@@ -652,17 +658,20 @@ CanvasView::createEdge(Node * source, Node * destination)
 
 void
 CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel,
-			    qreal edgeLabelSize, QColor edgeLineColour)
+			    qreal edgeLabelSize, QColor edgeLineColour,
+			    bool numberedLabels)
 {
     qDeb() << "CV::setUpEdgeParams(): edgeSize = " << edgeSize;
     qDeb() << "CV::setUpEdgeParams(): edgeLabel = /" << edgeLabel << "/";
     qDeb() << "CV::setUpEdgeParams(): edgeLabelSize = " << edgeLabelSize;
     qDeb() << "CV::setUpEdgeParams(): edgeLineColour = " << edgeLineColour;
+    qDeb() << "CV::setUpEdgeParams(): edgeLabelsNumbered = " << numberedLabels;
 
     edgeParams->size = edgeSize;
     edgeParams->label = edgeLabel;
     edgeParams->LabelSize = edgeLabelSize;
     edgeParams->color = edgeLineColour;
+    edgeParams->isNumbered = numberedLabels;
 }
 
 

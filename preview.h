@@ -2,7 +2,7 @@
  * File:    preview.h
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07 (?)
- * Version: 1.6
+ * Version: 1.8
  *
  * Purpose: define the fields of the preview class.
  *
@@ -32,7 +32,13 @@
  *  (a) Re-design (and simplify) the display of the zoom amount.
  *      Added zoomChanged signal to tell the mainwindow to update zoomDisplay.
  * Aug 11, 2020 (IC V1.6)
- *  (a) Add wheelEvent().
+ *  (a) Add wheelEvent() to allow for zooming using the mouse wheel.
+ * Aug 21, 2020 (IC V1.7)
+ *  (a) Added the ability to number edge labels similar to nodes;
+ *      Style_Graph() was updated to accomodate the numbering, and
+ *      some other variables were renamed to avoid confusion.
+ * Aug 21, 2020 (IC V1.8)
+ *  (a) For circulant graphs added the offsets param to Create_Basic_Graph().
  */
 
 #ifndef PREVIEW_H
@@ -55,18 +61,20 @@ class PreView: public QGraphicsView
       void zoomIn();
       void zoomOut();
       void Create_Basic_Graph(int graphType, int numOfNodes1, int numOfNodes2,
-			      qreal nodeDiameter, bool drawEdges);
+                              qreal nodeDiameter, bool drawEdges,
+                              QString offsets);
 
-      void Style_Graph(Graph * graph, int graphType,
+      void Style_Graph(Graph * graph,		    int graphType,
 		       enum widget_ID what_changed, qreal nodeDiameter,
 		       QString topNodeLabels,	    QString bottomNodeLabels,
-		       bool labelsAreNumbered,	    qreal nodeLabelSize,
+		       bool nodeLabelsNumbered,	    qreal nodeLabelSize,
 		       QColor nodeFillColor,	    QColor nodeOutlineColor,
 		       qreal edgeSize,		    QString edgeLabel,
 		       qreal edgeLabelSize,	    QColor edgeLineColor,
 		       qreal totalWidth,	    qreal totalHeight,
-		       qreal rotation,		    qreal numStart,
-		       qreal nodeThickness);
+		       qreal rotation,		    qreal nodeNumStart,
+		       qreal nodeThickness,	    bool edgeLabelsNumbered,
+		       qreal edgeNumStart);
 
   signals:
       void zoomChanged(QString zoomText);

@@ -1,16 +1,17 @@
 /*
  * File:    sizecontroller.h
  * Author:  Rachel Bood
- * Date:    2014 (?)
- * Version: 1.1
+ * Date:    2014/??/??
+ * Version: 1.2
  *
  * Modification history:
  * Jul 15, 2020 (IC V1.1)
- *  (a) Add a second value to node sizes; formerly nodes only had
- *	variable diameters, now the pen thickness can be changed as well.
- *	This requires a second spinbox, and so some renaming was done
- *	and the deletebox() function was split into two, one for edges
- *	(which have but one box) and one for nodes (which now have two).
+ *  (a) Updated the node sizecontroller to take two spinboxes as parameters,
+ *      one for node penwidth and the other for node diameter.
+ *  (b) Added setNodeSize2 to handle the new thickness box and a node specific
+ *      delete function.
+ * Jul 30, 2020 (JD V 1.2)
+ *  (a) Fix the V1.1 comment.  Duh.
  */
 
 #ifndef EDGESIZECONTROLLER_H

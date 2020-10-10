@@ -2,7 +2,7 @@
  * File:    edge.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.10
+ * Version: 1.11
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -45,6 +45,10 @@
  * Aug 19, 2020 (IC V1.10)
  *  (a) Remove now-unneeded setEdgeLabel() function.
  *  (b) Move setLabel() from public to public slots.
+ * Aug 21, 2020 (IC V1.11)
+ *  (a) Added the ability to number edge labels similar to nodes so setLabel
+ *      has been replaced with copies of the label functions from node.cpp.
+ *  (b) setLabelSize renamed to setEdgeLabelSize for clarity.
  */
 
 #ifndef EDGE_H
@@ -85,7 +89,10 @@ public:
     void setColour(QColor color);
     QColor getColour();
 
-    void setLabelSize(qreal edgeLabelSize);
+    void setEdgeLabel(int number);
+    void setEdgeLabel(QString aLabel, int number);
+    void setEdgeLabel(QString aLabel, QString subscript);
+    void setEdgeLabelSize(qreal edgeLabelSize);
     qreal getLabelSize();
 
     QRectF boundingRect() const;
@@ -113,15 +120,12 @@ public:
     int checked;
 
 public slots:
-    void setLabel(QString label);
+    void setEdgeLabel(QString aLabel);
 
 protected:
     void paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
                QWidget * widget);
     bool eventFilter(QObject * obj, QEvent * event);
-
-signals:
-    //void edgeDeleted(); // Should be removed? Never used.
 
 private:
     void	createSelectionPolygon();
@@ -134,6 +138,7 @@ private:
     int		penStyle;
     qreal	labelSize, penSize;
     QColor	edgeColour;
+    void	labelToHtml();
 };
 
 #endif // EDGE_H

@@ -2,7 +2,7 @@
  * File:	defuns.h
  * Author:	Jim Diamond
  * Date:	2019-12-10
- * Version:	1.7
+ * Version:	1.9
  *
  * Purpose:	Hold definitions that are needed by multiple classes
  *		and yet don't seem to meaningfully fit anywhere else.
@@ -36,6 +36,11 @@
  * Aug 18, 2020 (JD V1.7)
  *  (a) Add '#include <QDebug>' when DEBUG is defined, otherwise in some
  *      cases the compiler whines bitterly and pukes on your shoes.
+ * Aug 21, 2020 (IC V1.8)
+ *  (a) Rename numLabelStart_WGT to include 'node', add two widget IDs
+ *	for edge label numbers.
+ * Aug 24, 2020 (IC V1.9)
+ *  (a) Add offsets widget (for circulant graph).
  */
 
 #ifndef DEFUNS_H
@@ -64,11 +69,12 @@ extern QSettings settings;
 extern qreal currentPhysicalDPI, currentPhysicalDPI_X, currentPhysicalDPI_Y;
 
 enum widget_ID {NO_WGT, ALL_WGT, nodeDiam_WGT, nodeLabel1_WGT, nodeLabel2_WGT,
-		nodeLabelSize_WGT, numLabelCheckBox_WGT, nodeFillColour_WGT,
+		nodeLabelSize_WGT, nodeNumLabelCheckBox_WGT, nodeFillColour_WGT,
 		nodeOutlineColour_WGT, edgeThickness_WGT, edgeLabel_WGT,
 		edgeLabelSize_WGT, edgeLineColour_WGT, graphRotation_WGT,
 		completeCheckBox_WGT, graphHeight_WGT, graphWidth_WGT,
 		numOfNodes1_WGT, numOfNodes2_WGT, graphTypeComboBox_WGT,
-		numLabelStart_WGT, nodeThickness_WGT};
+		nodeNumLabelStart_WGT, nodeThickness_WGT, offsets_WGT,
+		edgeNumLabelCheckBox_WGT, edgeNumLabelStart_WGT};
 
 #endif
