@@ -2,7 +2,7 @@
  * File:	basicgraphs.h
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.5
+ * Version:	1.6
  *
  * Purpose:	Declare the basicgraphs class.
  *
@@ -20,7 +20,10 @@
  * Dec 14, 2019 (JD V1.4):
  *  (a) Remove "#include defuns.h" from here.
  * Aug 24, 2020 (IC V1.5):
- *  (a) Add circulant graph type.
+ *  (a) Added a new basicGraphs category, circulant graph which creates
+ *      a cycle along with edges based on a list of offsets.
+ * Aug 25, 2020 (JD V1.6):
+ *  (a) Fix V1.5 comment.  Duh.
  */
 
 

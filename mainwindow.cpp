@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.53
+ * Version:	1.54
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -318,10 +318,19 @@
  * Aug 24, 2020 (IC V1.53)
  *  (a) Changed the wording on some edit tab labels for clarity and
  *	added one more label.
- *  (b) For circulant graph, added connection for offsets widget and
+ *  (b) Added a new basicGraphs category, circulant, so a new offsets widget
+ *      was added. It only accepts input in the format "d,d,d" or "d d d"
+ *      and occupies the same space as numOfNodes2.
+ *  (c) For circulant graph, added connection for offsets widget and
  *	pass the offsets text to Create_Basic_Graph().  Set the
  *	offsets widget's font.  Show or hide that widget as desired.
- *  (c) Deleted some old commented-out code.
+ *  (d) Deleted some old commented-out code.
+ * Aug 25, 2020 (IC V1.54)
+ *  (a) Restrict the input for the offsets widget so users can't even
+ *	enter invalid data.
+ *  (b) When the offsets text is changed, a new graph is generated on
+ *	the preview instead of simply styling the graph as new edges
+ *	need to be added.
  */
 
 #include "mainwindow.h"
@@ -646,6 +655,13 @@ QMainWindow(parent),
             settingsDialog, SLOT(open()));
     connect(settingsDialog, SIGNAL(saveDone()),
             this, SLOT(updateDpiAndPreview()));
+
+    // Restrict the input for offsets lineEdit to the format "d,d,d" or "d d d"
+    // and move it to the same layout position as numOfNodes2.
+    QRegExp re = QRegExp("([1-9]\\d{0,1}(,| ))+");
+    QRegExpValidator * validator = new QRegExpValidator(re);
+    ui->offsets->setValidator(validator);
+    ui->gridLayout_4->addWidget(ui->offsets, 2, 9, Qt::AlignHCenter);
 
 
 #ifdef DEBUG
@@ -2304,7 +2320,8 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 	    || currentNumOfNodes1 != numOfNodes1
 	    || currentNumOfNodes2 != numOfNodes2
 	    || currentNodeDiameter != nodeDiameter
-	    || drawEdges != currentDrawEdges)
+	    || drawEdges != currentDrawEdges
+	    || changed_widget == offsets_WGT)
 	{
 	    qDeb() << "\tmaking a basic graph ("
 		   << ui->graphType_ComboBox->currentText() << ")";

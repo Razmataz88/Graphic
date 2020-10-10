@@ -2,7 +2,7 @@
  * File:	basicgraphs.cpp
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.6
+ * Version:	1.7
  *
  * Purpose:	Implement functions which draw all the "known" graph types.
  *
@@ -55,7 +55,10 @@
  *	possible while still fitting inside the bounding box (as with
  *	all the above, while scaling X and Y equally).
  * Aug 24, 2020 (IC + JD V1.6):
- *  (a) Add circulant graph.
+ *  (a) Added a new basicGraphs category, circulant graph, which creates
+ *      a cycle along with edges based on a list of node offsets.
+ * Aug 25, 2020 (IC + JD V1.7):
+ *  (a) Improve the code checking circulant graph offsets.
  */
 
 #include "basicgraphs.h"
@@ -432,14 +435,23 @@ BasicGraphs::generate_circulant(Graph * g, int numOfNodes, QString offsets,
     qreal height = 0.5;
     QList<int> offsetsList;
     QRegularExpression re("\\d");
-    QRegularExpressionMatch match;
+    QRegularExpressionMatch match, match2;
 
     // Need to parse the offsets string into a list of numbers
     // The string format should either be "d,d,d" or "d d d"
+    // but we need to take into account double digit numbers.
     for (int i = 0; i < offsets.count(); i++)
     {
         match = re.match(offsets.at(i));
-        if (match.hasMatch())
+        match2 = re.match(offsets.at(i + 1));
+        if (match.hasMatch() && match2.hasMatch())
+        {
+            int num = offsets.at(i).digitValue() * 10
+                    + offsets.at(i + 1).digitValue();
+            offsetsList.append(num);
+            i++;
+        }
+        else if (match.hasMatch())
         {
             int num = offsets.at(i).digitValue();
             offsetsList.append(num);
@@ -453,18 +465,32 @@ BasicGraphs::generate_circulant(Graph * g, int numOfNodes, QString offsets,
 
     for (int i = 0; i < g->nodes.cycle.count(); i++)
     {
+	int next = (i + 1) % g->nodes.cycle.count();
         Edge * edge = new Edge(g->nodes.cycle.at(i),
-                               g->nodes.cycle.at(i + 1));
+                               g->nodes.cycle.at(next));
         edge->setParentItem(g);
 
         foreach (int num, offsetsList)
         {
             if (num > 1 && num < g->nodes.cycle.count() - 1)
             {
+                // Prevent duplicate edges from being made
 		int otherEnd = (i + num) % g->nodes.cycle.count();
-                Edge * edge = new Edge(g->nodes.cycle.at(i),
-                                       g->nodes.cycle.at(otherEnd));
-                edge->setParentItem(g);
+                bool edgeExists = false;
+                foreach (Edge * edge, g->nodes.cycle.at(i)->edges())
+                {
+                    if ((edge->destNode() == g->nodes.cycle.at(i) &&
+			 edge->sourceNode() == g->nodes.cycle.at(otherEnd))
+			|| (edge->sourceNode() == g->nodes.cycle.at(i) &&
+			    edge->destNode() == g->nodes.cycle.at(otherEnd)))
+                        edgeExists = true;
+                }
+                if (!edgeExists)
+                {
+                    Edge * edge = new Edge(g->nodes.cycle.at(i),
+                                           g->nodes.cycle.at(otherEnd));
+                    edge->setParentItem(g);
+                }
             }
         }
     }

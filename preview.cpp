@@ -2,7 +2,7 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.15
+ * Version: 1.16
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
@@ -78,8 +78,12 @@
  *	Style_Graph() was updated to accomodate the numbering, and
  *	some other variables were renamed to avoid confusion.
  * Aug 24, 2020 (IC V1.15)
- *  (a) For circulant graphs added the offsets param and related code
+ *  (a) New basicGraphs category circulant added; create_Basic_Graph() takes
+ *      a new argument, offsets, and has a new case for generate_circulant().
+ *  (b) For circulant graphs added the offsets param and related code
  *	to Create_Basic_Graph().
+ * Aug 25, 2020 (IC V1.16)
+ *  (a) Minor clean-up of yesterday's additions.
  */
 
 #include "basicgraphs.h"
@@ -406,6 +410,10 @@ PreView::Create_Basic_Graph(int graphType, int numOfNodes1, int numOfNodes2,
         basicG->generate_bipartite(g, numOfNodes1, numOfNodes2, drawEdges);
         break;
 
+      case BasicGraphs::Circulant:
+        basicG->generate_circulant(g, numOfNodes1, offsets, drawEdges);
+        break;
+
       case BasicGraphs::Complete:
         basicG->generate_complete(g, numOfNodes1, drawEdges);
         break;
@@ -453,10 +461,6 @@ PreView::Create_Basic_Graph(int graphType, int numOfNodes1, int numOfNodes2,
       case BasicGraphs::Wheel:
         basicG->generate_wheel(g, numOfNodes1, drawEdges);
         break;
-
-      case BasicGraphs::Circulant:
-        basicG->generate_circulant(g, numOfNodes1, offsets, drawEdges);
-	break;
 
       default:
         // This should never happen!  Do not change to qDeb().
