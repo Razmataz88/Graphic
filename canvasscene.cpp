@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.19
+ * Version: 1.22
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -87,6 +87,21 @@
  *      The rotation of root2 needs to take into account any previous rotation.
  *  (b) Added code to the keyReleaseEvent that checks if both sets of nodes
  *      in a 4-node join were connected by an edge and, if so, removes one.
+ * Aug 26, 2020 (IC V1.20)
+ *  (a) Added updateCellSize which changes the size of mCellSize based on
+ *      the user's input to the cellSize widget on the UI and redraws the
+ *      cells accordingly.
+ * Aug 30, 2020 (JD V1.21)
+ *  (a) Adjust the code for the four-node join operation so that,
+ *	rather than co-locating the first nodes selected in each graph,
+ *	the midpoint between the selected nodes of the second graph
+ *	is translated to the midpoint between the selected nodes of
+ *	the first graph.  This tends to maintain more symmetry of the
+ *	second graph than co-locating the first vertices.
+ * Aug 30, 2020 (IC V1.22)
+ *  (a) Modify updateCellSize() as the snap-to-grid cell size is now
+ *	in the settings.
+ *  (b) Yet more improvements to the now-infamous 4-node join operation.
  */
 
 #include "canvasscene.h"
@@ -126,6 +141,27 @@ CanvasScene::CanvasScene()
 }
 
 
+/*
+ * Name:	updateCellSize()
+ * Purpose:	Update the size of the "snap-to" grid.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The snap-to grid.
+ * Returns:	Nothing.
+ * Assumptions:	?
+ * Bugs:	None known.
+ * Notes:	None.
+ */
+
+void
+CanvasScene::updateCellSize()
+{
+    QSize newCellSize(settings.value("gridCellSize").toInt(),
+                      settings.value("gridCellSize").toInt());
+    mCellSize = newCellSize;
+    update();
+}
+
 
 // We get many of these events when dragging the graph from the
 // preview window to the main canvas.
@@ -134,7 +170,7 @@ CanvasScene::CanvasScene()
 void
 CanvasScene::dragMoveEvent(QGraphicsSceneDragDropEvent * event)
 {
-    qDeb() << "CS::dragMoveEvent(" << event->screenPos() << ")";
+    // qDeb() << "CS::dragMoveEvent(" << event->screenPos() << ")";
 
     Q_UNUSED(event);
 }
@@ -191,7 +227,7 @@ CanvasScene::drawBackground(QPainter * painter, const QRectF &rect)
 void
 CanvasScene::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
-    qDeb() << "CS::mousePressEvent(" << event->screenPos() << ")";
+    // qDeb() << "CS::mousePressEvent(" << event->screenPos() << ")";
 
     bool itemFound = false;
     bool nodeFound = false;
@@ -504,7 +540,7 @@ CanvasScene::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 void
 CanvasScene::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
-    qDeb() << "CS::mouseReleaseEvent(" << event->screenPos() << ")";
+    // qDeb() << "CS::mouseReleaseEvent(" << event->screenPos() << ")";
 
     if (mDragged && snapToGrid && moved
 	&& (getMode() == CanvasView::drag || getMode() == CanvasView::edit))
@@ -645,27 +681,24 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 				      cn1b.rx() - cn1a.rx());
 		qreal angle2 = qAtan2(cn2b.ry() - cn2a.ry(),
 				      cn2b.rx() - cn2a.rx());
-		qreal angle = angle2 - angle1;
+		qreal angle = angle1 - angle2;
 
 		qDeb() << "\tcn1a " << cn1a;
 		qDeb() << "\tcn1b " << cn1b;
 		qDeb() << "\tcn2a " << cn2a;
 		qDeb() << "\tcn2b " << cn2b;
 
-		qDeb() << "\ty1 = " << QString::number(cn1b.ry()) << " - " <<
-		    QString::number(cn1a.ry()) << ", x1 = " <<
-		    QString::number(cn1b.rx()) << " - " <<
-		    QString::number(cn1a.rx());
+		qDebu("\tmidpoint of G1 vertices: (%.2f, %.2lf)",
+		      (cn1a.rx() + cn1b.rx()) / 2,
+		      (cn1a.ry() + cn1b.ry()) / 2);
+		qDebu("\tmidpoint of G2 vertices: (%.2f, %.2f)",
+		      (cn2a.rx() + cn2b.rx()) / 2,
+		      (cn2a.ry() + cn2b.ry()) / 2);
 
-		qDeb() << "\ty2 = " << QString::number(cn2b.ry()) << " - " <<
-		    QString::number(cn2a.ry()) << ", x2 = " <<
-		    QString::number(cn2b.rx()) << " - " <<
-		    QString::number(cn2a.rx());
-
-		qDeb() << "\tangle1 = " << angle1;
-		qDeb() << "\tangle2 = " << angle2;
-		qDeb() << "\tangle = " << angle;
-		qDeb() << "\tangle in degrees = " << qRadiansToDegrees(-angle);
+		qDeb() << "\tangle G1 = " << angle1;
+		qDeb() << "\tangle G2 = " << angle2;
+		qDeb() << "\tdelta angle = " << angle;
+		qDeb() << "\tdelta angle in deg = " << qRadiansToDegrees(angle);
 
 		// Rotate the second graph by the required angle.
 		if (connectNode2a->parentItem() != nullptr)
@@ -675,7 +708,7 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 		    while (root2->parentItem() != nullptr)
 			root2 = qgraphicsitem_cast<Graph*>(
 			    root2->parentItem());
-		    root2->setRotation(qRadiansToDegrees(-angle), true);
+		    root2->setRotation(qRadiansToDegrees(angle), true);
 		}
 
 		if (connectNode1a->parentItem() != nullptr)
@@ -687,10 +720,31 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 			    root1->parentItem());
 		}
 
+#ifdef DO_ASYMMETRICAL_JOIN
+		// The following calculates the offset to move cn2a to cn1a.
+		// This is the code which was used for a long time.
+		// It not preserve the symmetry of G2.
 		qreal deltaX = connectNode1a->scenePos().rx()
 		    - connectNode2a->scenePos().rx();
 		qreal deltaY = connectNode1a->scenePos().ry()
 		    - connectNode2a->scenePos().ry();
+#else
+		// The above destroys symmetry of G2.
+		// Instead, calculate the offset that moves the middle
+		// of edge (cn2a, cn2b) to the middle of edge (cn1a, cn1b)
+		// Note that cn2a and cn2b have moved since the rotation!
+		cn2a = connectNode2a->scenePos();
+		cn2b = connectNode2b->scenePos();
+		qreal midcn1X = (cn1a.rx() + cn1b.rx()) / 2;
+		qreal midcn1Y = (cn1a.ry() + cn1b.ry()) / 2;
+		qreal midcn2X = (cn2a.rx() + cn2b.rx()) / 2;
+		qreal midcn2Y = (cn2a.ry() + cn2b.ry()) / 2;
+		qreal deltaX = midcn1X - midcn2X;
+		qreal deltaY = midcn1Y - midcn2Y;
+		qDebu("\tmidcn1X = %.1f, midcn2X= %.1f", midcn1X, midcn2X);
+		qDebu("\tmidcn1Y = %.1f, midcn2Y= %.1f", midcn1Y, midcn2Y);
+		qDebu("\tdeltaX = %.1f, deltaY = %.1f", deltaX, deltaY);
+#endif
 
 		if (root2)
 		    root2->moveBy(deltaX, deltaY);
@@ -766,7 +820,8 @@ CanvasScene::keyReleaseEvent(QKeyEvent * event)
 				list.append(i->childItems());
 			    }
 			    else if (i->type() == Node::Type
-				&& i != connectNode2a && i != connectNode2b)
+				     && i != connectNode2a
+				     && i != connectNode2b)
 			    {
 				Node * node = qgraphicsitem_cast<Node*>(i);
 				node->setNodeLabel(count);

@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.54
+ * Version:	1.57
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -313,12 +313,12 @@
  *  (a) Added the ability to number edge labels similar to nodes.  Edge labels
  *      can now have numbered subscripts or simply numbered labels and the user
  *      can specify the start number with EdgeNumLabelStart.
- *  (b) Widgets and functions related to numbering slightly renamed (for
- *	clarity) to indicate whether they are related to an edge or a node.
- * Aug 24, 2020 (IC V1.53)
- *  (a) Changed the wording on some edit tab labels for clarity and
- *	added one more label.
- *  (b) Added a new basicGraphs category, circulant, so a new offsets widget
+ *  (b) Widgets related to numbering slightly renamed to indicate whether they
+ *      are related to an edge or a node for clarity.
+ * Aug 24, 2020 (IC V1.51)
+ *  (a) Changed the wording on some edit tab labels for clarity.
+ * Aug 25, 2020 (IC V1.52)
+ *  (a) Added a new basicGraphs category, circulant, so a new offsets widget
  *      was added. It only accepts input in the format "d,d,d" or "d d d"
  *      and occupies the same space as numOfNodes2.
  *  (c) For circulant graph, added connection for offsets widget and
@@ -331,6 +331,31 @@
  *  (b) When the offsets text is changed, a new graph is generated on
  *	the preview instead of simply styling the graph as new edges
  *	need to be added.
+ * Aug 26, 2020 (IC V1.55)
+ *  (a) Removed offsets from the mainwindow.ui and instead initialize it in
+ *      the constructor before moving it to the location of numOfNodes2.
+ *  (b) Restructured updateEditTab slightly so that nodes are added to
+ *	the edit tab before edges.
+ *  (c) Added a new setting underneath the snapToGrid checkbox that lets the
+ *      user specify the size of the grid cells when snapToGrid is on.
+ *	A signal is sent to the canvas scene when the value changes.
+ * Aug 27, 2020 (IC + JD V1.56)
+ *  (a) In select_custom_graph() fix the positioning of graphs whose width
+ *	or height is equal to 0.
+ *  (b) When a custom graph is read in, set the height and width widgets,
+ *	as well as the node size widget, to values from the custom graph.
+ *	(The node size is computed as the average of the actual node
+ *	sizes, which is a so-so approximation to what we want.)
+ *	This keeps the custom graph from magically changing size when, for
+ *	example, the node fill colour is changed.
+ *  (b) Removed redundant for loop from updateEditTab.
+ *  (c) Moved the gridCellSize widget to settingsdialog as it made more sense
+ *      there.
+ *  (d) Moved clearCanvas to the layout above the canvas so it is out of the
+ *      way of canvas graphs and  adheres to a layout.
+ * Aug 28, 2020 (IC V1.57)
+ *  (a) Update the connection for updateCellSize().
+ *  (b) Improve the code which populates the edit tab.
  */
 
 #include "mainwindow.h"
@@ -435,6 +460,25 @@ QMainWindow(parent),
     new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_G), this,
 		  SLOT(dumpGraphIc()));
 
+    // Create an offsets widget to be used with the circulant graph type
+    offsets = new QLineEdit;
+    offsets->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    offsets->setPlaceholderText("offsets");
+    offsets->setAlignment(Qt::AlignHCenter);
+
+    // Restrict the input for offsets lineEdit to the format "d,d,d" or "d d d"
+    // and move it to the same layout position as numOfNodes2
+    QRegExp re = QRegExp("([1-9]\\d{0,1}(, ?| ))+");
+    QRegExpValidator * validator = new QRegExpValidator(re);
+    offsets->setValidator(validator);
+
+    // We want the offsets widget to be in the same row/column position as
+    // numOfNodes2.
+    int index = ui->gridLayout->indexOf(ui->numOfNodes2);
+    int row, col, rSpan, cSpan;
+    ui->gridLayout->getItemPosition(index, &row, &col, &rSpan, &cSpan);
+    ui->gridLayout->addWidget(offsets, row, col, Qt::AlignHCenter);
+
     // The horrendous calls to connect() below were the simplest ones
     // I (JD) could find which allow passing information about which
     // UI widget was changed.  I could have had a separate function for
@@ -516,7 +560,7 @@ QMainWindow(parent),
     connect(ui->graphType_ComboBox,
 	    (void(QComboBox::*)(int))&QComboBox::activated,
 	    this, [this]() { generate_Graph(graphTypeComboBox_WGT); });
-    connect(ui->offsets,
+    connect(offsets,
             (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
             this, [this]() { generate_Graph(offsets_WGT); });
 
@@ -655,13 +699,8 @@ QMainWindow(parent),
             settingsDialog, SLOT(open()));
     connect(settingsDialog, SIGNAL(saveDone()),
             this, SLOT(updateDpiAndPreview()));
-
-    // Restrict the input for offsets lineEdit to the format "d,d,d" or "d d d"
-    // and move it to the same layout position as numOfNodes2.
-    QRegExp re = QRegExp("([1-9]\\d{0,1}(,| ))+");
-    QRegExpValidator * validator = new QRegExpValidator(re);
-    ui->offsets->setValidator(validator);
-    ui->gridLayout_4->addWidget(ui->offsets, 2, 9, Qt::AlignHCenter);
+    connect(settingsDialog, SIGNAL(saveDone()),
+            ui->canvas->scene(), SLOT(updateCellSize()));
 
 
 #ifdef DEBUG
@@ -1991,6 +2030,7 @@ MainWindow::select_Custom_Graph(QString graphName)
     // These 4 variables hold the radii of the vertices which give the
     // extremal positions stored above.
     qreal minXr = 0, maxXr = 0, minYr = 0, maxYr = 0;
+    qreal radius_total = 0;
 
     while (!in.atEnd())
     {
@@ -2053,6 +2093,7 @@ MainWindow::select_Custom_Graph(QString graphName)
 	    qreal d = fields.at(2).toDouble();
 	    qreal r = d / 2.;
 	    qreal t = fields.at(3).toDouble();
+	    radius_total += r;
 	    node->setPos(x * currentPhysicalDPI_X, y * currentPhysicalDPI_Y);
 	    node->setDiameter(d);
 	    node->setPenWidth(t);
@@ -2080,7 +2121,7 @@ MainWindow::select_Custom_Graph(QString graphName)
 		maxYr = r;
 	    }
 	    qDebu("  node id %d at (%.4f, %.4f)\n\tX [%.4f, %.4f], "
-		  "Y [%.4f, %.4f]", i-1, x, y, minX, maxX, minY, maxY);
+		  "Y [%.4f, %.4f]", i - 1, x, y, minX, maxX, minY, maxY);
 
 	    QColor fillColor;
 	    fillColor.setRedF(fields.at(5).toDouble());
@@ -2161,8 +2202,10 @@ MainWindow::select_Custom_Graph(QString graphName)
     // program should already be centered.)
     qreal width = (maxX - maxXr) - (minX + minXr);
     qreal height = (maxY - maxYr) - (minY + minYr);
-    qDebu("    X: [%.4f, %.4f], Xr min %.4f, max %.4f",
-	  minX, maxX, minXr, maxXr);
+    ui->graphWidth->setValue(width + 2 * radius_total / numOfNodes);
+    ui->graphHeight->setValue(height + 2 * radius_total / numOfNodes);
+    qDebu("    X: [%.4f, %.4f], Xr min %.4f, max %.4f, r avg %.4f",
+	  minX, maxX, minXr, maxXr, radius_total / numOfNodes);
     qDebu("    Y: [%.4f, %.4f], Yr min %.4f, max %.4f",
 	  minY, maxY, minYr, maxYr);
     qDebu("    width %.4f, height %.4f", width, height);
@@ -2172,8 +2215,10 @@ MainWindow::select_Custom_Graph(QString graphName)
     for (int i = 0; i < nodes.count(); i++)
     {
 	Node * n = nodes.at(i);
-	n->setPreviewCoords(n->x() / width / currentPhysicalDPI_X,
-			    n->y() / height / currentPhysicalDPI_Y);
+	n->setPreviewCoords(width == 0. ? 0.
+			    : n->x() / width / currentPhysicalDPI_X,
+			    height == 0. ? 0.
+			    : n->y() / height / currentPhysicalDPI_Y);
 	qDebu("    nodes[%s] coords: screen (%.4f, %.4f); "
 	      "preview set to (%.4f, %.4f)", n->getLabel().toLatin1().data(),
 	      n->x(), n->y(), n->getPreviewX(), n->getPreviewY());
@@ -2314,7 +2359,7 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 	int numOfNodes2 = ui->numOfNodes2->value();
 	qreal nodeDiameter = ui->nodeDiameter->value();
 	bool drawEdges = ui->complete_checkBox->isChecked();
-	QString offsets = ui->offsets->text();
+	QString offsetsText = offsets->text();
 
 	if (currentGraphIndex != graphIndex
 	    || currentNumOfNodes1 != numOfNodes1
@@ -2328,7 +2373,7 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 	    ui->preview->Create_Basic_Graph(graphIndex,
 					    numOfNodes1, numOfNodes2,
 					    nodeDiameter, drawEdges,
-					    offsets);
+					    offsetsText);
 	    this->style_Graph(ALL_WGT);
 	    currentNumOfNodes1 = numOfNodes1;
 	    currentNumOfNodes2 = numOfNodes2;
@@ -2595,7 +2640,7 @@ MainWindow::set_Font_Sizes()
     ui->nodeDiameter->setFont(font);
     ui->NodeNumLabelStart->setFont(font);
     ui->EdgeNumLabelStart->setFont(font);
-    ui->offsets->setFont(font);
+    offsets->setFont(font);
 }
 
 
@@ -2647,7 +2692,7 @@ MainWindow::set_Interface_Sizes()
 
     // Fix mainWindows minimum width
     this->setMinimumWidth(ui->tabWidget->minimumWidth()
-                          + ui->horizontalLayout->sizeHint().width()
+                          + ui->gridLayout_3->sizeHint().width()
                           + borderWidth2);
 
     // Resize the initial window size for high dpi screens
@@ -2701,7 +2746,7 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 
     ui->complete_checkBox->show();
 
-    ui->offsets->hide();
+    offsets->hide();
 
     if (index <= 0)
 	return;
@@ -2728,7 +2773,7 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 
       case BasicGraphs::Circulant:
         ui->numOfNodes2->hide();
-        ui->offsets->show();
+        offsets->show();
         break;
 
       case BasicGraphs::Cycle:
@@ -3064,136 +3109,134 @@ MainWindow::updateEditTab(int index)
 		    connect(graph, SIGNAL(destroyed(QObject*)),
 			    label12, SLOT(deleteLater()));
 
-		    QList<QGraphicsItem *> list;
+		    // Made two lists for nodes and edges
+		    QList<QGraphicsItem *> nodeList, edgeList;
 		    foreach (QGraphicsItem * gItem, graph->childItems())
-			list.append(gItem);
-
-		    while (!list.isEmpty())
 		    {
-			foreach (QGraphicsItem * gItem, list)
-			{
-			    if (gItem != nullptr)
-			    {
-				if (gItem->type() == Graph::Type)
-				    list.append(gItem->childItems());
-				else if (gItem->type() == Node::Type)
-				{
-				    Node * node
-					= qgraphicsitem_cast<Node*>(gItem);
-				    QLineEdit * nodeEdit = new QLineEdit();
-				    // Q: what was the point of this?
-				    // nodeEdit->setText("Node\n");
-				    // gridLayout->addWidget(nodeEdit);
+			if (gItem->type() == Node::Type)
+			    nodeList.append(gItem);
+			else if (gItem->type() == Edge::Type)
+			    edgeList.append(gItem);
+		    }
 
-				    QLabel * label = new QLabel("Node");
-				    // When this node is deleted, also
-				    // delete its label in the edit tab.
-				    connect(node, SIGNAL(destroyed(QObject*)),
-					    label, SLOT(deleteLater()));
+		    // First add all nodes to the edit tab
+		    while (!nodeList.isEmpty())
+		    {
+			QGraphicsItem * gItem = nodeList.at(0);
+			Node * node = qgraphicsitem_cast<Node*>(gItem);
+			QLineEdit * nodeEdit = new QLineEdit();
+			// Q: what was the point of this?
+			// nodeEdit->setText("Node\n");
+			// gridLayout->addWidget(nodeEdit);
 
-				    node->htmlLabel->editTabLabel = label;
+			QLabel * label = new QLabel("Node");
+			// When this node is deleted, also
+			// delete its label in the edit tab.
+			connect(node, SIGNAL(destroyed(QObject*)),
+				label, SLOT(deleteLater()));
 
-				    QDoubleSpinBox * diamBox
-					= new QDoubleSpinBox();
+			node->htmlLabel->editTabLabel = label;
 
-				    QDoubleSpinBox * thicknessBox
-					= new QDoubleSpinBox();
+			QDoubleSpinBox * diamBox
+			    = new QDoubleSpinBox();
 
-				    QPushButton * lineColorButton
-					= new QPushButton();
-				    QPushButton * fillColorButton
-					= new QPushButton();
+			QDoubleSpinBox * thicknessBox
+			    = new QDoubleSpinBox();
 
-				    QSpinBox * fontSizeBox
-					= new QSpinBox();
+			QPushButton * lineColorButton
+			    = new QPushButton();
+			QPushButton * fillColorButton
+			    = new QPushButton();
 
-				    nodeEdit->installEventFilter(node);
-				    diamBox->installEventFilter(node);
-				    thicknessBox->installEventFilter(node);
-				    fontSizeBox->installEventFilter(node);
+			QSpinBox * fontSizeBox
+			    = new QSpinBox();
 
-				    // All controllers handle deleting of widgets
-				    SizeController * sizeController
-					= new SizeController(node, diamBox,
-							     thicknessBox);
-				    ColorLineController * colorLineController
-					= new ColorLineController(node,
-								  lineColorButton);
-				    LabelController * weightController
-					= new LabelController(node, nodeEdit);
-				    LabelSizeController * weightSizeController
-					= new LabelSizeController(node,
-								  fontSizeBox);
-				    ColorFillController * colorFillController
-					= new ColorFillController(node,
-								  fillColorButton);
+			nodeEdit->installEventFilter(node);
+			diamBox->installEventFilter(node);
+			thicknessBox->installEventFilter(node);
+			fontSizeBox->installEventFilter(node);
 
-				    gridLayout->addWidget(label, i, 1);
-				    gridLayout->addWidget(thicknessBox, i, 2);
-				    gridLayout->addWidget(diamBox, i, 3);
-				    gridLayout->addWidget(nodeEdit,  i, 4);
-				    gridLayout->addWidget(fontSizeBox, i, 5);
-				    gridLayout->addWidget(lineColorButton, i, 6);
-				    gridLayout->addWidget(fillColorButton, i, 7);
-				    Q_UNUSED(sizeController);
-				    Q_UNUSED(colorLineController);
-				    Q_UNUSED(colorFillController);
-				    Q_UNUSED(weightController);
-				    Q_UNUSED(weightSizeController);
-				    i++;
-				}
-				else if (gItem->type() == Edge::Type)
-				{
-				    Edge * edge
-					= qgraphicsitem_cast<Edge*>(gItem);
-				    QLineEdit * edgeEdit = new QLineEdit();
-				    // Q: what were these for??
-				    // editEdge->setText("Edge\n");
-				    // gridLayout->addWidget(editEdge);
+			// All controllers handle deleting of widgets
+			SizeController * sizeController
+			    = new SizeController(node, diamBox,
+						 thicknessBox);
+			ColorLineController * colorLineController
+			    = new ColorLineController(node,
+						      lineColorButton);
+			LabelController * weightController
+			    = new LabelController(node, nodeEdit);
+			LabelSizeController * weightSizeController
+			    = new LabelSizeController(node,
+						      fontSizeBox);
+			ColorFillController * colorFillController
+			    = new ColorFillController(node,
+						      fillColorButton);
 
-				    QLabel * label = new QLabel("Edge");
-				    // When this edge is deleted, also
-				    // delete its label in the edit tab.
-				    connect(edge, SIGNAL(destroyed(QObject*)),
-					    label, SLOT(deleteLater()));
+			gridLayout->addWidget(label, i, 1);
+			gridLayout->addWidget(thicknessBox, i, 2);
+			gridLayout->addWidget(diamBox, i, 3);
+			gridLayout->addWidget(nodeEdit,  i, 4);
+			gridLayout->addWidget(fontSizeBox, i, 5);
+			gridLayout->addWidget(lineColorButton, i, 6);
+			gridLayout->addWidget(fillColorButton, i, 7);
+			Q_UNUSED(sizeController);
+			Q_UNUSED(colorLineController);
+			Q_UNUSED(colorFillController);
+			Q_UNUSED(weightController);
+			Q_UNUSED(weightSizeController);
+			i++;
+			nodeList.removeFirst();
+		    }
 
-				    edge->htmlLabel->editTabLabel = label;
+		    // Now add all edges to the edit tab
+		    while (!edgeList.isEmpty())
+		    {
+			QGraphicsItem * gItem = edgeList.at(0);
+			Edge * edge = qgraphicsitem_cast<Edge*>(gItem);
+			QLineEdit * edgeEdit = new QLineEdit();
+			// Q: what were these for??
+			// editEdge->setText("Edge\n");
+			// gridLayout->addWidget(editEdge);
 
-				    QPushButton * button = new QPushButton();
-				    QDoubleSpinBox * sizeBox
-					= new QDoubleSpinBox();
-				    QSpinBox * fontSizeBox
-					= new QSpinBox();
+			QLabel * label = new QLabel("Edge");
+			// When this edge is deleted, also
+			// delete its label in the edit tab.
+			connect(edge, SIGNAL(destroyed(QObject*)),
+				label, SLOT(deleteLater()));
 
-				    edgeEdit->installEventFilter(edge);
-				    sizeBox->installEventFilter(edge);
-				    fontSizeBox->installEventFilter(edge);
+			edge->htmlLabel->editTabLabel = label;
 
-				    // All controllers handle deleting of widgets
-				    SizeController * sizeController
-					= new SizeController(edge, sizeBox);
-				    ColorLineController * colorController
-					= new ColorLineController(edge, button);
-				    LabelController * weightController
-					= new LabelController(edge, edgeEdit);
-				    LabelSizeController * weightSizeController
-					= new LabelSizeController(edge,
-								  fontSizeBox);
+			QPushButton * button = new QPushButton();
 
-				    gridLayout->addWidget(label, i, 1);
-				    gridLayout->addWidget(sizeBox, i, 2);
-				    gridLayout->addWidget(edgeEdit, i, 4);
-				    gridLayout->addWidget(fontSizeBox, i, 5);
-				    gridLayout->addWidget(button, i, 6);
-				    Q_UNUSED(sizeController);
-				    Q_UNUSED(colorController);
-				    Q_UNUSED(weightController);
-				    Q_UNUSED(weightSizeController);
-				    i++;
-				}
-			    }
-			    list.removeFirst();
-			}
+			QDoubleSpinBox * sizeBox = new QDoubleSpinBox();
+
+			QSpinBox * fontSizeBox = new QSpinBox();
+
+			edgeEdit->installEventFilter(edge);
+			sizeBox->installEventFilter(edge);
+			fontSizeBox->installEventFilter(edge);
+
+			// All controllers handle deleting of widgets
+			SizeController * sizeController
+			    = new SizeController(edge, sizeBox);
+			ColorLineController * colorController
+			    = new ColorLineController(edge, button);
+			LabelController * weightController
+			    = new LabelController(edge, edgeEdit);
+			LabelSizeController * weightSizeController
+			    = new LabelSizeController(edge, fontSizeBox);
+
+			gridLayout->addWidget(label, i, 1);
+			gridLayout->addWidget(sizeBox, i, 2);
+			gridLayout->addWidget(edgeEdit, i, 4);
+			gridLayout->addWidget(fontSizeBox, i, 5);
+			gridLayout->addWidget(button, i, 6);
+			Q_UNUSED(sizeController);
+			Q_UNUSED(colorController);
+			Q_UNUSED(weightController);
+			Q_UNUSED(weightSizeController);
+			i++;
+			edgeList.removeFirst();
 		    }
 		}
 	    }
@@ -3302,7 +3345,6 @@ MainWindow::saveSettings()
 {
     if (this->isMaximized())
     {
-        //printf("Saving window Maxed\n");
         settings.setValue("windowMaxed", true);
         //this->showNormal();
         //settings.setValue("windowSize", this->size());
@@ -3310,7 +3352,6 @@ MainWindow::saveSettings()
     else
     {
         settings.setValue("windowMaxed", false);
-        //printf("Saving window size\n");
         settings.setValue("windowSize", this->size());
     }
 }

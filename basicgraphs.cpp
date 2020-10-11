@@ -2,7 +2,7 @@
  * File:	basicgraphs.cpp
  * Author:	Rachel Bood
  * Date:	Dec 31, 2015 (?)
- * Version:	1.7
+ * Version:	1.9
  *
  * Purpose:	Implement functions which draw all the "known" graph types.
  *
@@ -59,6 +59,12 @@
  *      a cycle along with edges based on a list of node offsets.
  * Aug 25, 2020 (IC + JD V1.7):
  *  (a) Improve the code checking circulant graph offsets.
+ * Aug 27, 2020 (JD V1.8)
+ *  (a) Modified the function which creates circulant graphs to remove
+ *	need for regexps and tweak the code a bit.
+ *	Added function documentation.
+ * Aug 28, 2020 (IC V1.9)
+ *  (a) Remove spurious #include <QRegularExpression>.
  */
 
 #include "basicgraphs.h"
@@ -67,7 +73,6 @@
 #include "edge.h"
 #include <qmath.h>
 #include <QDebug>
-#include <QRegularExpression>
 
 
 static const double PI = 3.14159265358979323846264338327950288419717;
@@ -82,10 +87,10 @@ BasicGraphs::BasicGraphs()
 {
     // This must agree with the Graph_Type enum defined in basicgraphs.h.
     Graph_Type_Name = { "None", "Antiprism", "Balanced Binary Tree",
-                        "Bipartite", "Circulant", "Complete", "Crown",
-                        "Cycle", "Dutch Windmill", "Gear (generalized)",
-                        "Grid", "Helm", "Path", "Petersen (generalized)",
-                        "Prism", "Star", "Wheel"
+			"Bipartite", "Circulant", "Complete", "Crown",
+			"Cycle", "Dutch Windmill", "Gear (generalized)",
+			"Grid", "Helm", "Path", "Petersen (generalized)",
+			"Prism", "Star", "Wheel"
     };
 }
 
@@ -427,6 +432,24 @@ BasicGraphs::generate_bipartite(Graph * g, int topNodes, int bottomNodes,
 
 
 
+/*
+ * Name:	generate_circulant()
+ * Purpose:	Generate a circulant graph.
+ * Arguments:	The graph g, the number of nodes, the list of edge offsets,
+ *              and whether to draw edges.
+ * Outputs:	Nothing.
+ * Modifies:	g
+ * Returns:	Nothing.
+ * Assumptions:	None.
+ * Bugs:	There must be a more elegant way to get the list of
+ *		numbers out of the offsets string.  And note that
+ *		stringstream is grotesque, not elegant.
+ * Notes:	Any characters other than digits are used only as delimiters.
+ *		Thus even if the UI allows negative numbers or
+ *		arithmetic expressions to be entered, this function won't
+ *		produce the intended (by the user) result.
+ */
+
 void
 BasicGraphs::generate_circulant(Graph * g, int numOfNodes, QString offsets,
                                 bool drawEdges)
@@ -434,28 +457,24 @@ BasicGraphs::generate_circulant(Graph * g, int numOfNodes, QString offsets,
     qreal width = 0.5;
     qreal height = 0.5;
     QList<int> offsetsList;
-    QRegularExpression re("\\d");
-    QRegularExpressionMatch match, match2;
+
+    qDebu("BG:generate_circulant(, %d, '%s', %s) called",
+	  numOfNodes, offsets.toLocal8Bit().data(),
+	  drawEdges ? "true" : "false");
 
     // Need to parse the offsets string into a list of numbers
-    // The string format should either be "d,d,d" or "d d d"
-    // but we need to take into account double digit numbers.
-    for (int i = 0; i < offsets.count(); i++)
+    int i = 0;
+    while (i < offsets.length())
     {
-        match = re.match(offsets.at(i));
-        match2 = re.match(offsets.at(i + 1));
-        if (match.hasMatch() && match2.hasMatch())
-        {
-            int num = offsets.at(i).digitValue() * 10
-                    + offsets.at(i + 1).digitValue();
-            offsetsList.append(num);
-            i++;
-        }
-        else if (match.hasMatch())
-        {
-            int num = offsets.at(i).digitValue();
-            offsetsList.append(num);
-        }
+	int num = 0;
+	if (offsets.at(i).isDigit())
+	{
+	    while (i < offsets.length() && offsets.at(i).isDigit())
+		num = 10 * num + offsets.at(i++).digitValue();
+	    offsetsList.append(num);
+	    qDebu("   added %d to offsetList", num);
+	}
+	i++;
     }
 
     g->nodes.cycle = create_cycle(g, width, height, numOfNodes);
@@ -463,32 +482,30 @@ BasicGraphs::generate_circulant(Graph * g, int numOfNodes, QString offsets,
     if (! drawEdges)
         return;
 
-    for (int i = 0; i < g->nodes.cycle.count(); i++)
+    for (int i = 0; i < numOfNodes; i++)
     {
-	int next = (i + 1) % g->nodes.cycle.count();
-        Edge * edge = new Edge(g->nodes.cycle.at(i),
-                               g->nodes.cycle.at(next));
-        edge->setParentItem(g);
-
+	Node * firstNode = g->nodes.cycle.at(i);
         foreach (int num, offsetsList)
         {
-            if (num > 1 && num < g->nodes.cycle.count() - 1)
+            if (num > 0 && num < g->nodes.cycle.count())
             {
-                // Prevent duplicate edges from being made
-		int otherEnd = (i + num) % g->nodes.cycle.count();
+                // Prevent duplicate edges from being made.
                 bool edgeExists = false;
-                foreach (Edge * edge, g->nodes.cycle.at(i)->edges())
+		Node * secondNode = g->nodes.cycle.at((i + num) % numOfNodes);
+                foreach (Edge * edge, firstNode->edges())
                 {
-                    if ((edge->destNode() == g->nodes.cycle.at(i) &&
-			 edge->sourceNode() == g->nodes.cycle.at(otherEnd))
-			|| (edge->sourceNode() == g->nodes.cycle.at(i) &&
-			    edge->destNode() == g->nodes.cycle.at(otherEnd)))
-                        edgeExists = true;
+                    if ((edge->destNode() == firstNode
+			 && edge->sourceNode() == secondNode)
+			|| (edge->sourceNode() == firstNode
+			    && edge->destNode() == secondNode))
+		    {
+			edgeExists = true;
+			break;
+		    }		    
                 }
                 if (!edgeExists)
                 {
-                    Edge * edge = new Edge(g->nodes.cycle.at(i),
-                                           g->nodes.cycle.at(otherEnd));
+                    Edge * edge = new Edge(firstNode, secondNode);
                     edge->setParentItem(g);
                 }
             }

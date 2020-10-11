@@ -2,7 +2,7 @@
  * File:    settingsdialog.cpp
  * Author:  Ian Cathcart
  * Date:    2020/08/05
- * Version: 1.2
+ * Version: 1.4
  *
  * Purpose: Implements the settings dialog.
  *
@@ -17,11 +17,18 @@
  *      is reflected here.  They should prompt the user to select a colour
  *      for saved graph backgrounds.  TODO: Allow a transparent background
  *      option for non-JPEG image types.
+ * Aug 26, 2020 (IC V1.3)
+ *  (a) Set the font of this UI to match mainwindow's font.
+ * Aug 27, 2020 (IC V1.4)
+ *  (a) Moved the gridCellSize widget from the mainwindow to here and added
+ *      a settings value for it to be used in canvasscene.cpp.
  */
+
 
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
 #include "defuns.h"
+#include "mainwindow.h"
 
 #include <QColorDialog>
 
@@ -31,6 +38,10 @@ SettingsDialog::SettingsDialog(QWidget * parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle("Settings");
+
+    QFont font;
+    font.setFamily("Arimo");
+    this->setFont(font);
 
     // Initialize colour buttons.
     QString s("background: #ffffff;" BUTTON_STYLE);
@@ -72,6 +83,9 @@ SettingsDialog::loadSettings()
 
         ui->customSpinBox->setValue(settings.value("customResolution").toInt());
 
+        if (settings.contains("gridCellSize"))
+            ui->gridCellSize->setValue(settings.value("gridCellSize").toInt());
+
         if (settings.contains("jpgBgColour"))
             ui->jpgBgColour->setStyleSheet("background: "
                                         + settings.value("jpgBgColour").toString()
@@ -90,6 +104,7 @@ SettingsDialog::saveSettings()
 {
     settings.setValue("useDefaultResolution", ui->defaultButton->isChecked());
     settings.setValue("customResolution", ui->customSpinBox->value());
+    settings.setValue("gridCellSize", ui->gridCellSize->value());
 
     emit saveDone();
 }
