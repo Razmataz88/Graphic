@@ -2,7 +2,7 @@
  * File:    canvasscene.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.22
+ * Version: 1.23
  *
  * Purpose: Initializes a QGraphicsScene to implement a drag and drop feature.
  *          still very much a WIP
@@ -60,9 +60,10 @@
  *  (a) Added searchAndSeparate() function to determine if a graph needs to be
  *      split into individual graphs following a node/edge deletion.
  * Jul 30, 2020 (IC V1.14)
- *  (a) (Partially) Removed the graph recursion from keyReleaseEvent. Children
- *      of the two graphs are now reassigned to a singular graph and the old
- *      graph objects are deleted, atleast in the case of 2 nodes selected!
+ *  (a) (Partially) Removed the graph recursion from keyReleaseEvent.
+ *	Children of the two graphs are now reassigned to a single
+ *	graph and the old graph objects are deleted, at least in the
+ *	case of 2 nodes selected!
  *      4 nodes selected is still WIP, as it messes up the rotations somehow.
  *  (b) For 4-node joins, ensure that all 4 nodes are distinct.
  * Jul 31, 2020 (IC V1.15)
@@ -82,9 +83,10 @@
  *  (a) Changed the way drag mode works slightly.  The drag will
  *	prioritize moving graphs that had items at the point of click
  *	before defaulting to moving the first graph bounding box found.
- * August 20, 2020 (IC V1.19)
- *  (a) Fixed the rotation issue, although the change was made in graph.cpp.
- *      The rotation of root2 needs to take into account any previous rotation.
+ * Aug 20, 2020 (IC V1.19)
+ *  (a) Fixed the rotation issue, although the change was made in
+ *	graph.cpp.  The rotation of root2 needs to take into account
+ *	any previous rotation. 
  *  (b) Added code to the keyReleaseEvent that checks if both sets of nodes
  *      in a 4-node join were connected by an edge and, if so, removes one.
  * Aug 26, 2020 (IC V1.20)
@@ -92,7 +94,9 @@
  *      the user's input to the cellSize widget on the UI and redraws the
  *      cells accordingly.
  * Aug 30, 2020 (JD V1.21)
- *  (a) Adjust the code for the four-node join operation so that,
+ *  (a) updateCellSize now uses the saved settings value to determine the size
+ *      of grid cells.
+ *  (b) Adjust the code for the four-node join operation so that,
  *	rather than co-locating the first nodes selected in each graph,
  *	the midpoint between the selected nodes of the second graph
  *	is translated to the midpoint between the selected nodes of
@@ -102,6 +106,10 @@
  *  (a) Modify updateCellSize() as the snap-to-grid cell size is now
  *	in the settings.
  *  (b) Yet more improvements to the now-infamous 4-node join operation.
+ * Sep 1, 2020 (IC + JD V1.23)
+ *  (a) Added the GRID_DOT_DPI_THRESHOLD macro and updated
+ *	drawBackground() to determine when the grid dots should be
+ *	single pixels or 2x2 blocks.
  */
 
 #include "canvasscene.h"
@@ -123,6 +131,9 @@
 #include <QtCore>
 #include <QtGui>
 
+// If the default resolution (DPI) is >= this, draw each grid dot as a
+// 2x2 block instead of a single pixel.
+#define GRID_DOT_DPI_THRESHOLD 120
 
 CanvasScene::CanvasScene()
     :  mCellSize(25, 25)
@@ -203,6 +214,7 @@ CanvasScene::dropEvent(QGraphicsSceneDragDropEvent * event)
 }
 
 
+
 void
 CanvasScene::drawBackground(QPainter * painter, const QRectF &rect)
 {
@@ -213,7 +225,16 @@ CanvasScene::drawBackground(QPainter * painter, const QRectF &rect)
 
         for (qreal x = left; x < rect.right(); x += mCellSize.width())
             for (qreal y = top; y < rect.bottom(); y += mCellSize.height())
+            {
                 painter->drawPoint(QPointF(x, y));
+                if (settings.value("defaultResolution").toInt()
+                        > GRID_DOT_DPI_THRESHOLD)
+                {
+                    painter->drawPoint(QPointF(x+1, y));
+                    painter->drawPoint(QPointF(x, y+1));
+                    painter->drawPoint(QPointF(x+1, y+1));
+                }
+            }
     }
     else
         QGraphicsScene::drawBackground(painter, rect);
