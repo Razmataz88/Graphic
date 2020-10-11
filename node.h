@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.12
+ * Version: 1.13
  *
  * Purpose: Declare the node class.
  * 
@@ -45,6 +45,9 @@
  * Aug 19, 2020 (IC V1.12)
  *  (a) Make the setNodeLabel(QString) a slot.
  *      Remove the now-unneeded setNodeLabel(void) function.
+ * August 26, 2020 (IC V1.13)
+ *  (a) Added tempPenStyle for saving and restoring penstyle during edit tab
+ *      focus events.
  */
 
 
@@ -140,7 +143,7 @@ class Node : public QGraphicsObject
     QString	label;
     QColor	nodeLine, nodeFill;
     int		nodeID;		    // The (internal) number of the node.
-    int		penStyle;
+    int		penStyle, tempPenStyle;
     qreal	penSize;
     bool	select;
     void	labelToHtml();

@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.19
+ * Version:	1.20
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -63,6 +63,9 @@
  *  (a) Added the ability to number edge labels similar to nodes so
  *      on_EdgeNumLabelCheckBox_clicked was added as well.
  *	Some related renaming of functions was required.
+ * Aug 26, 2020 (IC V1.20)
+ *  (a) Added a QLineEdit * offsets field, since the offsets widget is
+ *	now created in mainwindow.cpp, non in mainwindow.ui.
  */
 
 
@@ -151,6 +154,7 @@ private:
     QList<Graph *> graphList;
     bool promptSave = false;
     SettingsDialog * settingsDialog;
+    QLineEdit * offsets;
 };
 
 #endif // MAINWINDOW_H
