@@ -2,7 +2,7 @@
  * File:    main.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.5
+ * Version: 1.6
  *
  * Purpose: executes the mainwindow.ui.
  *
@@ -15,11 +15,15 @@
  *      can look as similar as possible on different systems.
  * May 13, 2020 (JD V1.3)
  *  (a) Update comments.
- * June 6, 2020 (IC V1.4)
+ * Jun 6, 2020 (IC V1.4)
  *  (a) Call set_Interface_Sizes() after show() to get accurate sizehints
  *      when resizing the window.
- * August 18, 2020 (IC V1.5)
- *  (a) Added cmtt10 and cmsy10 fonts to be embeded.
+ * Aug 18, 2020 (IC V1.5)
+ *  (a) Added cmtt10 and cmsy10 fonts to be embedded.
+ * Sep 11, 2020 (JD V1.6)
+ *  (a) Replace (most of) cmr10, cmmi10 and cmsy10 with cmzsd10.
+ *      See corresponding simplifications of html-label.cpp
+ *	and comment about why I still embed cmr10.
  */
 
 #include "mainwindow.h"
@@ -33,11 +37,10 @@ main(int argc, char * argv[])
 {
     QApplication a(argc, argv);
 
-    QFontDatabase::addApplicationFont(":/fonts/cmmi10.ttf");
-    QFontDatabase::addApplicationFont(":/fonts/cmr10.ttf");
-    QFontDatabase::addApplicationFont(":/fonts/cmsy10.ttf");
-    QFontDatabase::addApplicationFont(":/fonts/cmtt10.ttf");
     QFontDatabase::addApplicationFont(":/fonts/arimo.ttf");
+    QFontDatabase::addApplicationFont(":/fonts/cmr10.ttf");
+    QFontDatabase::addApplicationFont(":/fonts/cmtt10.ttf");
+    QFontDatabase::addApplicationFont(":/fonts/cmzsd10.ttf");
 
     MainWindow w;
     w.show();

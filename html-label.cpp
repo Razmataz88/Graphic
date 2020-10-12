@@ -2,7 +2,7 @@
  * File:	html-label.cpp	    Formerly label.cpp
  * Author:	Rachel Bood
  * Date:	2014-??-??
- * Version:	1.9
+ * Version:	1.10
  * 
  * Purpose:	Implement the functions relating to node and edge labels.
  *		(Some places in the code use "weight" for "edge label".)
@@ -56,6 +56,19 @@
  *  (b) Remove the function "setTextInteraction()" which has not been
  *	called in many a year, if ever.
  *  (c) #include defuns.h to get debugging defns, remove them from here.
+ * Sep 9, 2020 (IC V1.9)
+ *  (a) Added some precautions to the event filter incase a label gets focus
+ *      without the edit tab being populated yet.
+ * Sep 11, 2020 (JD V1.10)
+ *  (a) Created a single font (cmzsd10) containing all the characters
+ *      that are supported now in a valid math expression.
+ *	(Appropriate chars were pulled from cmr10, cmsy7, cmsy10 and
+ *	cmmi10.)  Simplified the code considerably since we no longer
+ *	have to figure out what font to use, and so on.  Also made the
+ *	code handle more weird but (more or less) valid constructs,
+ *	such as "a^\{", "a\_", and many more such pathological expressions.
+ *  (b) Remove setHtmlLabel(), which was made redundant by the changes
+ *	to edge.cpp on Aug 21, 2020.
  */
 
 #include "defuns.h"
@@ -69,7 +82,6 @@
 
 
 
-
 HTML_Label::HTML_Label(QGraphicsItem * parent)
 {
     qDeb() << "HTML_Label constructor called";
@@ -79,7 +91,10 @@ HTML_Label::HTML_Label(QGraphicsItem * parent)
     setZValue(5);
 
     QFont font;
-    // Set default font to tt so that it stands out while editing the label.
+    // Set the default font of HTML labels to cmtt10 so that the text
+    // stands out while the label is being edited *and* so that when
+    // the TeX of focused-out label is invalid, the label shows up on
+    // the canvas in cmtt10.
     font.setFamily(QStringLiteral("cmtt10"));
     font.setBold(false);
     font.setWeight(50);
@@ -98,15 +113,16 @@ HTML_Label::HTML_Label(QGraphicsItem * parent)
 }
 
 
+
 /*
  * Name:        eventFilter()
  * Purpose:     Intercepts events related to canvas labels so we can
  *              identify the location of the item on the edit tab and
  *              transfer text data between the nodes/edges and the labels.
- * Arguments:
+ * Arguments:	An object and the event of possible interest.
  * Output:	Nothing.
  * Modifies:	The "editability" of the label.
- * Returns:
+ * Returns:	Whatever QObject::eventFilter(obj, event) returns.
  * Assumptions:
  * Bugs:
  * Notes:       Try using QEvent::HoverEnter and QEvent::HoverLeave
@@ -115,23 +131,33 @@ HTML_Label::HTML_Label(QGraphicsItem * parent)
 bool
 HTML_Label::eventFilter(QObject * obj, QEvent * event)
 {
+    qDeb() << "HL:eventfilter() called with texLabelText = '"
+	   <<  texLabelText << "' and obj = "
+	   << obj << " and event = " << event;
     if (event->type() == QEvent::FocusIn)
     {
-        // Embolden the header for this item's entry on the edit tab
-        QFont font = editTabLabel->font();
-        font.setBold(true);
-        editTabLabel->setFont(font);
+        // Embolden the header for this item's entry in the edit tab.
+        if (editTabLabel != nullptr)
+        {
+            QFont font = editTabLabel->font();
+            font.setBold(true);
+            editTabLabel->setFont(font);
+        }
 
-        // Now update the editable text on the canvas temporarily
+        // While we are editing the label, display it in cmtt10 to
+	// make it obvious to the user that it is being edited.
         QString text = "<font face=\"cmtt10\">" + texLabelText + "</font>";
         setHtml(text);
     }
     else if (event->type() == QEvent::FocusOut)
     {
-	// Undo the bold text
-        QFont font = editTabLabel->font();
-        font.setBold(false);
-        editTabLabel->setFont(font);
+        if (editTabLabel != nullptr)
+        {
+            // Undo the bold text
+            QFont font = editTabLabel->font();
+            font.setBold(false);
+            editTabLabel->setFont(font);
+        }
 
         // Let the parent know to update and reformat the label text.
         emit editDone(toPlainText());
@@ -158,32 +184,20 @@ HTML_Label::eventFilter(QObject * obj, QEvent * event)
 
 
 /*
- * Name:	setHtmlLabel()
- * Purpose:	Create the htmlLabel from the plain text version.
- * Arguments:	The plain text label.
- * Outputs:	Nothing.
- * Modifies:	The edge's htmlLabel.
+ * Name:	paint()
+ * Purpose:	Draw the label on the preview or main canvas.
+ * Arguments:	As below.
+ * Outputs:	Text to the preview or main canvas.
+ * Modifies:	The preview or main canvas.
  * Returns:	Nothing.
- * Assumptions:	None.
- * Bugs:	None.
- * Notes:	None.
+ * Assumptions:	?
+ * Bugs:	?
+ * Notes:	This function is called when a label is changed,
+ *		when a label edit widget in "Edit Nodes and Edges"
+ *		gets or loses focus, and about once per second when
+ *		the label on the canvas is being edited.
+ *		And maybe some other times.
  */
-
-void
-HTML_Label::setHtmlLabel(QString string)
-{
-    qDeb() << "HL:setHtmlLabel(" << string << ") called";
-
-    this->setHtml(strToHtml(string));
-
-    if (parentItem() != nullptr)
-        setPos(parentItem()->boundingRect().center().x()
-	       - boundingRect().width() / 2.,
-               parentItem()->boundingRect().center().y()
-	       - boundingRect().height() / 2.);
-}
-
-
 
 void
 HTML_Label::paint(QPainter * painter,
@@ -198,66 +212,17 @@ HTML_Label::paint(QPainter * painter,
 // All of the following code is for outputting labels in a TeX-ish way.
 // HTML4 and Qt can't handle all of TeX math, but the code below makes
 // relatively simple things look realistic.
-
-// These are the fonts we need to render letters, digits, '{' and '}'.
-#define     CMR	    "<font face=\"cmr10\">"
-#define     CMMI    "<font face=\"cmmi10\">"
-#define     CMSY    "<font face=\"cmsy10\">"
-#define     FONTEND "</font>"
-
-typedef enum { none, cmr, cmmi, cmsy } fontChoices;
-
-
-
-/*
- * Name:	fontChoice
- * Purpose:	Take a char and return the font TeX would set it in
- *		(in a math formula).
- * Argument:	The char of interest
- * Outputs:	Nothing.
- * Modifies:	Nothing.
- * Returns:	A member of the fontChoices enum.
- * Assumptions:	None.
- * Bugs:	There are probably valid chars it doesn't yet know about.
- * Notes:	None.
- */
-
-static fontChoices
-fontChoice(char c)
-{
-    if (isdigit(c))
-	return cmr;
-
-    switch (c)
-    {
-      case '[':
-      case ']':
-      case '(':
-      case ')':
-      case ' ':
-      case ';':
-      case ':':
-      case '+':
-      case '=':
-      case '-':		// cmsy char 0, which I can't do.  Use n-dash.
-	return cmr;
-
-      case '{':
-      case '}':
-	return cmsy;
-
-      default:
-	return cmmi;
-    }
-}
-
+// I allow some usage (e.g., \^ and \_) which are not the same as TeX,
+// and this needs to be taken care of when exporting to TikZ.
 
 /*
  * Name:	mathFontify()
  * Purpose:	Take a (non-HTMLized) string and create a new string
  *		with appropriate font tags to display the string on
  *		the Qt canvas in "math mode".
- *		THIS DOES NOT HANDLE _ or ^.  THAT IS DONE ELSEWHERE.
+ *		THIS DOES NOT HANDLE subscript (_) or superscript (^).
+ *		THAT IS DONE ELSEWHERE.
+ *		However, prime (') is handled here.
  * Arguments:	A QString to be fontified.
  * Outputs:	Nothing.
  * Modifies:	Nothing.
@@ -273,18 +238,14 @@ fontChoice(char c)
  *		does, in that it only implements basic math formula
  *		typesetting.  One thing it handles is throwing away
  *		braces which are not preceded by a '\'.
- *		Qt bug?  If the formula has a \{ and/or \}, the HTML
- *		text is raised too high.  Font issue or Qt?
  */
 
 static QString
 mathFontify(QByteArray chars)
 {
     QString htmlMathStr = "";
-    fontChoices thisFont;
     bool prevWasBS = false;		// BackSlash
     int len = chars.length();
-    fontChoices prevFont = none;
 
     qDebu("HL:mathFontify(\"%s\") called", chars.data());
 
@@ -300,74 +261,42 @@ mathFontify(QByteArray chars)
 	    continue;
 	}
 
-	thisFont = fontChoice(c);
 	// TeX doesn't display braces if they are not preceded with '\'
 	// Ditto for spaces in math formulae.
 	if (c == '{' || c == '}' || c == ' ')
 	{
 	    if (! prevWasBS)
 		continue;
-	    // These chars are not in the expected place in cmsy10!
-	    if (c == '{')
-		c = 'f';
-	    else if (c == '}')
-		c = 'g';
 	}
 
-	// minus is char 0 in cmmi10, which I can't easily get into
-	// the string.  Use cmr n-dash.
-	if (c == '-')
-	    c = 0173;
-
-	// These are in weird places in cmmi10
-	if (c == ',')
-	    c = 073;
-	if (c == '.')
-	    c = 072;
-
-	// Change font, if necessary
-	qDebu("  font(%c) = %d", c, thisFont);
-	if (thisFont != prevFont)
-	{
-	    if (prevFont != none)
-		htmlMathStr += FONTEND;
-	    switch (thisFont)
-	    {
-	      case cmr:
-		htmlMathStr += CMR;
-		break;
-
-	      case cmmi:
-		htmlMathStr += CMMI;
-		break;
-
-	      case cmsy:
-		htmlMathStr += CMSY;
-		break;
-
-	      default:
-		fprintf(stderr, "unknown font %d in mathFontify()\n", thisFont);
-		htmlMathStr += CMMI;
-		break;
-	    }
-	    prevFont = thisFont;
-	}
+	// Map '<' and '>' to avoid conflicts with HTML tags.
+	// NOTE: Although cmzsd10 has the space glyph from cmr10, and
+	// other programs (e.g., gnumeric) show a visible space when
+	// using cmzsd10, Qt does not display any visible space unless
+	// the font is changed to cmr10.  (I could probably also use
+	// cmtt10's space, but it is 50 or 60% wider than cmr10's,
+	// so I'll use cmr10 for now.
+	// TODO: figure out why cmzsd10's space isn't OK here.
 	if (c == '<')
 	    htmlMathStr += "&lt;";
 	else if (c == '>')
 	    htmlMathStr += "&gt;";
 	else if (c == ' ' && prevWasBS)
-	    htmlMathStr += "&nbsp;";
+	    htmlMathStr += "<font face = \"cmr10\">&nbsp;</font>";
+	    // htmlMathStr += "&nbsp;";
+	else if (c == '^' && prevWasBS)
+	    htmlMathStr += "^";
+	else if (c == '_' && prevWasBS)
+	    htmlMathStr += "_";
+	else if (c == '\'')
+	    htmlMathStr += "<sup>'</sup>";
 	else
 	    htmlMathStr += c;
 
 	prevWasBS = false;
     }
 
-    if (htmlMathStr.length() > 0)
-	htmlMathStr += FONTEND;
-
-    qDeb() << "mathFontify(" << chars << " -> /" << htmlMathStr << "/";
+    qDeb() << "mathFontify(" << chars << ") -> /" << htmlMathStr << "/";
 
     return htmlMathStr;
 }
@@ -377,18 +306,19 @@ mathFontify(QByteArray chars)
 /*
  * Name:	strToHtml2()
  * Purpose:	Parse the arg string, turn it into HTML, return that text.
- * Arguments:	A hopefully-correct TeX-ish vertex label string.
+ * Arguments:	A hopefully-correct TeX-ish node or edge label string.
  * Outputs:	Nothing.
  * Modifies:	Nothing.
  * Returns:	If able to completely parse the arg string as proper TeX, 
  *		the HTML-ized text.  On failure, ideally return the
  *		empty string.
  * Assumptions:	The label string is not deviously invalid.
- * Bugs:	Should return a success indication should parsing fail.
+ * Bugs:	(Arguable.)  Should return more useful information
+ *		should parsing fail.
  * Notes:	Algorithm:
  *		Case 1: no '^' or '_'
  *		        -> just call mathFontify()
- *		Case 2: '^' or '_' at position 0 (must be a recursive call)
+ *		Case 2: '^' or '_' at position 0 (i.e, a recursive call)
  *		     2a: sub/sup is a single token
  *		        -> handle base directly, recursive call for rest
  *		     2b: sub/sub is a brace group
@@ -415,6 +345,15 @@ strToHtml2(QByteArray chars)
     QString closeTag;
 
     qDebu("HL:strToHtml2(%s) called", chars.data());
+
+    while (firstUnderscore > 0 && chars[firstUnderscore - 1] == '\\')
+    {
+	qDebu("  firstUnderscore() = %d, but \\ before it", firstUnderscore);
+	firstUnderscore = chars.indexOf('_', firstUnderscore + 1);
+    }
+    while (firstCircumflex > 0 && chars[firstCircumflex - 1] == '\\')
+	firstCircumflex = chars.indexOf('_', firstCircumflex + 1);
+
     qDebu("  firstUnderscore() = %d", firstUnderscore);
     qDebu("  firstCircumflex() = %d", firstCircumflex);
     
@@ -434,23 +373,31 @@ strToHtml2(QByteArray chars)
 	    ? firstUnderscore : firstCircumflex;
     qDebu("  .. first = %d", first);
 
-    // Case 2: If first == 0, this means strToHtml2() has been called
-    // recursively to deal with the rest of the string, after the text
-    // before the ^/_ has already been deal with.  We must find the
-    // sub/sup, HTMLize that, and then deal with the rest of the string.
+    // Case 2: If first == 0, this means that the text before the ^/_
+    // has already been dealt with, and then strToHtml2() was called
+    // recursively to deal with the rest of the string.  We must find
+    // the sub/sup, HTMLize that, and then deal with the rest of the string.
     if (first == 0)
     {
 	if (chars[1] != '{')
 	{
-	    // Case 2a: sub/sup is just a single token
-	    // FOR NOW JUST HANDLE A SINGLE CHAR HERE
-	    qDebu("   Case 2a: script is '%s'", chars.mid(1, 1).data());
-	    qDebu("   Case 2a: rest is '%s'", chars.mid(2).data());
+	    // Case 2a: sub/sup is just a single token.
+	    // FOR NOW JUST HANDLE A SINGLE CHAR HERE (as opposed to a
+	    // control sequence).
+	    int chrs = 1;
+	    if (chars[1] == '\\')
+	    {
+		if (length == 2)
+		    return "";
+		chrs = 2;
+	    }
+	    qDebu("   Case 2a: script is '%s'", chars.mid(1, chrs).data());
+	    qDebu("   Case 2a: rest is '%s'", chars.mid(chrs + 1).data());
 	    if (chars[0] == '^')
-		result += "<sup>" + mathFontify(chars.mid(1, 1)) + "</sup>";
+		result += "<sup>" + mathFontify(chars.mid(1, chrs)) + "</sup>";
 	    else
-		result += "<sub>" + mathFontify(chars.mid(1, 1)) + "</sub>";
-	    result += strToHtml2(chars.mid(2));
+		result += "<sub>" + mathFontify(chars.mid(1, chrs)) + "</sub>";
+	    result += strToHtml2(chars.mid(chrs + 1));
 	    return result;
 	}
 
@@ -460,7 +407,7 @@ strToHtml2(QByteArray chars)
 	depth = 1;
 	for (end = 2; end < length && depth > 0; end++)
 	{
-	qDebu("  --- looking at '%c' where end = %d", (char)chars[end], end);
+	    qDebu("  -- looking at '%c' where end = %d", (char)chars[end], end);
 	    if (chars[end] == '{' && (end == 0 || chars[end - 1] != '\\'))
 		depth++;
 	    else if (chars[end] == '}' && (end == 0 || chars[end - 1] != '\\'))
@@ -474,6 +421,7 @@ strToHtml2(QByteArray chars)
 	else
 	    result += "<sub>" + strToHtml2(chars.mid(2, end - 2)) + "</sub>";
 
+	qDebu("  result so far is '%s'", result.toLocal8Bit().data());
 	qDebu(" -.-. rest is '%s'", chars.mid(end + 1).data());
 	if (end < length - 1)
 	    result += strToHtml2(chars.mid(end + 1));
@@ -481,8 +429,9 @@ strToHtml2(QByteArray chars)
 	return result;
     }
 
-    // If we get here, there is at least one subscript or superscript.
-    // Either the first ^/_ is at depth 0 or it is not.
+    // If we get here, there is at least one '^' or '_', but the first
+    // one is not at the very beginning of the string.
+    // See whether the first ^/_ is at depth 0 or it is not.
     depth = 0;
     for (int i = 0; i < first; i++)
     {
@@ -504,12 +453,11 @@ strToHtml2(QByteArray chars)
 	return result;
     }
 
+    // Case 4: break the string into three parts:
+    //	    (a) possibly-empty prefix before first '{'
+    //	    (b) the balanced {...} text
+    //	    (c) possibly-empty suffix following the balanced {...} text
     qDebu("  Case 4:  first ^/_ NOT at depth 0");
-    // Break the string into three parts:
-    // (a) prefix before first '{' (this could not be empty)
-    // (b) the balanced {...} text
-    // (c) possibly-empty suffix following the {...} text
-
     int firstBrace = 0;
     while (chars[firstBrace] != '{'
 	   || (firstBrace != 0 && chars[firstBrace - 1] == '\\'))
@@ -531,7 +479,7 @@ strToHtml2(QByteArray chars)
     }
     end--;
     qDebu(" .. case 4: end is %d, brace section is '%s'",
-	      end, chars.mid(firstBrace + 1, end - firstBrace - 1).data());
+	  end, chars.mid(firstBrace + 1, end - firstBrace - 1).data());
     result += strToHtml2(chars.mid(firstBrace + 1, end - firstBrace - 1));
 
     // (c) The remaining text, if any.
@@ -555,13 +503,20 @@ strToHtml2(QByteArray chars)
  * Assumptions:	The label string is not deviously invalid.
  * Bugs:	?
  * Notes:	Qt5 doesn't properly display 2nd-level sub/sups.
+ *		This function boldly uses the dreaded and feared goto!
+ *		The "prev" variable below holds the syntactic value of
+ *		the previous char, not necessarily the actual char.
  */
 
 QString
 HTML_Label::strToHtml(QString str)
 {
     QByteArray chars = str.toLocal8Bit();
+    QString html;
     int length = chars.length();
+    bool bogusSubSup = false;
+    int depth = 0;
+    char prev = 'o';	// Effective prev char, not actual ('o' = other)
 
     if (length == 0)
 	return "";
@@ -569,39 +524,74 @@ HTML_Label::strToHtml(QString str)
     qDebu("\nHL:strToHtml(%s) called", chars.data());
 
     // Do some basic sanity checking
-    bool bogusSubSup = false;
-    int depth = 0;
+    if (chars[0] == '}' || chars[0] == '^' || chars[0] == '_')
+	goto BOGUS;
+
     if (chars[0] == '{')
 	depth = 1;
-    else if (chars[0] == '}')
-	depth = -1;
-    if (chars[0] == '^' || chars[0] == '_')
-	bogusSubSup = true;
-    if (chars[length - 1] == '^' || chars[length - 1] == '_')
-	bogusSubSup = true;
+
+    if (chars[0] == '\\')
+	prev = '\\';
+
     for (int i = 1; i < length && depth >= 0 && !bogusSubSup; i++)
     {
-	if (chars[i] == '{' && chars[i - 1] != '\\')
-	    depth++;
-	else if (chars[i] == '}' && chars[i - 1] != '\\')
-	    depth--;
+	switch (chars[i])
+	{
+	  case '{':
+	    if (prev != '\\')
+		prev = '{', depth++;
+	    else
+		prev = 'o';
+	    break;
 
-	if ((chars[i] == '^' || chars[i] == '_') && (chars[i - 1] == '{'))
-	    bogusSubSup = true;
-	if (i < length - 1 && (chars[i] == '^' || chars[i] == '_')
-	    && (chars[i + 1] == '}'))
-	    bogusSubSup = true;
+	  case '}':
+	    if (prev != '\\')
+		prev = '}', depth--;
+	    else
+		prev = 'o';
+	    break;
+
+	  case '\\':
+	    if (prev != '\\')
+		prev = '\\';
+	    else
+		prev = 'o';
+	    break;
+
+	  case '^':
+	  case '_':
+	    if (prev == '{')
+		goto BOGUS;
+	    if (i + 1 < length && chars[i + 1] == '}')
+		goto BOGUS;
+	    if (prev == '\\')
+		prev = 'o';
+	    else
+		prev = '_';	// '_' represents the syntax type '^' or '_'.
+	    break;
+
+	  default:
+	    prev = 'o';
+	    break;
+	}
     }
-    if (depth != 0 || bogusSubSup)
-	return "<font face=\"cmtt10\">" + str + "</font>";
+    if (depth != 0 || prev == '\\' || prev == '_')
+	goto BOGUS;
 
-    // The string wasn't empty. if strToHtml2() returns an empty
-    // string, assume that Something Is Wrong.
-    QString html = strToHtml2(chars);
-    qDebu("  strToHtml() returns \"%s\"", html.toLocal8Bit().data());
+    // The string wasn't empty, and not obviously bogus.
+    // If strToHtml2() returns an empty string, assume that Something Is Wrong.
+    html = strToHtml2(chars);
     if (html.length() == 0)
-	return "<font face=\"cmtt10\">" + str + "</font>";;
+	goto BOGUS;
 
     // Success!
+    html = "<font face=\"cmzsd10\">" + html + "</font>";
+    qDebu("  strToHtml() returns \"%s\"", html.toLocal8Bit().data());
     return html;
+
+  BOGUS:
+    qDebu("  HL:strToHtml(): the label is invalid\n");
+    // The default font for labels is cmtt10, so it will continue to
+    // stand out without further htmlizing the text.
+    return str;
 }
