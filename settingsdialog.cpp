@@ -2,7 +2,7 @@
  * File:    settingsdialog.cpp
  * Author:  Ian Cathcart
  * Date:    2020/08/05
- * Version: 1.4
+ * Version: 1.5
  *
  * Purpose: Implements the settings dialog.
  *
@@ -22,8 +22,21 @@
  * Aug 27, 2020 (IC V1.4)
  *  (a) Moved the gridCellSize widget from the mainwindow to here and added
  *      a settings value for it to be used in canvasscene.cpp.
+ * Oct 15, 2020 (JD V1.5)
+ *  (a) Allow users to set alpha channel for the non-JPEG image background.
+ *      Show the percentage transparent on the "other image" button.
+ *	Added setOtherImageButtonStyle() to encapsulate the actions
+ *	required for that button to show the transparency level.
+ *  (b) Improve the way getColor() is called so that the colour picker
+ *	is initialized to the previous colour (or white, if none).
+ *	Ditto for the colour of the buttons themselves on the very
+ *	first call to the settings dialog.
+ *  (c) Some code tidying; some new function comments.
+ *  (d) Rename customSpinBox->customDpiSpinBox and customButton ->
+ *	customDpiButton for clarity.
  */
 
+#define DEBUG
 
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
@@ -31,6 +44,7 @@
 #include "mainwindow.h"
 
 #include <QColorDialog>
+
 
 SettingsDialog::SettingsDialog(QWidget * parent) :
     QDialog(parent),
@@ -43,7 +57,8 @@ SettingsDialog::SettingsDialog(QWidget * parent) :
     font.setFamily("Arimo");
     this->setFont(font);
 
-    // Initialize colour buttons.
+    // Initialize colour buttons; these might be over-ridden when
+    // loadSettings() is called.
     QString s("background: #ffffff;" BUTTON_STYLE);
     ui->jpgBgColour->setStyleSheet(s);
     ui->otherImageBgColour->setStyleSheet(s);
@@ -69,32 +84,40 @@ SettingsDialog::loadSettings()
     ui->defaultLabel->setText(settings.value("defaultResolution").toString()
                               + " pixels/inch");
 
-    // If no settings founds, initialize to defaults
+    // If no DPI settings founds, initialize to defaults.
     if (!settings.contains("useDefaultResolution"))
     {
-        ui->customSpinBox->setValue(settings.value("defaultResolution").toInt());
+        ui->customDpiSpinBox
+	    ->setValue(settings.value("defaultResolution").toInt());
     }
-    else // load saved settings
+    else
     {
+	// Load saved DPI settings.
         if (settings.value("useDefaultResolution").toBool() == true)
-            ui->defaultButton->setChecked(true);
+            ui->defaultDpiButton->setChecked(true);
         else
-            ui->customButton->setChecked(true);
+            ui->customDpiButton->setChecked(true);
 
-        ui->customSpinBox->setValue(settings.value("customResolution").toInt());
-
-        if (settings.contains("gridCellSize"))
-            ui->gridCellSize->setValue(settings.value("gridCellSize").toInt());
-
-        if (settings.contains("jpgBgColour"))
-            ui->jpgBgColour->setStyleSheet("background: "
-                                        + settings.value("jpgBgColour").toString()
-                                        + ";" + BUTTON_STYLE);
-        if (settings.contains("otherImageBgColour"))
-            ui->otherImageBgColour->setStyleSheet("background: "
-                                        + settings.value("otherImageBgColour").toString()
-                                        + ";" + BUTTON_STYLE);
+        ui->customDpiSpinBox
+	    ->setValue(settings.value("customResolution").toInt());
     }
+
+    if (settings.contains("gridCellSize"))
+	ui->gridCellSize->setValue(settings.value("gridCellSize").toInt());
+
+    if (settings.contains("jpgBgColour"))
+    {
+	qDeb() << "... settings contains jpgBgColour = "
+	       << settings.value("jpgBgColour").toString();
+	
+	ui->jpgBgColour
+	    ->setStyleSheet("background: "
+			    + settings.value("jpgBgColour").toString()
+			    + "; " + BUTTON_STYLE);
+	ui->jpgBgColour->update();
+    }
+
+    setOtherImageButtonStyle();
 }
 
 
@@ -102,8 +125,8 @@ SettingsDialog::loadSettings()
 void
 SettingsDialog::saveSettings()
 {
-    settings.setValue("useDefaultResolution", ui->defaultButton->isChecked());
-    settings.setValue("customResolution", ui->customSpinBox->value());
+    settings.setValue("useDefaultResolution", ui->defaultDpiButton->isChecked());
+    settings.setValue("customResolution", ui->customDpiSpinBox->value());
     settings.setValue("gridCellSize", ui->gridCellSize->value());
 
     emit saveDone();
@@ -111,48 +134,125 @@ SettingsDialog::saveSettings()
 
 
 
+/*
+ * Name:	on_jpgBgColour_clicked()
+ * Purpose:	Implement the actions required when the "JPEG image"
+ *		background colour button is clicked.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The JPEG image background colour and the look of the button.
+ * Returns:	Nothing.
+ * Assumptions:	?
+ * Bugs:	None known.
+ * Notes:	None.
+ */
+
 void
 SettingsDialog::on_jpgBgColour_clicked()
 {
-    QColor colour = QColorDialog::getColor();
+    QColor oldColour, newColour;
 
-    if (!colour.isValid())
+    if (settings.contains("jpgBgColour"))
+	oldColour = settings.value("jpgBgColour").toString();
+    else
+	oldColour = Qt::white;
+
+    newColour = QColorDialog::getColor(oldColour, nullptr,
+				       "Select JPEG background colour");
+    if (!newColour.isValid())
 	return;
 
-    QString s("background: #"
-	      + QString(colour.red() < 16 ? "0" : "")
-	      + QString::number(colour.red(), 16)
-	      + QString(colour.green() < 16 ? "0" : "")
-	      + QString::number(colour.green(), 16)
-	      + QString(colour.blue() < 16 ? "0" : "")
-	      + QString::number(colour.blue(), 16) + ";"
-	      BUTTON_STYLE);
-    qDeb() << "MW::on_jpgBgColour_clicked(): background colour set to" << s;
-    settings.setValue("jpgBgColour", colour.name());
-    ui->jpgBgColour->setStyleSheet(s);
+    QString newStyle("background: " + newColour.name() + "; " BUTTON_STYLE);
+    settings.setValue("jpgBgColour", newColour.name());
+    ui->jpgBgColour->setStyleSheet(newStyle);
+
     ui->jpgBgColour->update();
 }
 
 
 
+/*
+ * Name:	on_otherImageBgColour_clicked()
+ * Purpose:	Implement the actions required when the "other image"
+ *		background colour button is clicked.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The other image background colour and the look of the button.
+ * Returns:	Nothing.
+ * Assumptions:	?
+ * Bugs:	None known.
+ * Notes:	None.
+ */
+
 void
 SettingsDialog::on_otherImageBgColour_clicked()
 {
-    QColor colour = QColorDialog::getColor();
+    QColor oldColour, newColour;
 
-    if (!colour.isValid())
+    if (settings.contains("otherImageBgColour"))
+	oldColour = settings.value("otherImageBgColour").toString();
+    else
+	oldColour = Qt::white;
+
+    newColour = QColorDialog::getColor(oldColour, nullptr,
+				       "Select image background colour",
+				       QColorDialog::ShowAlphaChannel);
+
+    if (!newColour.isValid())
 	return;
 
-    QString s("background: #"
-	      + QString(colour.red() < 16 ? "0" : "")
-	      + QString::number(colour.red(), 16)
-	      + QString(colour.green() < 16 ? "0" : "")
-	      + QString::number(colour.green(), 16)
-	      + QString(colour.blue() < 16 ? "0" : "")
-	      + QString::number(colour.blue(), 16) + ";"
-	      BUTTON_STYLE);
-    qDeb() << "MW::on_otherImageBgColour_clicked(): BG colour set to" << s;
-    settings.setValue("otherImageBgColour", colour.name());
-    ui->otherImageBgColour->setStyleSheet(s);
+    settings.setValue("otherImageBgColour", newColour.name(QColor::HexArgb));
+
+    setOtherImageButtonStyle();
+}
+
+
+
+/*
+ * Name:	setOtherImageButtonStyle()
+ * Purpose:	Set the background colour, as well as the foreground
+ *		text and colour, for the "other image" colour button.
+ * Arguments:	None (params gleaned from settings).
+ * Outputs:	Nothing.
+ * Modifies:	The style of the other image colour button.
+ * Returns:	Nothing.
+ * Assumptions:	The ui->otherImageBgColour has been initialized.
+ * Bugs:	None known.
+ * Notes:	At time of writing called from both loadSettings() and
+ *		on_otherImageBgColour_clicked().
+ *		TODO: The decision on when to write the transparency
+ *		in black or when to use white probably needs harder
+ *		thinking.
+ */
+
+void
+SettingsDialog::setOtherImageButtonStyle()
+{
+    QColor currentColour;
+    QString buttonFGColour;
+    QString transparency;
+    int totalColour;
+    int alphaPercent;
+
+    if (settings.contains("otherImageBgColour"))
+	currentColour = settings.value("otherImageBgColour").toString();
+    else
+	currentColour = Qt::white;
+
+    totalColour = currentColour.red() + currentColour.green()
+	+ currentColour.blue();
+    if (totalColour < 255 * 3 / 2 && currentColour.alpha() > 127)
+	buttonFGColour = "color: #ffffff; ";
+    else
+	buttonFGColour = "color: #000000; ";
+
+    QString buttonStyle("background: " + currentColour.name(QColor::HexArgb)
+			+ "; " + buttonFGColour + BUTTON_STYLE);
+    ui->otherImageBgColour->setStyleSheet(buttonStyle);
+
+    alphaPercent = 100 * (255 - currentColour.alpha()) / 255;
+    transparency = QString::number(alphaPercent) + "% transparent";
+    ui->otherImageBgColour->setText(transparency);
+
     ui->otherImageBgColour->update();
 }

@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.57
+ * Version:	1.58
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -198,7 +198,7 @@
  *  (b) Replace a bunch of printf()s with qDebu(); delete a number of others.
  * May 11, 2020 (IC V1.24)
  *  (a) Changed the logical DPI variables to use physical DPI to correct
- * 	scaling issues. (Only reliable with Qt V5.14.2 or higher)
+ *	scaling issues. (Only reliable with Qt V5.14.2 or higher)
  * May 12, 2020 (IC V1.25)
  *  (a) Removed certain labels that were unnecessary after redesigning the ui.
  * May 15, 2020 (IC V1.26)
@@ -356,6 +356,10 @@
  * Aug 28, 2020 (IC V1.57)
  *  (a) Update the connection for updateCellSize().
  *  (b) Improve the code which populates the edit tab.
+ * Oct 16, 2020 (JD V1.58)
+ *  (a) Rename saveSettings() -> saveWinSizeSettings() to clarify.
+ *  (b) Add some code to make the use of settings more robust.
+ *  (c) Tidy white-space.
  */
 
 #include "mainwindow.h"
@@ -528,11 +532,11 @@ QMainWindow(parent),
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(edgeLabelSize_WGT); });
     connect(ui->EdgeNumLabelCheckBox,
-            (void(QCheckBox::*)(bool))&QCheckBox::clicked,
-            this, [this]() { generate_Graph(edgeNumLabelCheckBox_WGT); });
+	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
+	    this, [this]() { generate_Graph(edgeNumLabelCheckBox_WGT); });
     connect(ui->EdgeNumLabelStart,
-            (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
-            this, [this]() { generate_Graph(edgeNumLabelStart_WGT); });
+	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
+	    this, [this]() { generate_Graph(edgeNumLabelStart_WGT); });
     connect(ui->EdgeLineColor,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
 	    this, [this]() { generate_Graph(edgeLineColour_WGT); });
@@ -561,8 +565,8 @@ QMainWindow(parent),
 	    (void(QComboBox::*)(int))&QComboBox::activated,
 	    this, [this]() { generate_Graph(graphTypeComboBox_WGT); });
     connect(offsets,
-            (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
-            this, [this]() { generate_Graph(offsets_WGT); });
+	    (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
+	    this, [this]() { generate_Graph(offsets_WGT); });
 
     // When these NODE and EDGE parameters are changed, the updated
     // values are passed to the canvas view, so that nodes and edges
@@ -592,7 +596,7 @@ QMainWindow(parent),
     connect(ui->EdgeLabelSize, SIGNAL(valueChanged(int)),
 	    this, SLOT(edgeParamsUpdated()));
     connect(ui->EdgeNumLabelCheckBox, SIGNAL(clicked(bool)),
-            this, SLOT(edgeParamsUpdated()));
+	    this, SLOT(edgeParamsUpdated()));
     connect(ui->EdgeLineColor, SIGNAL(clicked(bool)),
 	    this, SLOT(edgeParamsUpdated()));
 
@@ -674,20 +678,19 @@ QMainWindow(parent),
     QScreen * screen = QGuiApplication::primaryScreen();
     if (settings.value("useDefaultResolution") == false)
     {
-        currentPhysicalDPI = settings.value("customResolution").toReal();
-        currentPhysicalDPI_X = settings.value("customResolution").toReal();
-        currentPhysicalDPI_Y = settings.value("customResolution").toReal();
+	currentPhysicalDPI = settings.value("customResolution").toReal();
+	currentPhysicalDPI_X = settings.value("customResolution").toReal();
+	currentPhysicalDPI_Y = settings.value("customResolution").toReal();
     }
     else
     {
-        currentPhysicalDPI = screen->physicalDotsPerInch();
-        currentPhysicalDPI_X = screen->physicalDotsPerInchX();
-        currentPhysicalDPI_Y = screen->physicalDotsPerInchY();
+	currentPhysicalDPI = screen->physicalDotsPerInch();
+	currentPhysicalDPI_X = screen->physicalDotsPerInchX();
+	currentPhysicalDPI_Y = screen->physicalDotsPerInchY();
     }
     screenLogicalDPI_X = screen->logicalDotsPerInchX();
 
-    if (settings.contains("windowSize"))
-        loadSettings();
+    loadWinSizeSettings();
 
     // Unfortunately qreal QVariants can't convert... so we store an int...
     int defaultDPI = screen->physicalDotsPerInch();
@@ -696,11 +699,11 @@ QMainWindow(parent),
     settingsDialog = new SettingsDialog(this);
 
     connect(ui->actionGraph_settings, SIGNAL(triggered()),
-            settingsDialog, SLOT(open()));
+	    settingsDialog, SLOT(open()));
     connect(settingsDialog, SIGNAL(saveDone()),
-            this, SLOT(updateDpiAndPreview()));
+	    this, SLOT(updateDpiAndPreview()));
     connect(settingsDialog, SIGNAL(saveDone()),
-            ui->canvas->scene(), SLOT(updateCellSize()));
+	    ui->canvas->scene(), SLOT(updateCellSize()));
 
 
 #ifdef DEBUG
@@ -997,11 +1000,11 @@ findDefaults(QVector<Node *> nodes,
 	| nodeDefaults_p->fillB;
     for (auto item : vFillColour)
     {
-        if (max_count < item.second)
+	if (max_count < item.second)
 	{
-            result = item.first;
-            max_count = item.second;
-        }
+	    result = item.first;
+	    max_count = item.second;
+	}
     }
     nodeDefaults_p->fillR = result >> 16;
     nodeDefaults_p->fillG = (result >> 8) & 0xFF;
@@ -1012,11 +1015,11 @@ findDefaults(QVector<Node *> nodes,
 	| nodeDefaults_p->lineB;
     for (auto item : vLineColour)
     {
-        if (max_count < item.second)
+	if (max_count < item.second)
 	{
-            result = item.first;
-            max_count = item.second;
-        }
+	    result = item.first;
+	    max_count = item.second;
+	}
     }
     nodeDefaults_p->lineR = result >> 16;
     nodeDefaults_p->lineG = (result >> 8) & 0xFF;
@@ -1026,11 +1029,11 @@ findDefaults(QVector<Node *> nodes,
     fresult = nodeDefaults_p->nodeDiameter;
     for (auto item : vNodeDiam)
     {
-        if (max_count < item.second)
+	if (max_count < item.second)
 	{
-            fresult = item.first;
-            max_count = item.second;
-        }
+	    fresult = item.first;
+	    max_count = item.second;
+	}
     }
     nodeDefaults_p->nodeDiameter = fresult;
     qDebu("nodeDiam: %.4f count = %d", fresult, max_count);
@@ -1039,11 +1042,11 @@ findDefaults(QVector<Node *> nodes,
     fresult = nodeDefaults_p->penSize;
     for (auto item : vPenSize)
     {
-        if (max_count < item.second)
-        {
-            fresult = item.first;
-            max_count = item.second;
-        }
+	if (max_count < item.second)
+	{
+	    fresult = item.first;
+	    max_count = item.second;
+	}
     }
     nodeDefaults_p->penSize = fresult;
     qDebu("nodePenSize: %.4f count = %d", fresult, max_count);
@@ -1052,11 +1055,11 @@ findDefaults(QVector<Node *> nodes,
     fresult = nodeDefaults_p->labelSize;
     for (auto item : vLabelSize)
     {
-        if (max_count < item.second)
+	if (max_count < item.second)
 	{
-            fresult = item.first;
-            max_count = item.second;
-        }
+	    fresult = item.first;
+	    max_count = item.second;
+	}
     }
     nodeDefaults_p->labelSize = fresult;
     qDebu("nodeLabelSize: %.4f count = %d", fresult, max_count);
@@ -1098,11 +1101,11 @@ findDefaults(QVector<Node *> nodes,
 	| edgeDefaults_p->lineB;
     for (auto item : eLineColour)
     {
-        if (max_count < item.second)
+	if (max_count < item.second)
 	{
-            result = item.first;
-            max_count = item.second;
-        }
+	    result = item.first;
+	    max_count = item.second;
+	}
     }
     edgeDefaults_p->lineR = result >> 16;
     edgeDefaults_p->lineG = (result >> 8) & 0xFF;
@@ -1114,11 +1117,11 @@ findDefaults(QVector<Node *> nodes,
     fresult = edgeDefaults_p->penSize;
     for (auto item : ePenSize)
     {
-        if (max_count < item.second)
+	if (max_count < item.second)
 	{
-            fresult = item.first;
-            max_count = item.second;
-        }
+	    fresult = item.first;
+	    max_count = item.second;
+	}
     }
     edgeDefaults_p->penSize = fresult;
     qDebu("edgePenSize: %.4f count = %d", fresult, max_count);
@@ -1127,11 +1130,11 @@ findDefaults(QVector<Node *> nodes,
     fresult = edgeDefaults_p->labelSize;
     for (auto item : eLabelSize)
     {
-        if (max_count < item.second)
+	if (max_count < item.second)
 	{
-            fresult = item.first;
-            max_count = item.second;
-        }
+	    fresult = item.first;
+	    max_count = item.second;
+	}
     }
     edgeDefaults_p->labelSize = fresult;
     qDebu("edgeLabelSize: %.4f count = %d", fresult, max_count);
@@ -1149,7 +1152,7 @@ findDefaults(QVector<Node *> nodes,
  * Assumptions:	Args are valid.
  * Bugs:	This is grotesquely long.
  * Notes:	Currently always returns T, but maybe in the future ...
- * 		Idea: to minimize the amount of TikZ code, the most
+ *		Idea: to minimize the amount of TikZ code, the most
  *		common vertex and edge attributes are found and stored
  *		in the styles v/.style, e/.style and l/.style.  Then
  *		when drawing a particular vertex or edge, anything not
@@ -1210,8 +1213,8 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	    << "}{1}\\selectfont},\n";
 
     outfile << "\tnode width="
-            << QString::number(nodeDefaults.penSize / currentPhysicalDPI_X,
-                               'f', VT_PREC_TIKZ) << "in},\n";
+	    << QString::number(nodeDefaults.penSize / currentPhysicalDPI_X,
+			       'f', VT_PREC_TIKZ) << "in},\n";
 
 
     // e style gets 'draw=<colour>' and 'line width=<stroke width>' options
@@ -2383,7 +2386,7 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 	else
 	{
 	    qDeb() << "\tredrawing the current basic graph ("
-		<< ui->graphType_ComboBox->currentText() << ")";
+		   << ui->graphType_ComboBox->currentText() << ")";
 	    this->style_Graph(changed_widget);
 	}
     }
@@ -2409,14 +2412,14 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
     // Node and edge labels are focusable (but not editable) so lets fix that
     if (!ui->editMode_radioButton->isChecked()) //Unnecessary but good practice
     {
-        foreach (QGraphicsItem * item, ui->preview->scene()->items())
-        {
-            if (item->type() == HTML_Label::Type)
-            {
-                item->setFlag(QGraphicsItem::ItemIsFocusable, false);
-                item->setFlag(QGraphicsItem::ItemIsSelectable, false);//Useless?
-            }
-        }
+	foreach (QGraphicsItem * item, ui->preview->scene()->items())
+	{
+	    if (item->type() == HTML_Label::Type)
+	    {
+		item->setFlag(QGraphicsItem::ItemIsFocusable, false);
+		item->setFlag(QGraphicsItem::ItemIsSelectable, false);//Useless?
+	    }
+	}
     }
 }
 
@@ -2440,7 +2443,7 @@ MainWindow::on_NodeOutlineColor_clicked()
     QColor color = QColorDialog::getColor();
 
     if (!color.isValid())
-        return;
+	return;
 
     QString s("background: #"
 	      + QString(color.red() < 16 ? "0" : "")
@@ -2475,7 +2478,7 @@ MainWindow::on_NodeFillColor_clicked()
     QColor color = QColorDialog::getColor();
 
     if (!color.isValid())
-        return;
+	return;
 
     QString s("background: #"
 	      + QString(color.red() < 16 ? "0" : "")
@@ -2510,7 +2513,7 @@ MainWindow::on_EdgeLineColor_clicked()
     QColor color = QColorDialog::getColor();
 
     if (!color.isValid())
-        return;
+	return;
 
     QString s("background: #"
 	      + QString(color.red() < 16 ? "0" : "")
@@ -2663,9 +2666,9 @@ void
 MainWindow::set_Interface_Sizes()
 {
 #ifdef __APPLE__
-    #define SYSTEM_DEFAULT_LOGICAL_DPI 72
+#define SYSTEM_DEFAULT_LOGICAL_DPI 72
 #else
-    #define SYSTEM_DEFAULT_LOGICAL_DPI 96
+#define SYSTEM_DEFAULT_LOGICAL_DPI 96
 #endif
     qreal scale = screenLogicalDPI_X / SYSTEM_DEFAULT_LOGICAL_DPI;
 
@@ -2692,14 +2695,14 @@ MainWindow::set_Interface_Sizes()
 
     // Fix mainWindows minimum width
     this->setMinimumWidth(ui->tabWidget->minimumWidth()
-                          + ui->gridLayout_3->sizeHint().width()
-                          + borderWidth2);
+			  + ui->gridLayout_3->sizeHint().width()
+			  + borderWidth2);
 
     // Resize the initial window size for high dpi screens
     if (!settings.contains("windowSize"))
     {
-        this->resize(this->width()*scale, this->height()*scale);
-        settings.setValue("windowSize", this->size());
+	this->resize(this->width()*scale, this->height()*scale);
+	settings.setValue("windowSize", this->size());
     }
 }
 
@@ -2725,7 +2728,7 @@ void
 MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 {
     qDeb() << "\nMW::on_graphType_ComboBox_currentIndexChanged("
-	     << index << ") called";
+	   << index << ") called";
 
     // Here are the default settings.  Over-ride as needed below.
     ui->numOfNodes1->setSingleStep(1);
@@ -2772,9 +2775,9 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
 	break;
 
       case BasicGraphs::Circulant:
-        ui->numOfNodes2->hide();
-        offsets->show();
-        break;
+	ui->numOfNodes2->hide();
+	offsets->show();
+	break;
 
       case BasicGraphs::Cycle:
       case BasicGraphs::Crown:
@@ -3329,30 +3332,27 @@ MainWindow::dumpGraphIc()
 
 
 void
-MainWindow::loadSettings()
+MainWindow::loadWinSizeSettings()
 {
-    //printf("Loading window size\n");
-    this->resize(settings.value("windowSize").toSize());
+    if (settings.contains("windowSize"))
+	this->resize(settings.value("windowSize").toSize());
 
-    if (settings.value("windowMaxed") == true)
-        this->showMaximized();
+    if (settings.contains("windowMaxed")
+	&& settings.value("windowMaxed") == true)
+	this->showMaximized();
 }
 
 
 
 void
-MainWindow::saveSettings()
+MainWindow::saveWinSizeSettings()
 {
     if (this->isMaximized())
-    {
-        settings.setValue("windowMaxed", true);
-        //this->showNormal();
-        //settings.setValue("windowSize", this->size());
-    }
+	settings.setValue("windowMaxed", true);
     else
     {
-        settings.setValue("windowMaxed", false);
-        settings.setValue("windowSize", this->size());
+	settings.setValue("windowMaxed", false);
+	settings.setValue("windowSize", this->size());
     }
 }
 
@@ -3362,49 +3362,51 @@ void
 MainWindow::updateDpiAndPreview()
 {
     QScreen * screen = QGuiApplication::primaryScreen();
-    if (settings.value("useDefaultResolution").toBool() == true)
+    if (settings.value("useDefaultResolution").toBool() == true
+	|| ! settings.contains("customResolution"))
     {
-        currentPhysicalDPI = screen->physicalDotsPerInch();
-        currentPhysicalDPI_X = screen->physicalDotsPerInchX();
-        currentPhysicalDPI_Y = screen->physicalDotsPerInchY();
+	currentPhysicalDPI = screen->physicalDotsPerInch();
+	currentPhysicalDPI_X = screen->physicalDotsPerInchX();
+	currentPhysicalDPI_Y = screen->physicalDotsPerInchY();
     }
     else
     {
-        currentPhysicalDPI = settings.value("customResolution").toReal();
-        currentPhysicalDPI_X = settings.value("customResolution").toReal();
-        currentPhysicalDPI_Y = settings.value("customResolution").toReal();
+	currentPhysicalDPI = settings.value("customResolution").toReal();
+	currentPhysicalDPI_X = settings.value("customResolution").toReal();
+	currentPhysicalDPI_Y = settings.value("customResolution").toReal();
     }
 
+    // Need to redraw the preview graph if the DPI changed.
+    // Claiming this widget changed is good enough for generate_Graph().
     generate_Graph(nodeDiam_WGT);
 }
+
 
 
 void
 MainWindow::closeEvent(QCloseEvent * event)
 {
     if (!ui->canvas->scene()->itemsBoundingRect().isEmpty()
-        && promptSave == true)
+	&& promptSave == true)
     {
-        QMessageBox::StandardButton closeBtn
+	QMessageBox::StandardButton closeBtn
 	    = QMessageBox::question(this, "Graphic",
 				    tr("Save graph before quitting?\n"),
 				    QMessageBox::Cancel | QMessageBox::No
 				    | QMessageBox::Yes);
-        if (closeBtn == QMessageBox::Cancel)
-        {
-            event->ignore();
-        }
-        else
-        {
-            if (closeBtn == QMessageBox::Yes)
-                save_Graph();
-            saveSettings();
-            event->accept();
-        }
+	if (closeBtn == QMessageBox::Cancel)
+	    event->ignore();
+	else
+	{
+	    if (closeBtn == QMessageBox::Yes)
+		save_Graph();
+	    saveWinSizeSettings();
+	    event->accept();
+	}
     }
     else
     {
-        saveSettings();
-        event->accept();
+	saveWinSizeSettings();
+	event->accept();
     }
 }

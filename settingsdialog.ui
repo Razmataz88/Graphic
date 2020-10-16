@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>263</width>
+    <width>267</width>
     <height>273</height>
    </rect>
   </property>
@@ -24,7 +24,7 @@
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
-       <widget class="QRadioButton" name="defaultButton">
+       <widget class="QRadioButton" name="defaultDpiButton">
         <property name="text">
          <string>Use system setting:</string>
         </property>
@@ -41,14 +41,14 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QRadioButton" name="customButton">
+       <widget class="QRadioButton" name="customDpiButton">
         <property name="text">
          <string>Custom resolution:</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QSpinBox" name="customSpinBox">
+       <widget class="QSpinBox" name="customDpiSpinBox">
         <property name="maximum">
          <number>999</number>
         </property>
@@ -107,6 +107,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p style=&quot;border:none;background-color:white;color:black;padding:3px;&quot;&gt;Set Alpha channel to 0 for 100% transparency, or to 255 for 0% transparency.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string/>

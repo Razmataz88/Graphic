@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.20
+ * Version:	1.21
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -66,6 +66,8 @@
  * Aug 26, 2020 (IC V1.20)
  *  (a) Added a QLineEdit * offsets field, since the offsets widget is
  *	now created in mainwindow.cpp, non in mainwindow.ui.
+ * Oct 16, 2020 (JD V1.21)
+ *  (a) Rename saveSettings() -> saveWinSizeSettings() to clarify.
  */
 
 
@@ -143,8 +145,8 @@ class MainWindow : public QMainWindow
     void updateDpiAndPreview();
 
 private:
-    void loadSettings();
-    void saveSettings();
+    void loadWinSizeSettings();
+    void saveWinSizeSettings();
 
     Ui::MainWindow * ui;
     QDir dir;

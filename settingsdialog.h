@@ -2,7 +2,7 @@
  * File:    settingsdialog.h
  * Author:  Ian Cathcart
  * Date:    2020/08/05
- * Version: 1.2
+ * Version: 1.3
  *
  * Purpose: Define the behaviour of the settings dialog window.
  *
@@ -13,6 +13,8 @@
  * Aug 7, 2020 (IC V1.2)
  *  (a) Renamed functions to on_jpgBgColour_clicked() and
  *	on_otherImageBgColour_clicked().
+ * Oct 15, 2020 (JD V1.3)
+ *  (a) Added setOtherImageButtonStyle().
  */
 
 #ifndef SETTINGSDIALOG_H
@@ -46,7 +48,8 @@ signals:
     void saveDone();
 
 private:
-    Ui::SettingsDialog *ui;
+    Ui::SettingsDialog * ui;
+    void setOtherImageButtonStyle();
 };
 
 #endif // SETTINGSDIALOG_H
