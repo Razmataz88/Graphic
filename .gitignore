@@ -8,9 +8,11 @@ Makefile*
 TODO
 commit
 dpi-schlmozzle
+fonts/cmzsd10.sfd
 graph-ic
 j-stash
 misc-stuff
 moc_*
 qrc_application.cpp
 ui_mainwindow.h
+ui_settingsdialog.h
