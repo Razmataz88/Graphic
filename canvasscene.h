@@ -2,7 +2,7 @@
  * File:	canvasscene.h
  * Author:	Rachel Bood
  * Date:	?
- * Version:	1.10
+ * Version:	1.11
  *
  * Purpose:
  *
@@ -35,6 +35,8 @@
  *      "snap-to-grid" cells accordingly.
  * Aug 27, 2020 (IC V1.10)
  *  (a) Update signature of updateCellSize().
+ * Sep 11, 2020 (IC V1.11)
+ *  (a) #include graphmimedata.h.
  */
 
 #ifndef CANVASSCENE_H
@@ -43,6 +45,7 @@
 #include "mainwindow.h"
 #include "node.h"
 #include "graph.h"
+#include "graphmimedata.h"
 
 #include <QGraphicsScene>
 

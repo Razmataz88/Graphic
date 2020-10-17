@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.23
+ * Version: 1.27
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -28,7 +28,7 @@
  *  (e) When in free style mode, a click on empty space or a double
  *	click takes the user out of "path drawing mode".
  *  (f) Commented out aScene->addItem(edge) for in addEdgeToScene()
- *      which was causing whinage from Qt.
+ *	which was causing whinage from Qt.
  *  (g) Added getModeName() to help with debugging output.
  * Nov 30, 2019 (JD V1.7)
  *  (a) Added the #ifdef DEBUG stuff to set the debug variable.
@@ -49,43 +49,61 @@
  *  (a) Add usage of Esc to edit mode help.
  * Jun 12, 2020 (IC V1.14)
  *  (a) Added measures to addEdgeToScene() to prevent edges being made between
- *      nodes that already have an edge.
+ *	nodes that already have an edge.
  * Jun 17, 2020 (IC V1.15)
  *  (a) Updated setMode() to delete freestyle graph after a mode change if
- *      the freestyle graph is empty.
+ *	the freestyle graph is empty.
  * Jun 19, 2020 (IC V1.16)
  *  (a) Added nodeCreated() and edgeCreated() signals to tell mainWindow to
- *      update the edit tab.
+ *	update the edit tab.
  * Jun 25, 2020 (IC V1.17)
   * (a) Updated addEdgeToScene() to prevent additional root parents from being
-  *     created if a root parent was previously created.
+  *	created if a root parent was previously created.
   * (b) Pass the created node or edge to the respective signal.
  * Jul 23, 2020 (IC V1.18)
  *  (a) Initialize modeType in the constructor(!).
  *  (b) Delete empty free-style graphs.
  *  (c) Don't allow freestyle mode to make edges from a node to itself.
  *  (d) Removed the graph recursion from addEdgeToScene.  Children of the two
- *      graphs are now reassigned to a singular graph and the old graph objects
- *      are deleted.
+ *	graphs are now reassigned to a singular graph and the old graph objects
+ *	are deleted.
  * Jul 24, 2020 (IC V1.19)
  *  (a) Added clearCanvas() function that removes all items from the canvas.
  *  (b) Initialize modeType to 0 to prevent accidental deletion of nonexistant
- *      freestyleGraph on startup.
+ *	freestyleGraph on startup.
  *  (c) Don't allow freestyle to make two edges between a given node pair.
  * Aug 5, 2020 (IC V1.20)
  *  (a) Added nodeThickness to nodeParams, setUpNodeParams, and createNode.
  * Aug 11, 2020 (IC V1.21)
  *  (a) Added scaleView, wheelEvent, zoomIn, and zoomOut as well as updated
- *      keyPressEvent to allow for zooming on the canvas, similar to the zoom
- *      from preview.cpp, using either a key press or mouse wheel scroll.
+ *	keyPressEvent to allow for zooming on the canvas, similar to the zoom
+ *	from preview.cpp, using either a key press or mouse wheel scroll.
  * Aug 12, 2020 (IC V1.22)
  *  (a) Created macros to be used for zoom level min and max for clarity.
  *  (b) Delete the help text from here; similar text is now in mainwindow.ui.
  *  (c) Remove some old commented code.
  * Aug 21, 2020 (IC V1.23)
  *  (a) Update the names setLabelSize() -> setEdgeLabelSize() and
- *       setLabel() -> setEdgeLabel().
+ *	 setLabel() -> setEdgeLabel().
  *  (b) Add code to allow edges to be sequentially numbered, a la nodes.
+ * Sep 3, 2020 (IC V1.24)
+ *  (a) Added a new mode type, select, to setMode.
+ *  (b) Added a QRubberBand to be used in the new select mode that allows the
+ *	user to select a grouping of nodes and edges to be mass edited on
+ *	the canvas graph tab.
+ *  (c) Added mouseMoveEvent and mouseReleaseEvent to support the rubberband
+ *	functionality.
+ * Sep 4, 2020 (IC V1.25)
+ *  (a) Corrected an issue where the rubberband would only select items if
+ *	the origin was to the top left and the end was to the bottom right.
+ * Sep 10, 2020 (IC V1.26)
+ *  (a) Added selectedListChanged signal to tell the mainwindow to reset the
+ *	canvas graph tab.
+ * Sep 11, 2020 (IC V1.27)
+ *  (a) Whenever a graph is created, append it to the canvasGraphList and
+ *	similarly, whenever a graph is deleted, remove it from the list.
+ *  (b) Fixed a bug that caused the app to crash if a node was selected when
+ *	the canvas was cleared.
  */
 
 #include "canvasview.h"
@@ -102,26 +120,29 @@
 
 // This is the factor by which the canvas is zoomed for each
 // zoom in or zoom out operation.
-#define SCALE_FACTOR    1.1
+#define SCALE_FACTOR	1.1
 static qreal zoomValue = 100;
 static QString zoomDisplayText = "Zoom: " + QString::number(zoomValue) + "%";
 
+QList<QGraphicsItem *> selectedList;
+QList<QGraphicsItem *> canvasGraphList;
+
 // Empirically chosen values, modify as you see fit:
-#define MIN_ZOOM_LEVEL  0.07
-#define MAX_ZOOM_LEVEL  10.0
+#define MIN_ZOOM_LEVEL	0.07
+#define MAX_ZOOM_LEVEL	10.0
 
 
 
 /*
- * Name:        Canvas
- * Purpose:     Contructor for Canvas class.
- * Arguments:   QWidget *
- * Output:      Nothing.
- * Modifies:    canvas
- * Returns:     Nothing.
+ * Name:	Canvas
+ * Purpose:	Contructor for Canvas class.
+ * Arguments:	QWidget *
+ * Output:	Nothing.
+ * Modifies:	canvas
+ * Returns:	Nothing.
  * Assumptions: ?
- * Bugs:        ?
- * Notes:       None.
+ * Bugs:	?
+ * Notes:	None.
  */
 
 CanvasView::CanvasView(QWidget * parent)
@@ -141,6 +162,8 @@ CanvasView::CanvasView(QWidget * parent)
     node2 = nullptr;
     modeType = 0; // Can randomly be 4 at startup and cause crash, so fix it!
     setMode(mode::drag);     // This must be after 'node1 = nullptr;' !
+
+    selectionBand = new QRubberBand(QRubberBand::Rectangle, this);
 }
 
 
@@ -153,7 +176,7 @@ CanvasView::CanvasView(QWidget * parent)
  * Outputs:	Nothing.
  * Modifies:	The nodeParams struct.
  * Returns:	Nothing.
- * Assumptions:	?
+ * Assumptions: ?
  * Bugs:	?
  * Notes:	This is called from MW::generate_Freestyle_Nodes(), which
  *		itself is connected to UI elements which change node
@@ -203,15 +226,15 @@ CanvasView::createNode(QPointF pos)
 
 
 /*
- * Name:        keyPressEvent
- * Purpose:     Perform the appropriate action for known key presses.
- * Arguments:   QKeyEvent
- * Output:      Nothing.
- * Modifies:    The scale of the canvas window for the zoom operations.
- * Returns:     Nothing.
+ * Name:	keyPressEvent
+ * Purpose:	Perform the appropriate action for known key presses.
+ * Arguments:	QKeyEvent
+ * Output:	Nothing.
+ * Modifies:	The scale of the canvas window for the zoom operations.
+ * Returns:	Nothing.
  * Assumptions: ?
- * Bugs:        ?
- * Notes:       Unhandled key events are passed on to QGraphicsView.
+ * Bugs:	?
+ * Notes:	Unhandled key events are passed on to QGraphicsView.
  */
 
 void
@@ -221,34 +244,34 @@ CanvasView::keyPressEvent(QKeyEvent * event)
 
     if (event->modifiers().testFlag(Qt::ControlModifier))
     {
-        switch (event->key())
-        {
-          case Qt::Key_Equal:
-            zoomIn();
-            break;
-          case Qt::Key_Minus:
-            zoomOut();
-            break;
-          default:
-            QGraphicsView::keyPressEvent(event);
-        }
+	switch (event->key())
+	{
+	  case Qt::Key_Equal:
+	    zoomIn();
+	    break;
+	  case Qt::Key_Minus:
+	    zoomOut();
+	    break;
+	  default:
+	    QGraphicsView::keyPressEvent(event);
+	}
     }
     else
-        QGraphicsView::keyPressEvent(event);
+	QGraphicsView::keyPressEvent(event);
 }
 
 
 
 /*
- * Name:        wheelEvent
- * Purpose:     Perform the appropriate action for wheel scroll.
- * Arguments:   QWheelEvent
- * Output:      Nothing.
- * Modifies:    The scale of the canvas window for the zoom operations.
- * Returns:     Nothing.
+ * Name:	wheelEvent
+ * Purpose:	Perform the appropriate action for wheel scroll.
+ * Arguments:	QWheelEvent
+ * Output:	Nothing.
+ * Modifies:	The scale of the canvas window for the zoom operations.
+ * Returns:	Nothing.
  * Assumptions: ?
- * Bugs:        ?
- * Notes:       Unhandled key events are passed on to QGraphicsView
+ * Bugs:	?
+ * Notes:	Unhandled key events are passed on to QGraphicsView
  */
 
 void
@@ -258,29 +281,29 @@ CanvasView::wheelEvent(QWheelEvent * event)
 
     if (event->modifiers().testFlag(Qt::ControlModifier))
     {
-        if (event->angleDelta().y() > 0)
-            zoomIn();
-        else if (event->angleDelta().y() < 0)
-            zoomOut();
-        else
-            QGraphicsView::wheelEvent(event);
+	if (event->angleDelta().y() > 0)
+	    zoomIn();
+	else if (event->angleDelta().y() < 0)
+	    zoomOut();
+	else
+	    QGraphicsView::wheelEvent(event);
     }
     else
-        QGraphicsView::wheelEvent(event);
+	QGraphicsView::wheelEvent(event);
 }
 
 
 
 /*
- * Name:        scaleView()
- * Purpose:     Scales the view of the QGraphicsScene
- * Arguments:   A qreal
- * Output:      Nothing.
- * Modifies:    The scale view of the QGraphicsScene
- * Returns:     Nothing.
+ * Name:	scaleView()
+ * Purpose:	Scales the view of the QGraphicsScene
+ * Arguments:	A qreal
+ * Output:	Nothing.
+ * Modifies:	The scale view of the QGraphicsScene
+ * Returns:	Nothing.
  * Assumptions: None.
- * Bugs:        ?
- * Notes:       None.
+ * Bugs:	?
+ * Notes:	None.
  */
 
 void
@@ -289,18 +312,18 @@ CanvasView::scaleView(qreal scaleFactor)
     qDeb() << "CV::scaleView(" << scaleFactor << ") called";
 
     qreal factor = transform().scale(scaleFactor, scaleFactor)
-                .mapRect(QRectF(0, 0, 1, 1)).width();
+		.mapRect(QRectF(0, 0, 1, 1)).width();
     if (factor < MIN_ZOOM_LEVEL || factor > MAX_ZOOM_LEVEL)
-        return;
+	return;
     scale(scaleFactor, scaleFactor);
 
     // Determine how displayed zoom value needs to update
     qreal afterFactor = transform().scale(scaleFactor, scaleFactor)
-            .mapRect(QRectF(0, 0, 1, 1)).width();
+	    .mapRect(QRectF(0, 0, 1, 1)).width();
     if (afterFactor > factor)
-        zoomValue = zoomValue * SCALE_FACTOR;
+	zoomValue = zoomValue * SCALE_FACTOR;
     else
-        zoomValue = zoomValue / SCALE_FACTOR;
+	zoomValue = zoomValue / SCALE_FACTOR;
 
     // Update and show the current zoom.
     zoomDisplayText = "Zoom: " + QString::number(zoomValue, 'f', 0) + "%";
@@ -332,7 +355,7 @@ CanvasView::zoomOut()
  * Outputs:	Nothing.
  * Modifies:	The help text and the mode index.
  * Returns:	Nothing.
- * Assumptions:	node1 and modeType have been initialized to meaningful values.
+ * Assumptions: node1 and modeType have been initialized to meaningful values.
  * Bugs:	?
  * Notes:	Also calls canvasscene's setCanvasMode() function.
  *		Ideally, the mode would be stored in one place, but
@@ -366,8 +389,33 @@ CanvasView::setMode(int m)
 	}
     }
 
+    if (lastModeType == mode::select) // Unselect any selected items
+    {
+	if (!selectedList.isEmpty())
+	{
+	    foreach (QGraphicsItem * item, selectedList)
+	    {
+		if (item->type() == Node::Type)
+		{
+		    Node * node = qgraphicsitem_cast<Node *>(item);
+		    node->chosen(0);
+		}
+		else if (item->type() == Edge::Type)
+		{
+		    Edge * edge = qgraphicsitem_cast<Edge *>(item);
+		    edge->chosen(0);
+		}
+	    }
+	    selectedList.clear();
+	    emit selectedListChanged();
+	}
+    }
+
     if (node1 != nullptr)
+    {
 	node1->chosen(0);
+	node1 = nullptr;
+    }
 
     modeType = m;
     freestyleGraph = nullptr;
@@ -386,17 +434,17 @@ CanvasView::setMode(int m)
 
 
 /*
- * Name:        MouseDoubleClickEvent
- * Purpose:     Generates a new node in the CanvasScene if in freestyle mode
- *              when use doubleclicks the mouse.
+ * Name:	MouseDoubleClickEvent
+ * Purpose:	Generates a new node in the CanvasScene if in freestyle mode
+ *		when use doubleclicks the mouse.
  *		Otherwise pass the event to QGraphicsView.
- * Arguments:   QMouseEvent
- * Output:      Nothing.
- * Modifies:    CanvasScene
- * Returns:     Nothing.
+ * Arguments:	QMouseEvent
+ * Output:	Nothing.
+ * Modifies:	CanvasScene
+ * Returns:	Nothing.
  * Assumptions: ?
- * Bugs:        ?
- * Notes:       None.
+ * Bugs:	?
+ * Notes:	None.
  */
 
 void
@@ -413,7 +461,15 @@ CanvasView::mouseDoubleClickEvent(QMouseEvent * event)
 	pt = mapToScene(event->pos());
 	qDeb() << "\tfreestyle mode: create a new node at " << pt;
 	createNode(pt);
+	freestyleGraph->update(); // Useful when graph boundingRects are drawn.
+
+	// Check if that is the first item in the freestyle graph
+	// and add to canvasGraphList if so.
+	if (freestyleGraph->childItems().count() == 1)
+	    canvasGraphList.append(freestyleGraph);
+
 	emit nodeCreated();
+
 	if (node1 != nullptr)
 	    node1->chosen(0);
 	node1 = nullptr;
@@ -439,6 +495,8 @@ CanvasView::mousePressEvent(QMouseEvent * event) // Should this be in CS?
 	Qt::IntersectsItemShape,
 	Qt::DescendingOrder,
 	QTransform());
+
+    origin = event->pos();
 
     bool clickedInEmptySpace = true;
     switch (getMode())
@@ -487,6 +545,10 @@ CanvasView::mousePressEvent(QMouseEvent * event) // Should this be in CS?
 			qDeb() << "\t\tcalling addEdgeToScene(n1, n2) !";
 			addEdgeToScene(node1, node2);
 			emit edgeCreated();
+
+			freestyleGraph->update(); // Useful when graph
+			// boundingRects are drawn.
+
 			// qDeb() << "node1->pos() is " << node1->pos();
 			// qDeb() << "node1->scenePos() is " << node1->scenePos();
 			// TODO: without this horrible hack, edges
@@ -522,6 +584,43 @@ CanvasView::mousePressEvent(QMouseEvent * event) // Should this be in CS?
 	}
 	break;
 
+      case (mode::select):
+	//
+	if (event->button() == Qt::LeftButton)
+	{
+	    qDeb() << "\tLeftButton pressed in select mode";
+
+	    // If you want to be able to select items individually, try:
+	    //if (event->modifiers().testFlag(Qt::ControlModifier))
+	    // then add the item at the event->pos() to the selectedList.
+	    // and perhaps return so that you don't promptly clear the
+	    // selectedList :)
+	    // You'll probably need to ignore mouseMoveEvent and
+	    // mouseReleaseEvent in this case as well?
+
+	    if (!selectedList.empty())
+	    {
+		foreach (QGraphicsItem * item, selectedList)
+		{
+		    if (item->type() == Node::Type)
+		    {
+			Node * node = qgraphicsitem_cast<Node *>(item);
+			node->chosen(0);
+		    }
+		    else if (item->type() == Edge::Type)
+		    {
+			Edge * edge = qgraphicsitem_cast<Edge *>(item);
+			edge->chosen(0);
+		    }
+		}
+		selectedList.clear();
+		emit selectedListChanged();
+	    }
+	    selectionBand->setGeometry(QRect(origin, QSize()).normalized());
+	    selectionBand->show();
+	    break;
+	}
+
       default:
 	if (node1 != nullptr)
 	    node1->chosen(0);
@@ -532,6 +631,96 @@ CanvasView::mousePressEvent(QMouseEvent * event) // Should this be in CS?
 }
 
 
+void
+CanvasView::mouseMoveEvent(QMouseEvent * event)
+{
+    //	qDeb() << "CV::mouseMoveEvent";
+    if (getMode() == CanvasView::select)
+    {
+	selectionBand->setGeometry(QRect(origin, event->pos()).normalized());
+    }
+    else
+	QGraphicsView::mouseMoveEvent(event);
+}
+
+
+void
+CanvasView::mouseReleaseEvent(QMouseEvent * event)
+{
+    //	qDeb() << "CV::mouseReleaseEvent(" << event->pos() << ")";
+
+    if (getMode() == CanvasView::select)
+    {
+	end = event->pos();
+
+	// Find the top left corner manually since selectionBand.topleft()
+	// doesn't map properly.
+	int x = (origin.x() < end.x()) ? origin.x() : end.x();
+	int y = (origin.y() < end.y()) ? origin.y() : end.y();
+	QPoint topleft(x, y);
+	QRect rect(topleft, selectionBand->size());
+
+	// Update the global list with selected items.
+	selectedList = this->scene()->items(
+		    this->mapToScene(rect),
+		    Qt::ContainsItemShape,
+		    Qt::AscendingOrder,
+		    QTransform());
+
+	// Sometimes all items are selected, but the graph isn't due to
+	// bounding rect issues. So check and add graph if necessary.
+	if (!selectedList.isEmpty())
+	{
+	    QList<Graph *> graphList;
+	    bool missingItems;
+
+	    // Make list of all graphs not in the selected list but with
+	    // children that are selected.
+	    foreach (QGraphicsItem * item, selectedList)
+	    {
+		while (item->parentItem() != nullptr)
+		    item = item->parentItem();
+		Graph * graph = qgraphicsitem_cast<Graph *>(item);
+		if (!selectedList.contains(graph) && !graphList.contains(graph))
+		    graphList.append(graph);
+	    }
+	    // Check if each entire graph is selected and add to selectedList
+	    // if so.
+	    foreach (Graph * graph, graphList)
+	    {
+		missingItems = false;
+		foreach (QGraphicsItem * child, graph->childItems())
+		{
+		    if (!selectedList.contains(child))
+		    {
+			missingItems = true;
+			break;
+		    }
+		}
+		if (!missingItems)
+		    selectedList.append(graph);
+	    }
+	}
+
+	// Visually show which items are selected on the canvas.
+	foreach (QGraphicsItem * item, selectedList)
+	{
+	    if (item->type() == Node::Type)
+	    {
+		Node * node = qgraphicsitem_cast<Node *>(item);
+		node->chosen(2);
+	    }
+	    else if (item->type() == Edge::Type)
+	    {
+		Edge * edge = qgraphicsitem_cast<Edge *>(item);
+		edge->chosen(1);
+	    }
+	}
+	selectionBand->hide();
+    }
+    else
+	QGraphicsView::mouseReleaseEvent(event);
+}
 
 void
 CanvasView::snapToGrid(bool snap)
@@ -601,6 +790,7 @@ CanvasView::addEdgeToScene(Node * source, Node * destination)
 	edge->setParentItem(root);
 	root->setHandlesChildEvents(false);
 	aScene->addItem(root);
+	canvasGraphList.append(root);
 
 	edge->adjust();
 
@@ -611,8 +801,10 @@ CanvasView::addEdgeToScene(Node * source, Node * destination)
 	}
 
 	aScene->removeItem(parent1);
+	canvasGraphList.removeOne(parent1);
 	delete parent1;
 	aScene->removeItem(parent2);
+	canvasGraphList.removeOne(parent2);
 	delete parent2;
 
 	edge->causedConnect = 1;
@@ -649,7 +841,7 @@ CanvasView::createEdge(Node * source, Node * destination)
  * Outputs:	Nothing.
  * Modifies:	The edgeParams struct.
  * Returns:	Nothing.
- * Assumptions:	?
+ * Assumptions: ?
  * Bugs:	?
  * Notes:	This is called from MW::generate_Freestyle_Edges(), which
  *		itself is connected to UI elements which change edge
@@ -692,10 +884,10 @@ CanvasView::getModeName(int mode)
     // when I try to do that *and* declare this function static (so we
     // don't need an object reference, which we don't have in
     // canvasscene.cpp), g++ gets unhappy with me, regardless of the
-    // 12 things I have tried.  Perhaps the 13th would have worked,
+    // 12 things I have tried.	Perhaps the 13th would have worked,
     // but I gave it up as a bad loss and put the string array in here.
-    static QString modes[5] = {  
-	    "drag", "join", "del", "edit", "freestyle"
+    static QString modes[6] = {
+	    "drag", "join", "del", "edit", "freestyle", "select"
     };
 
     if ((unsigned)mode > sizeof(modes) / sizeof(modes[0]))
@@ -712,7 +904,7 @@ CanvasView::getModeName(int mode)
  * Outputs:	Nothing.
  * Modifies:	The canvas.
  * Returns:	Nothing.
- * Assumptions:	Something is on the canvas?
+ * Assumptions: Something is on the canvas?
  * Bugs:	?
  * Notes:	None.
  */
@@ -741,7 +933,11 @@ CanvasView::clearCanvas()
 
     if (getMode() == CanvasView::freestyle)
     {
+	node1 = nullptr;
 	freestyleGraph = new Graph;
 	aScene->addItem(freestyleGraph);
     }
+    selectedList.clear();
+    canvasGraphList.clear();
+    emit selectedListChanged();
 }

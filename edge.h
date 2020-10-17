@@ -2,7 +2,7 @@
  * File:    edge.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.11
+ * Version: 1.12
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -13,7 +13,7 @@
  *  (a) Rename (in this order!)
  *	       label -> htmlLabel,
  *	       setWeightLabelSize() -> setLabelSize(),
- *             getWeightLabelSize() -> getLabelSize(),
+ *	       getWeightLabelSize() -> getLabelSize(),
  *	       setWeight() -> setLabel(), 
  *	       getWeight() -> getLabel(),
  *	       editWeight() -> editLabel(),
@@ -31,7 +31,7 @@
  *  (a) Remove (globally) unused "penWidth" private variable.
  * Jun 18, 2020 (IC V1.6)
  *  (a) Added setEdgeLabel() slot to update label when changes are made on the
- *      canvas in edit mode.
+ *	canvas in edit mode.
  *  (b) Changed htmlLabel to public for use in labelcontroller.cpp
  * Jun 25, 2020 (IC V1.7)
  *  (a) Add causedConnect to edge object.
@@ -40,15 +40,17 @@
  *  (a) Add checked member.
  * Jul 29, 2020 (IC V1.9)
  *  (a) Added eventFilter() to receive edit tab events so we can identify
- *      the edge being edited/looked at.
+ *	the edge being edited/looked at.
  *  (b) Added penStyle so edges can be drawn solid or dashed.
  * Aug 19, 2020 (IC V1.10)
  *  (a) Remove now-unneeded setEdgeLabel() function.
  *  (b) Move setLabel() from public to public slots.
  * Aug 21, 2020 (IC V1.11)
  *  (a) Added the ability to number edge labels similar to nodes so setLabel
- *      has been replaced with copies of the label functions from node.cpp.
+ *	has been replaced with copies of the label functions from node.cpp.
  *  (b) setLabelSize renamed to setEdgeLabelSize for clarity.
+ * Sep 3, 2020 (IC V1.12)
+ *  (a) Add chosen(), which sets the pen style.
  */
 
 #ifndef EDGE_H
@@ -113,6 +115,8 @@ public:
     void editLabel(bool edit);
     QGraphicsItem * getRootParent();
 
+    void chosen(int group1);
+
      //~Edge(); deconstructor a WIP
 
     HTML_Label * htmlLabel;
@@ -124,7 +128,7 @@ public slots:
 
 protected:
     void paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
-               QWidget * widget);
+	       QWidget * widget);
     bool eventFilter(QObject * obj, QEvent * event);
 
 private:

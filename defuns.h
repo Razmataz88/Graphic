@@ -2,7 +2,7 @@
  * File:	defuns.h
  * Author:	Jim Diamond
  * Date:	2019-12-10
- * Version:	1.9
+ * Version:	1.11
  *
  * Purpose:	Hold definitions that are needed by multiple classes
  *		and yet don't seem to meaningfully fit anywhere else.
@@ -41,12 +41,21 @@
  *	for edge label numbers.
  * Aug 24, 2020 (IC V1.9)
  *  (a) Add offsets widget (for circulant graph).
+ * Sep 3, 2020 (IC V1.10)
+ *  (a) Added selectedList variable that stores all items selected by the
+ *      rubberband in canvasview.cpp.
+ * Sep 11, 2020 (IC V1.11)
+ *  (a) Added canvasGraphList variable to be used globally to keep track
+ *      of all graphs on the canvas (aside from empty freestyle graphs).
+ *  (b) Added canvas_widget_ID enum for the widgets in the "edit
+ *	canvas" tab.
  */
 
 #ifndef DEFUNS_H
 #define DEFUNS_H
 
 #include <QSettings>
+#include <QGraphicsItem>
 
 // Use qDeb() and qDebu() for debugging, and then the statements can
 // be turned on and off with a re-compile but no source-code editing.
@@ -67,6 +76,8 @@
 
 extern QSettings settings;
 extern qreal currentPhysicalDPI, currentPhysicalDPI_X, currentPhysicalDPI_Y;
+extern QList<QGraphicsItem *> selectedList;
+extern QList<QGraphicsItem *> canvasGraphList;
 
 enum widget_ID {NO_WGT, ALL_WGT, nodeDiam_WGT, nodeLabel1_WGT, nodeLabel2_WGT,
 		nodeLabelSize_WGT, nodeNumLabelCheckBox_WGT, nodeFillColour_WGT,
@@ -76,5 +87,15 @@ enum widget_ID {NO_WGT, ALL_WGT, nodeDiam_WGT, nodeLabel1_WGT, nodeLabel2_WGT,
 		numOfNodes1_WGT, numOfNodes2_WGT, graphTypeComboBox_WGT,
 		nodeNumLabelStart_WGT, nodeThickness_WGT, offsets_WGT,
 		edgeNumLabelCheckBox_WGT, edgeNumLabelStart_WGT};
+
+enum canvas_widget_ID {cNodeDiam_WGT, cNodeLabel1_WGT,
+		       cNodeLabelSize_WGT, cNodeNumLabelCheckBox_WGT,
+		       cNodeFillColour_WGT, cNodeOutlineColour_WGT,
+		       cEdgeThickness_WGT, cEdgeLabel_WGT, cEdgeLabelSize_WGT,
+		       cEdgeLineColour_WGT, cGraphRotation_WGT,
+		       cGraphHeight_WGT, cGraphWidth_WGT,
+		       cNodeNumLabelStart_WGT, cNodeThickness_WGT,
+		       cEdgeNumLabelCheckBox_WGT, cEdgeNumLabelStart_WGT};
+
 
 #endif

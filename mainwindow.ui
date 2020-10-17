@@ -59,7 +59,7 @@
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="newGraph">
          <property name="sizePolicy">
@@ -92,7 +92,7 @@
                <x>0</x>
                <y>0</y>
                <width>674</width>
-               <height>778</height>
+               <height>774</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -104,103 +104,6 @@
              <layout class="QVBoxLayout" name="verticalLayout_3">
               <item>
                <layout class="QGridLayout" name="gridLayout">
-                <item row="3" column="3" alignment="Qt::AlignHCenter">
-                 <widget class="QDoubleSpinBox" name="graphRotation">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="wrapping">
-                   <bool>true</bool>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="decimals">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <double>360.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="4" rowspan="3">
-                 <widget class="Line" name="line_2">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1" alignment="Qt::AlignHCenter">
-                 <widget class="QLabel" name="heightLabel">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="palette">
-                   <palette>
-                    <active>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </active>
-                    <inactive>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </inactive>
-                    <disabled>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>127</red>
-                        <green>127</green>
-                        <blue>127</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </disabled>
-                   </palette>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>12</pointsize>
-                    <strikeout>false</strikeout>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Height</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="buddy">
-                   <cstring>graphHeight</cstring>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="1" colspan="9">
                  <widget class="QLabel" name="graphLabel">
                   <property name="sizePolicy">
@@ -347,41 +250,198 @@
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="1" colspan="9">
-                 <widget class="Line" name="line_5">
+                <item row="2" column="2" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="widthLabel">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Width</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buddy">
+                   <cstring>graphWidth</cstring>
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="2" alignment="Qt::AlignHCenter">
-                 <widget class="QDoubleSpinBox" name="graphWidth">
+                <item row="2" column="3" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="rotationLabel">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Rotation</string>
+                  </property>
+                  <property name="scaledContents">
+                   <bool>true</bool>
+                  </property>
                   <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   <set>Qt::AlignCenter</set>
                   </property>
-                  <property name="decimals">
-                   <number>2</number>
+                 </widget>
+                </item>
+                <item row="3" column="8" colspan="2" alignment="Qt::AlignHCenter">
+                 <widget class="QCheckBox" name="complete_checkBox">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
                   </property>
-                  <property name="maximum">
-                   <double>100.000000000000000</double>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>120</red>
+                        <green>120</green>
+                        <blue>120</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
                   </property>
-                  <property name="singleStep">
-                   <double>0.500000000000000</double>
+                  <property name="font">
+                   <font>
+                    <pointsize>11</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
                   </property>
-                  <property name="value">
-                   <double>2.500000000000000</double>
+                  <property name="mouseTracking">
+                   <bool>false</bool>
+                  </property>
+                  <property name="toolTip">
+                   <string>Uncheck this to only draw the nodes.</string>
+                  </property>
+                  <property name="layoutDirection">
+                   <enum>Qt::LeftToRight</enum>
+                  </property>
+                  <property name="text">
+                   <string>Draw edges</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                  <property name="tristate">
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -450,392 +510,6 @@
                     <string>Select Graph Type</string>
                    </property>
                   </item>
-                 </widget>
-                </item>
-                <item row="2" column="3" alignment="Qt::AlignHCenter">
-                 <widget class="QLabel" name="rotationLabel">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="palette">
-                   <palette>
-                    <active>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </active>
-                    <inactive>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </inactive>
-                    <disabled>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>127</red>
-                        <green>127</green>
-                        <blue>127</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </disabled>
-                   </palette>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>12</pointsize>
-                    <strikeout>false</strikeout>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Rotation</string>
-                  </property>
-                  <property name="scaledContents">
-                   <bool>true</bool>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1" alignment="Qt::AlignHCenter">
-                 <widget class="QDoubleSpinBox" name="graphHeight">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="decimals">
-                   <number>2</number>
-                  </property>
-                  <property name="maximum">
-                   <double>100.000000000000000</double>
-                  </property>
-                  <property name="singleStep">
-                   <double>0.500000000000000</double>
-                  </property>
-                  <property name="value">
-                   <double>2.500000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="2" alignment="Qt::AlignHCenter">
-                 <widget class="QLabel" name="widthLabel">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="palette">
-                   <palette>
-                    <active>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </active>
-                    <inactive>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </inactive>
-                    <disabled>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>127</red>
-                        <green>127</green>
-                        <blue>127</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </disabled>
-                   </palette>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>12</pointsize>
-                    <strikeout>false</strikeout>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Width</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="buddy">
-                   <cstring>graphWidth</cstring>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="7" rowspan="3">
-                 <widget class="Line" name="line_3">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="8" alignment="Qt::AlignHCenter">
-                 <widget class="QSpinBox" name="numOfNodes1">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>For most graph types, the number of nodes.</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::UpDownArrows</enum>
-                  </property>
-                  <property name="maximum">
-                   <number>99</number>
-                  </property>
-                  <property name="value">
-                   <number>5</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="6" alignment="Qt::AlignHCenter">
-                 <widget class="QSpinBox" name="EdgeNumLabelStart">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string/>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::UpDownArrows</enum>
-                  </property>
-                  <property name="maximum">
-                   <number>100</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="9" alignment="Qt::AlignHCenter">
-                 <widget class="QSpinBox" name="numOfNodes2">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string/>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::UpDownArrows</enum>
-                  </property>
-                  <property name="maximum">
-                   <number>99</number>
-                  </property>
-                  <property name="value">
-                   <number>5</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="6" alignment="Qt::AlignHCenter">
-                 <widget class="QSpinBox" name="NodeNumLabelStart">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string/>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::UpDownArrows</enum>
-                  </property>
-                  <property name="maximum">
-                   <number>100</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="5" alignment="Qt::AlignHCenter">
-                 <widget class="QCheckBox" name="EdgeNumLabelCheckBox">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="palette">
-                   <palette>
-                    <active>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </active>
-                    <inactive>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </inactive>
-                    <disabled>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </disabled>
-                   </palette>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>11</pointsize>
-                    <strikeout>false</strikeout>
-                   </font>
-                  </property>
-                  <property name="focusPolicy">
-                   <enum>Qt::TabFocus</enum>
-                  </property>
-                  <property name="layoutDirection">
-                   <enum>Qt::LeftToRight</enum>
-                  </property>
-                  <property name="text">
-                   <string>Number edges</string>
-                  </property>
-                  <property name="tristate">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="5" alignment="Qt::AlignHCenter">
-                 <widget class="QCheckBox" name="NodeNumLabelCheckBox">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="palette">
-                   <palette>
-                    <active>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </active>
-                    <inactive>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>103</red>
-                        <green>103</green>
-                        <blue>103</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </inactive>
-                    <disabled>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </disabled>
-                   </palette>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>11</pointsize>
-                    <strikeout>false</strikeout>
-                   </font>
-                  </property>
-                  <property name="focusPolicy">
-                   <enum>Qt::TabFocus</enum>
-                  </property>
-                  <property name="layoutDirection">
-                   <enum>Qt::LeftToRight</enum>
-                  </property>
-                  <property name="text">
-                   <string>Number nodes</string>
-                  </property>
-                  <property name="tristate">
-                   <bool>false</bool>
-                  </property>
                  </widget>
                 </item>
                 <item row="1" column="6" alignment="Qt::AlignHCenter">
@@ -971,8 +645,43 @@
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="8" colspan="2" alignment="Qt::AlignHCenter">
-                 <widget class="QCheckBox" name="complete_checkBox">
+                <item row="3" column="3" alignment="Qt::AlignHCenter">
+                 <widget class="QDoubleSpinBox" name="graphRotation">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="wrapping">
+                   <bool>true</bool>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="4" rowspan="3">
+                 <widget class="Line" name="line_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="5" alignment="Qt::AlignHCenter">
+                 <widget class="QCheckBox" name="NodeNumLabelCheckBox">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -1022,23 +731,314 @@
                     <strikeout>false</strikeout>
                    </font>
                   </property>
-                  <property name="mouseTracking">
-                   <bool>false</bool>
-                  </property>
-                  <property name="toolTip">
-                   <string>Uncheck this to only draw the nodes.</string>
+                  <property name="focusPolicy">
+                   <enum>Qt::TabFocus</enum>
                   </property>
                   <property name="layoutDirection">
                    <enum>Qt::LeftToRight</enum>
                   </property>
                   <property name="text">
-                   <string>Draw edges</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
+                   <string>Number nodes</string>
                   </property>
                   <property name="tristate">
                    <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="2" alignment="Qt::AlignHCenter">
+                 <widget class="QDoubleSpinBox" name="graphWidth">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="maximum">
+                   <double>100.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.500000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>2.500000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="7" rowspan="3">
+                 <widget class="Line" name="line_3">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="9" alignment="Qt::AlignHCenter">
+                 <widget class="QSpinBox" name="numOfNodes2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string/>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::UpDownArrows</enum>
+                  </property>
+                  <property name="maximum">
+                   <number>99</number>
+                  </property>
+                  <property name="value">
+                   <number>5</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1" alignment="Qt::AlignHCenter">
+                 <widget class="QDoubleSpinBox" name="graphHeight">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="maximum">
+                   <double>100.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.500000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>2.500000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="6" alignment="Qt::AlignHCenter">
+                 <widget class="QSpinBox" name="NodeNumLabelStart">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string/>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::UpDownArrows</enum>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="5" alignment="Qt::AlignHCenter">
+                 <widget class="QCheckBox" name="EdgeNumLabelCheckBox">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>120</red>
+                        <green>120</green>
+                        <blue>120</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>11</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="focusPolicy">
+                   <enum>Qt::TabFocus</enum>
+                  </property>
+                  <property name="layoutDirection">
+                   <enum>Qt::LeftToRight</enum>
+                  </property>
+                  <property name="text">
+                   <string>Number edges</string>
+                  </property>
+                  <property name="tristate">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="heightLabel">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Height</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buddy">
+                   <cstring>graphHeight</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1" colspan="9">
+                 <widget class="Line" name="line_5">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="6" alignment="Qt::AlignHCenter">
+                 <widget class="QSpinBox" name="EdgeNumLabelStart">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string/>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::UpDownArrows</enum>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="8" alignment="Qt::AlignHCenter">
+                 <widget class="QSpinBox" name="numOfNodes1">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>For most graph types, the number of nodes.</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::UpDownArrows</enum>
+                  </property>
+                  <property name="maximum">
+                   <number>99</number>
+                  </property>
+                  <property name="value">
+                   <number>5</number>
                   </property>
                  </widget>
                 </item>
@@ -2130,6 +2130,7 @@
                  <property name="font">
                   <font>
                    <pointsize>12</pointsize>
+                   <strikeout>false</strikeout>
                   </font>
                  </property>
                  <property name="toolTip">
@@ -2147,9 +2148,1727 @@
           </item>
          </layout>
         </widget>
+        <widget class="QWidget" name="canvasGraph">
+         <attribute name="title">
+          <string>Edit Canvas Graph</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_7">
+          <item>
+           <widget class="QScrollArea" name="scrollArea_3">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="horizontalScrollBarPolicy">
+             <enum>Qt::ScrollBarAlwaysOff</enum>
+            </property>
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents_3">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>674</width>
+               <height>774</height>
+              </rect>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <layout class="QGridLayout" name="gridLayout_4">
+                <item row="3" column="6" alignment="Qt::AlignHCenter">
+                 <widget class="QSpinBox" name="EdgeNumLabelStart_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string/>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::UpDownArrows</enum>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="3" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="rotationLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Rotation</string>
+                  </property>
+                  <property name="scaledContents">
+                   <bool>true</bool>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="heightLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Height</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buddy">
+                   <cstring>graphHeight</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="3" alignment="Qt::AlignHCenter">
+                 <widget class="QDoubleSpinBox" name="graphRotation_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="wrapping">
+                   <bool>true</bool>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1" alignment="Qt::AlignHCenter">
+                 <widget class="QDoubleSpinBox" name="graphHeight_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="maximum">
+                   <double>100.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.500000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>2.500000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="6" alignment="Qt::AlignHCenter">
+                 <widget class="QSpinBox" name="NodeNumLabelStart_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string/>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::UpDownArrows</enum>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="5" alignment="Qt::AlignHCenter">
+                 <widget class="QCheckBox" name="EdgeNumLabelCheckBox_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>120</red>
+                        <green>120</green>
+                        <blue>120</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>11</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="focusPolicy">
+                   <enum>Qt::TabFocus</enum>
+                  </property>
+                  <property name="layoutDirection">
+                   <enum>Qt::LeftToRight</enum>
+                  </property>
+                  <property name="text">
+                   <string>Number edges</string>
+                  </property>
+                  <property name="tristate">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="6" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="numLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>120</red>
+                        <green>120</green>
+                        <blue>120</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Start #</string>
+                  </property>
+                  <property name="buddy">
+                   <cstring>NodeNumLabelStart</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="widthLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Width</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buddy">
+                   <cstring>graphWidth</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="5" alignment="Qt::AlignHCenter">
+                 <widget class="QCheckBox" name="NodeNumLabelCheckBox_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>120</red>
+                        <green>120</green>
+                        <blue>120</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>11</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="focusPolicy">
+                   <enum>Qt::TabFocus</enum>
+                  </property>
+                  <property name="layoutDirection">
+                   <enum>Qt::LeftToRight</enum>
+                  </property>
+                  <property name="text">
+                   <string>Number nodes</string>
+                  </property>
+                  <property name="tristate">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="4" rowspan="3">
+                 <widget class="Line" name="line_7">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="2" alignment="Qt::AlignHCenter">
+                 <widget class="QDoubleSpinBox" name="graphWidth_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="maximum">
+                   <double>100.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.500000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>2.500000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1" colspan="6">
+                 <widget class="QLabel" name="graphLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>188</red>
+                        <green>188</green>
+                        <blue>188</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                     <colorrole role="Text">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>180</red>
+                        <green>180</green>
+                        <blue>180</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                     <colorrole role="ButtonText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>163</red>
+                        <green>163</green>
+                        <blue>163</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                     <colorrole role="PlaceholderText">
+                      <brush brushstyle="NoBrush">
+                       <color alpha="128">
+                        <red>180</red>
+                        <green>180</green>
+                        <blue>180</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>188</red>
+                        <green>188</green>
+                        <blue>188</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                     <colorrole role="Text">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>180</red>
+                        <green>180</green>
+                        <blue>180</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                     <colorrole role="ButtonText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>163</red>
+                        <green>163</green>
+                        <blue>163</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                     <colorrole role="PlaceholderText">
+                      <brush brushstyle="NoBrush">
+                       <color alpha="128">
+                        <red>180</red>
+                        <green>180</green>
+                        <blue>180</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                     <colorrole role="Text">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                     <colorrole role="ButtonText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>148</red>
+                        <green>148</green>
+                        <blue>148</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                     <colorrole role="PlaceholderText">
+                      <brush brushstyle="NoBrush">
+                       <color alpha="128">
+                        <red>180</red>
+                        <green>180</green>
+                        <blue>180</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>20</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>GRAPH</string>
+                  </property>
+                  <property name="scaledContents">
+                   <bool>false</bool>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                  <property name="textInteractionFlags">
+                   <set>Qt::NoTextInteraction</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1" colspan="6">
+                 <widget class="Line" name="line_8">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_5">
+                <item row="3" column="0" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="edgeThicknessLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Thickness</string>
+                  </property>
+                  <property name="buddy">
+                   <cstring>edgeThickness</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="3" alignment="Qt::AlignHCenter">
+                 <widget class="QPushButton" name="EdgeLineColor_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="textSizeLabel_3">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Label size</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buddy">
+                   <cstring>EdgeLabelSize</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="8" alignment="Qt::AlignHCenter">
+                 <widget class="QSpinBox" name="NodeLabelSize_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                  <property name="value">
+                   <number>12</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="9" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="nodeDiameterLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Diameter</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="buddy">
+                   <cstring>nodeDiameter</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="7" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="textInputLabel_3">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Label text</string>
+                  </property>
+                  <property name="buddy">
+                   <cstring>NodeLabel1</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0" colspan="11">
+                 <widget class="Line" name="line_10">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="7" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="textSizeLabel_4">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Label size</string>
+                  </property>
+                  <property name="buddy">
+                   <cstring>NodeLabelSize</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="3" colspan="3" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="colorLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>149</red>
+                        <green>149</green>
+                        <blue>149</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>149</red>
+                        <green>149</green>
+                        <blue>149</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>18</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Colour</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2" rowspan="3">
+                 <widget class="Line" name="line_11">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="edgeLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>188</red>
+                        <green>188</green>
+                        <blue>188</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>188</red>
+                        <green>188</green>
+                        <blue>188</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>19</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>EDGE</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1" alignment="Qt::AlignHCenter">
+                 <widget class="QDoubleSpinBox" name="edgeThickness_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.500000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.500000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>1.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="8" alignment="Qt::AlignHCenter">
+                 <widget class="QLineEdit" name="NodeLabel1_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>53</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="mouseTracking">
+                   <bool>false</bool>
+                  </property>
+                  <property name="maxLength">
+                   <number>1</number>
+                  </property>
+                  <property name="frame">
+                   <bool>false</bool>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                  <property name="placeholderText">
+                   <string>u</string>
+                  </property>
+                  <property name="clearButtonEnabled">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="textInputLabel_4">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Label text</string>
+                  </property>
+                  <property name="buddy">
+                   <cstring>EdgeLabel</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="5" alignment="Qt::AlignHCenter">
+                 <widget class="QPushButton" name="NodeOutlineColor_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="7" colspan="4">
+                 <widget class="QLabel" name="nodeLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>188</red>
+                        <green>188</green>
+                        <blue>188</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>188</red>
+                        <green>188</green>
+                        <blue>188</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>19</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="layoutDirection">
+                   <enum>Qt::LeftToRight</enum>
+                  </property>
+                  <property name="text">
+                   <string>NODE</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="4" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="outlineLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Outline</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                  <property name="buddy">
+                   <cstring>NodeOutlineColor</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="7" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="nodeThicknessLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>120</red>
+                        <green>120</green>
+                        <blue>120</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Thickness</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="6" rowspan="3">
+                 <widget class="Line" name="line_12">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="4" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="fillLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="palette">
+                   <palette>
+                    <active>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </active>
+                    <inactive>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>103</red>
+                        <green>103</green>
+                        <blue>103</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </inactive>
+                    <disabled>
+                     <colorrole role="WindowText">
+                      <brush brushstyle="SolidPattern">
+                       <color alpha="255">
+                        <red>127</red>
+                        <green>127</green>
+                        <blue>127</blue>
+                       </color>
+                      </brush>
+                     </colorrole>
+                    </disabled>
+                   </palette>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Fill</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                  <property name="buddy">
+                   <cstring>NodeFillColor</cstring>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="8" alignment="Qt::AlignHCenter">
+                 <widget class="QDoubleSpinBox" name="nodeThickness_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.500000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.500000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>1.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1" alignment="Qt::AlignHCenter">
+                 <widget class="QLineEdit" name="EdgeLabel_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>65</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="mouseTracking">
+                   <bool>false</bool>
+                  </property>
+                  <property name="inputMask">
+                   <string/>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="frame">
+                   <bool>false</bool>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                  <property name="placeholderText">
+                   <string>weight</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1" alignment="Qt::AlignHCenter">
+                 <widget class="QSpinBox" name="EdgeLabelSize_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                  <property name="value">
+                   <number>12</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="5" alignment="Qt::AlignHCenter">
+                 <widget class="QPushButton" name="NodeFillColor_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="10" alignment="Qt::AlignHCenter">
+                 <widget class="QDoubleSpinBox" name="nodeDiameter_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                  <property name="specialValueText">
+                   <string/>
+                  </property>
+                  <property name="showGroupSeparator" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.050000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.200000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QGridLayout" name="graphListLayout">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="graphListLabel">
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Graph List:</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="verticalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
         <widget class="QWidget" name="editGraph">
          <attribute name="title">
-          <string>Edit Graph</string>
+          <string>Edit Nodes and Edges</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
@@ -2169,7 +3888,7 @@
                <x>0</x>
                <y>0</y>
                <width>674</width>
-               <height>778</height>
+               <height>774</height>
               </rect>
              </property>
             </widget>
@@ -2183,99 +3902,7 @@
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
          <layout class="QGridLayout" name="gridLayout_3">
-          <property name="sizeConstraint">
-           <enum>QLayout::SetDefaultConstraint</enum>
-          </property>
-          <item row="1" column="6" colspan="2" alignment="Qt::AlignRight">
-           <widget class="QCheckBox" name="snapToGrid_checkBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
-            <property name="text">
-             <string>Snap to Grid</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="4">
-           <widget class="QRadioButton" name="freestyleMode_radioButton">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add nodes by double clicking at the desired location. Add a path between existing nodes by clicking on two or more nodes consecutively.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
-            <property name="text">
-             <string>Freestyle</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="5">
-           <widget class="QRadioButton" name="dragMode_radioButton">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hold the mouse down over any part of a graph and move the mouse to drag that graph around the canvas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
-            <property name="text">
-             <string>Drag</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QRadioButton" name="editMode_radioButton">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Drag individual nodes around the canvas. Use 'Esc' key to undo one or more node drags. Click on a node to give it a label.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
-            <property name="text">
-             <string>Edit</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="modeLabel">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Modes:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
+          <item row="0" column="1">
            <widget class="QRadioButton" name="joinMode_radioButton">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
@@ -2294,7 +3921,7 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="3">
+          <item row="0" column="2">
            <widget class="QRadioButton" name="deleteMode_radioButton">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
@@ -2313,7 +3940,58 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="7">
+          <item row="0" column="0">
+           <widget class="QLabel" name="modeLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Modes:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QRadioButton" name="freestyleMode_radioButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add nodes by double clicking at the desired location. Add a path between existing nodes by clicking on two or more nodes consecutively.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Freestyle</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4" alignment="Qt::AlignRight">
+           <widget class="QCheckBox" name="snapToGrid_checkBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Snap to Grid</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4" alignment="Qt::AlignRight">
            <widget class="QPushButton" name="clearCanvas">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -2324,10 +4002,56 @@
             <property name="font">
              <font>
               <pointsize>12</pointsize>
+              <strikeout>false</strikeout>
              </font>
             </property>
             <property name="text">
              <string>Clear Canvas</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QRadioButton" name="selectMode_radioButton">
+            <property name="text">
+             <string>Select</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QRadioButton" name="editMode_radioButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Drag individual nodes around the canvas. Use 'Esc' key to undo one or more node drags. Click on a node to give it a label.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Edit</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QRadioButton" name="dragMode_radioButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hold the mouse down over any part of a graph and move the mouse to drag that graph around the canvas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Drag</string>
             </property>
            </widget>
           </item>
@@ -2343,7 +4067,7 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>400</width>
+            <width>0</width>
             <height>500</height>
            </size>
           </property>
@@ -2405,6 +4129,7 @@
            <property name="font">
             <font>
              <pointsize>12</pointsize>
+             <strikeout>false</strikeout>
             </font>
            </property>
            <property name="toolTip">
@@ -2428,7 +4153,7 @@
      <x>0</x>
      <y>0</y>
      <width>1300</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -2570,12 +4295,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>683</x>
-     <y>352</y>
+     <x>680</x>
+     <y>354</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2590,8 +4315,8 @@
      <y>289</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2606,8 +4331,8 @@
      <y>289</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2622,8 +4347,8 @@
      <y>323</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2634,12 +4359,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>378</x>
-     <y>183</y>
+     <x>577</x>
+     <y>185</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2654,8 +4379,8 @@
      <y>353</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2666,12 +4391,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>653</x>
-     <y>183</y>
+     <x>417</x>
+     <y>185</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2682,12 +4407,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>168</x>
-     <y>352</y>
+     <x>165</x>
+     <y>354</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2698,12 +4423,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>449</x>
-     <y>211</y>
+     <x>652</x>
+     <y>213</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2718,8 +4443,8 @@
      <y>206</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2734,8 +4459,8 @@
      <y>289</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2750,8 +4475,8 @@
      <y>149</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2762,12 +4487,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>469</x>
-     <y>183</y>
+     <x>663</x>
+     <y>185</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2778,12 +4503,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>284</x>
-     <y>211</y>
+     <x>270</x>
+     <y>213</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2794,12 +4519,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>197</x>
-     <y>211</y>
+     <x>187</x>
+     <y>213</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2814,8 +4539,8 @@
      <y>323</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2826,12 +4551,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>667</x>
-     <y>211</y>
+     <x>485</x>
+     <y>185</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2846,8 +4571,8 @@
      <y>304</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2858,12 +4583,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>537</x>
-     <y>322</y>
+     <x>534</x>
+     <y>324</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2874,12 +4599,12 @@
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>542</x>
-     <y>352</y>
+     <x>539</x>
+     <y>354</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1062</x>
-     <y>64</y>
+     <x>931</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>

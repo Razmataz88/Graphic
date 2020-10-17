@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.21
+ * Version:	1.22
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -16,11 +16,11 @@
  *  (a) Add dumpGraphIc() and dumpTikZ().
  * Nov 29, 2019 (JD V1.5)
  *  (a) Rename "none" mode to "drag" mode, for less confusion.
- *      This required changes to mainwindow.ui as well.
+ *	This required changes to mainwindow.ui as well.
  *	(Also changed "Complete" to "Draw edges" there.)
  * Dec 6, 2019 (JD V1.6)
  *  (a) Rename generate_Freestyle_{Nodes,Edges} to {node,edge}ParamsUpdated
- *      to better reflect what those functions do.
+ *	to better reflect what those functions do.
  *  (b) Modify generate_Graph() to take a parameter.
  *  (c) Add the enum widget_num as the parameter values for generate_Graph().
  * Dec 9, 2019 (JD V1.7)
@@ -37,12 +37,12 @@
  *  (a) Removed setKeyStatusLabel() in favour of tooltips for each mode.
  * Jun 6, 2020 (IC V1.11)
  *  (a) Added set_Interface_Sizes() to fix sizing issues on monitors with
- *      different DPIs.
+ *	different DPIs.
  * Jun 10, 2020 (IC V1.12)
  *  (a) Added loadSettings(), saveSettings(), and reimplemented closeEvent().
  * Jun 19, 2020 (IC V1.13)
  *  (a) Added multiple slots for updating edit tab when graphs/nodes/edges are
- *      created.
+ *	created.
  * Jun 26, 2020 (IC V1.14)
  *  (a) Rename on_tabWidget_currentChanged(int) to updateEditTab(int).
  *  (b) Add params to add<X>ToEditTab().
@@ -55,19 +55,27 @@
  * Aug 11, 2020 (IC V1.17)
  *  (a) Add updateDpiAndPreview().
  *  (b) Added settingsDialog variable to be used in conjunction with
- *      the new settingsDialog window which allows the user to use a
+ *	the new settingsDialog window which allows the user to use a
  *	custom DPI value instead of the system default.
  * Aug 13, 2020 (IC V1.18)
  *  (a) Removed addGraphToEditTab(), addNodeToEditTab() and addEdgeToEditTab().
  * Aug 21, 2020 (IC V1.19)
  *  (a) Added the ability to number edge labels similar to nodes so
- *      on_EdgeNumLabelCheckBox_clicked was added as well.
+ *	on_EdgeNumLabelCheckBox_clicked was added as well.
  *	Some related renaming of functions was required.
  * Aug 26, 2020 (IC V1.20)
  *  (a) Added a QLineEdit * offsets field, since the offsets widget is
  *	now created in mainwindow.cpp, non in mainwindow.ui.
  * Oct 16, 2020 (JD V1.21)
  *  (a) Rename saveSettings() -> saveWinSizeSettings() to clarify.
+ * Sep 4, 2020 (IC V1.22)
+ *  (a) Lots of infrastructure added for the new canvas graph editing tab.
+ *	Numerous on_clicked() functions were added for the new colour
+ *	widgets and checkboxes.	 set_Font_Sizes() will now set the
+ *	font for all widgets on the canvas graph tab.
+ *	style_Canvas_Graph() passes the changed_widget ID to the
+ *	overloaded functions of the same name along with all relevant
+ *	canvas graph tab widgets to style the selected canvas items.
  */
 
 
@@ -102,8 +110,8 @@ class MainWindow : public QMainWindow
   protected:
     virtual void closeEvent (QCloseEvent *event);
 
-  private slots:
-    bool save_Graph();
+    private slots:
+	bool save_Graph();
     bool load_Graphic_File();
     void load_Graphic_Library();
     void select_Custom_Graph(QString graphName);
@@ -119,8 +127,16 @@ class MainWindow : public QMainWindow
     void on_NodeFillColor_clicked();
     void on_EdgeLineColor_clicked();
 
+    void on_NodeOutlineColor_2_clicked();
+    void on_NodeFillColor_2_clicked();
+    void on_EdgeLineColor_2_clicked();
+
     void on_NodeNumLabelCheckBox_clicked(bool checked);
     void on_EdgeNumLabelCheckBox_clicked(bool checked);
+
+    void on_NodeNumLabelCheckBox_2_clicked(bool checked);
+    void on_EdgeNumLabelCheckBox_2_clicked(bool checked);
+
     void on_graphType_ComboBox_currentIndexChanged(int index);
     void on_numOfNodes1_valueChanged(int arg1);
     void on_numOfNodes2_valueChanged(int arg1);
@@ -129,22 +145,36 @@ class MainWindow : public QMainWindow
     void edgeParamsUpdated();
 
     void on_deleteMode_radioButton_clicked();
-
     void on_joinMode_radioButton_clicked();
-
     void on_editMode_radioButton_clicked();
-
     void on_dragMode_radioButton_clicked();
-
     void on_freestyleMode_radioButton_clicked();
+    void on_selectMode_radioButton_clicked();
+    void on_tabWidget_currentChanged(int index);
 
     void updateEditTab(int index);
     void updateEditTab();
+    void scheduleUpdate();
 
     void somethingChanged();
     void updateDpiAndPreview();
 
-private:
+    void updateCanvasGraphList();
+    void resetCanvasGraphTab();
+
+    void style_Canvas_Graph(enum canvas_widget_ID what_changed);
+    void style_Canvas_Graph(enum canvas_widget_ID what_changed,
+			    qreal nodeDiameter,	    QString nodeLabel,
+			    bool labelsAreNumbered, qreal nodeLabelSize,
+			    QColor nodeFillColor,   QColor nodeOutlineColor,
+			    qreal edgeSize,	    QString edgeLabel,
+			    qreal edgeLabelSize,    QColor edgeLineColor,
+			    qreal totalWidth,	    qreal totalHeight,
+			    qreal rotation,	    qreal numStart,
+			    qreal nodeThickness,    bool edgeLabelsNumbered,
+			    qreal edgeNumStart);
+
+  private:
     void loadWinSizeSettings();
     void saveWinSizeSettings();
 
@@ -153,7 +183,6 @@ private:
     QString fileDirectory;
     QGridLayout * gridLayout;
     QScrollArea * scroll;
-    QList<Graph *> graphList;
     bool promptSave = false;
     SettingsDialog * settingsDialog;
     QLineEdit * offsets;

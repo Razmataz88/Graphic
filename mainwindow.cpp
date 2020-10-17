@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.58
+ * Version:	1.64
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -34,11 +34,11 @@
  *  (a) Allow blank lines and comments ([ \t]*#.*) in .grphc files.
  *  (b) Add some comments.  Reformat a bit.  Improve debug stmts.
  *  (c) Output a more informative and human-readable .grhpc file.
- *      Output the information as we compute it, rather than slowly
- *      constructing two big honkin' strings piece by piece and
+ *	Output the information as we compute it, rather than slowly
+ *	constructing two big honkin' strings piece by piece and
  *	then outputting them.
  *  (d) Check for some error conditions and pop up a QErrorMessage in
- *      such cases.
+ *	such cases.
  * Oct 13, 2019 (JD V1.5)
  *  (a) Before this version, node labels and corresponding font sizes
  *	were not stored in the .grphc file.  Go figure.
@@ -47,31 +47,31 @@
  *  (c) When saving the graph, only do Linux-specific filename checks
  *	*after* confirming the selected filename is non-null.
  *  (d) Added some error checking when selecting files as possible
- *      graph-ic files, as well as checking contents of a graph-ic file.
+ *	graph-ic files, as well as checking contents of a graph-ic file.
  *  (e) Since node.{h,cpp} have been updated to allow superscripts as
  *	well as subscripts, and this allows the "edit" function to change
  *	vertex labels with subs/supers, the TikZ export has been changed
- *	to add '^{}' iff there is no '^' in the label.  This adds a
+ *	to add '^{}' iff there is no '^' in the label.	This adds a
  *	spurious (but apparently harmless) empty superscript to labels
  *	which have neither sub nor super.
  *  (f) Added a number of function comments.
  * Oct 16, 2019 (JD V1.6)
  *  (a) When creating .grphc file, center graph on (0,0) so that when
- *      it is read back in it is centered (and thus accessible) in the
+ *	it is read back in it is centered (and thus accessible) in the
  *	preview pane.  Ditto
  *  (b) Output coords (to .grphc file) using a %.<VP_PREC_GRPHC>f
  *	format, rather than the default %6g format, to avoid numbers
  *	like -5.68434e-14 (DAMHIKT) in the output file.
  * Oct 16, 2019 (JD V1.7)
  *  (a) The original code was outputting (TikZ case) too many edge
- *      colour definitions, and in some cases they could be wrong.
+ *	colour definitions, and in some cases they could be wrong.
  *	Fix that, and also add in the "well known colour" stuff from
  *	the nodes, as described in V1.5(b) above.
  *  (b) Only output the edge label and size if there is one.
  *  (c) Read edges from .grphc file with and without label info.
  * Nov 10, 2019 (JD V1.8)
  *  (a) Output the label font size before label so that a space before the
- *      label doesn't need to be trimmed.
+ *	label doesn't need to be trimmed.
  * Nov 10, 2019 (JD V1.9)
  *  (a) Fix apparently-erroneous use of logicalDotsPerInchX in the Y
  *	part of Create_Graph() (called in generate_Graph()).
@@ -116,7 +116,7 @@
  *	and only output differences for nodes/edges that are different).
  * Nov 24, 2019 (JD V1.14)
  *  (a) Add a call on_graphType_ComboBox_currentIndexChanged(-1) the
- *      mainwindow constructor to initialize the "Create Graph" pane
+ *	mainwindow constructor to initialize the "Create Graph" pane
  *	to a self-consistent shape.  Modify on_graphType_...() to not
  *	whine when its arg is < 0.
  * Nov 28, 2019 (JD V1.15)
@@ -125,17 +125,17 @@
  *  (b) findDefaults(): changed default node diameter from 0.2 to
  *	(qreal)0.2 to correctly match the data type.  Changed the
  *	floats to qreals in the hashes for the same reason.
- *      Also only change struct values from the initial defaults if
+ *	Also only change struct values from the initial defaults if
  *	there were actually observations in the corresponding hash table.
  *  (c) Improve saveTikZ() so that "nicer" TikZ code is output.
- *      Specifically, output default styles for nodes, edge lines and
+ *	Specifically, output default styles for nodes, edge lines and
  *	edge labels and when outputting individual nodes and edges
  *	only specify differences from the defaults.
  *	Also output things as we go, rather than creating a big
  *	honkin' string and outputting it at the end (can you say O(n^2)?).
  * Nov 28, 2019 (JD V1.16)
  *  (a) Factor out saveGraphIc() from save_Graph().
- *      Use this to implement dumpGraphIc().
+ *	Use this to implement dumpGraphIc().
  * Nov 29, 2019 (JD V1.17)
  *  (a) Rename "none" mode to "drag" mode, for less confusion.
  * Dec 1, 2019 (JD V1.18)
@@ -144,10 +144,10 @@
  *  (c) Add comments, minor code clean-ups.
  * Dec 6, 2019 (JD V1.19)
  *  (a) Rename generate_Freestyle_{Nodes,Edges} to {node,edge}ParamsUpdated
- *      to better reflect what those functions do.
+ *	to better reflect what those functions do.
  *  (b) Modify generate_Graph(), and the related connect() calls, to
  *	hand a parameter to generate_Graph() so that it knows which
- *	widget's change caused it to be called.  This is the first
+ *	widget's change caused it to be called.	 This is the first
  *	step of fixing things so that specific features of library
  *	graphs can be styled without applying all styles, which
  *	otherwise destroys much of the content of a library graph.
@@ -177,11 +177,11 @@
  *	day 1!)
  *  (c) Allow commas in labels.
  *  (d) Close the file descriptor upon discovering an error when
- *      reading a .grphc file.
+ *	reading a .grphc file.
  *  (e) (Re-)Implement the ability to style library graphs (with
  *	changes to preview.cpp).  As of this version, the graph
  *	drawing widgets visible when a library graph is chosen do not
- *	have values related to the graph in the preview window.  This
+ *	have values related to the graph in the preview window.	 This
  *	needs to be dealt with in the fullness of time.
  *  (f) Show nodeLabel2 iff showing numOfNodes2.
  *  (g) The usual collection of debug statement improvements.
@@ -214,116 +214,116 @@
  *  (a) Modified save_Graph() to use a white background for JPEG files.
  * Jun 6, 2020 (IC V1.30)
  *  (a) Added set_Interface_Sizes() to fix sizing issues on monitors with
- *      different DPIs.
+ *	different DPIs.
  * Jun 9, 2020 (IC V1.31)
  *  (a) Converted the node and edge label size doublespinboxes into
- *      regular spinboxes and updated any relevant connect statements.
+ *	regular spinboxes and updated any relevant connect statements.
  * Jun 10, 2020 (IC V1.32)
  *  (a) Added QSettings to save the window size on exit and load the size
- *      on startup. See saveSettings() and loadSettings()
+ *	on startup. See saveSettings() and loadSettings()
  *  (b) Reimplemented closeEvent() to accommodate QSettings and prompt user to
- *      save graph if any exists on the canvas.
+ *	save graph if any exists on the canvas.
  *  (c) Added code to saveGraph() that supports saving default background
- *      colour of saved images. WIP
+ *	colour of saved images. WIP
  * Jun 17, 2020 (IC V1.33)
  *  (a) Updated on_tabWidget_currentChanged() to display merged graphs under a
- *      single set of headers as well as delete those headers if the graph is
- *      deleted.
+ *	single set of headers as well as delete those headers if the graph is
+ *	deleted.
  * Jun 19, 2020 (IC V1.34)
  *  (a) Added multiple slots and appropriate connections for updating edit tab
- *      when graphs/nodes/edges are created.
+ *	when graphs/nodes/edges are created.
  * Jun 26, 2020 (IC V1.35)
  *  (a) Update some connections to take a node or edge param.
  *  (b) Fixed a bug that would set the colour to black if user exited the
- *      colour select window without selecting a colour.
+ *	colour select window without selecting a colour.
  *  (c) Rename on_tabWidget_currentChanged(int) to updateEditTab(int).
- *      Do some UI tweaking there.
+ *	Do some UI tweaking there.
  *  (d) Implement addGraphToEditTab(), addNodeToEditTab() and
- *      addEdgeToEditTab().
+ *	addEdgeToEditTab().
  * Jun 30, 2020 (IC V1.36)
  *  (a) Added another connection to refresh the preview pane with a new graph
- *      when the previous is dropped onto the canvas.
+ *	when the previous is dropped onto the canvas.
  * Jul 3, 2020 (IC V1.37)
  *  (a) Added code so that the thickness of a node (the circle) can be
- *      changed.  Added another connection to update the preview and
+ *	changed.  Added another connection to update the preview and
  *	params when the node thickness is adjusted.
  *  (b) Updated set_Font_Sizes() to include the new thickness widgets.
  * Jul 7, 2020 (IC V1.38)
  *  (a) Added another connection to update the zoomDisplay after a zoom change.
  * Jul 9, 2020 (IC V1.39)
  *  (a) Added another connection to update the edit tab after two graphs were
- *      joined.
+ *	joined.
  *  (b) Fixed a bug that allowed labels to be focusable on the preview pane.
  * Jul 14, 2020 (IC V1.40)
  *  (a) Corrected an issue that was preventing custom graphs from being
- *      refreshed on the preview after being dropped onto the canvas.
+ *	refreshed on the preview after being dropped onto the canvas.
  * Jul 15, 2020 (IC V1.41)
  *  (a) Added node thickness widgets to the edit tab so that both node penwidth
- *      and diameter can be changed after leaving the preview pane.
+ *	and diameter can be changed after leaving the preview pane.
  * Jul 22, 2020 (IC V1.42)
  *  (b) Set the font of the zoomDisplay.
  *  (c) Add "N width" label and widget to edit tab; rearrange edit tab widgets.
  * Jul 23, 2020 (IC V1.43)
  *  (a) Added another connection to update the edit tab after a graph is
- *      separated.  (Replace itemDeleted() with graphSeparated().)
+ *	separated.  (Replace itemDeleted() with graphSeparated().)
  * Jul 24, 2020 (IC V1.44)
  *  (a) Added another connection to call clearCanvas when the clearCanvas
- *      button is pressed.
+ *	button is pressed.
  * Jul 29, 2020 (IC V1.45)
  *  (a) Installed event filters in updateEditTab(int) to send event
  *	handling to node.cpp and edge.cpp.
  * Jul 31, 2020 (IC V1.46)
  *  (a) Added connections to somethingChanged() slot and bool promptSave that
- *      detects if any change has been made on the canvas since the last save
- *      and thus a new save prompt is needed on exit.
+ *	detects if any change has been made on the canvas since the last save
+ *	and thus a new save prompt is needed on exit.
  *  (b) Add setting to allow the user to specify their physicalDPI
  *	setting, a la acroread.
  * Aug 5, 2020 (IC V1.47)
  *  (a) Node thickness is now be included in the save code and is passed
- *      to nodeParam functions.
- *      THIS DEPRECATES PREVIOUS .grphc FILES and changes .tikz output.
+ *	to nodeParam functions.
+ *	THIS DEPRECATES PREVIOUS .grphc FILES and changes .tikz output.
  *  (b) Added updateDpiAndPreview slot and settingsDialog variable to be used
- *      in conjunction with the new settingsDialog window which allows the user
- *      to use a custom DPI value instead of the system default.
+ *	in conjunction with the new settingsDialog window which allows the user
+ *	to use a custom DPI value instead of the system default.
  *  (c) Renamed nodeSize widget to nodeDiameter and edgeSize widget to
- *      edgeThickness for clarity.  Corresponding changes also in UI.
+ *	edgeThickness for clarity.  Corresponding changes also in UI.
  *  (d) On exit, don't ask the user if the graph should be saved if it
- *      has not been changed since the last save.
+ *	has not been changed since the last save.
  *  (e) In set_Font_Sizes() set the font of the clearCanvas button.
  * Aug 7, 2020 (IC V1.48)
  *  (a) save_Graph() now uses the saved background colours from settingsDialog
- *      to colour saved graphs.
+ *	to colour saved graphs.
  * Aug 11, 2020 (IC V1.49)
  *  (a) A zoom function was added to the canvas similar to the one for the
- *      preview so zoomDisplay_2 needs to be scaled in set_Interface_Sizes().
+ *	preview so zoomDisplay_2 needs to be scaled in set_Interface_Sizes().
  *  (b) New connection for zoomChanged() signal.
  *  (c) Update preview when settings DPI is changed.  Add
  *	updateDpiAndPreview() function.
  *  (d) Handraulically scale clearCanvas and zoomDisplay{,_2} widgets.
  * Aug 12, 2020 (IC V1.50)
  *  (a) Cleaned up set_Interface_Sizes() to make the default scale code more
- *      readable.  Currently, the scale is based on logicalDPI / 72 for apple
- *      and logicalDPI / 96 for any other machine.
+ *	readable.  Currently, the scale is based on logicalDPI / 72 for apple
+ *	and logicalDPI / 96 for any other machine.
  *  (b) Major code removal: addEdgeToEditTab(), addNodeToEditTab() and
- *      addGraphToEditTab() all went away.
+ *	addGraphToEditTab() all went away.
  * Aug 14, 2020 (IC V1.51)
  *  (a) Update call to setRotation() with new param.
  *  (b) Remove a now-bogus comment.
  * Aug 21, 2020 (IC V1.52)
  *  (a) Added the ability to number edge labels similar to nodes.  Edge labels
- *      can now have numbered subscripts or simply numbered labels and the user
- *      can specify the start number with EdgeNumLabelStart.
+ *	can now have numbered subscripts or simply numbered labels and the user
+ *	can specify the start number with EdgeNumLabelStart.
  *  (b) Widgets related to numbering slightly renamed to indicate whether they
- *      are related to an edge or a node for clarity.
+ *	are related to an edge or a node for clarity.
  * Aug 24, 2020 (IC V1.51)
  *  (a) Changed the wording on some edit tab labels for clarity.
  * Aug 25, 2020 (IC V1.52)
  *  (a) Added a new basicGraphs category, circulant, so a new offsets widget
- *      was added. It only accepts input in the format "d,d,d" or "d d d"
- *      and occupies the same space as numOfNodes2.
+ *	was added. It only accepts input in the format "d,d,d" or "d d d"
+ *	and occupies the same space as numOfNodes2.
  *  (c) For circulant graph, added connection for offsets widget and
- *	pass the offsets text to Create_Basic_Graph().  Set the
- *	offsets widget's font.  Show or hide that widget as desired.
+ *	pass the offsets text to Create_Basic_Graph().	Set the
+ *	offsets widget's font.	Show or hide that widget as desired.
  *  (d) Deleted some old commented-out code.
  * Aug 25, 2020 (IC V1.54)
  *  (a) Restrict the input for the offsets widget so users can't even
@@ -333,11 +333,11 @@
  *	need to be added.
  * Aug 26, 2020 (IC V1.55)
  *  (a) Removed offsets from the mainwindow.ui and instead initialize it in
- *      the constructor before moving it to the location of numOfNodes2.
+ *	the constructor before moving it to the location of numOfNodes2.
  *  (b) Restructured updateEditTab slightly so that nodes are added to
  *	the edit tab before edges.
  *  (c) Added a new setting underneath the snapToGrid checkbox that lets the
- *      user specify the size of the grid cells when snapToGrid is on.
+ *	user specify the size of the grid cells when snapToGrid is on.
  *	A signal is sent to the canvas scene when the value changes.
  * Aug 27, 2020 (IC + JD V1.56)
  *  (a) In select_custom_graph() fix the positioning of graphs whose width
@@ -350,9 +350,9 @@
  *	example, the node fill colour is changed.
  *  (b) Removed redundant for loop from updateEditTab.
  *  (c) Moved the gridCellSize widget to settingsdialog as it made more sense
- *      there.
+ *	there.
  *  (d) Moved clearCanvas to the layout above the canvas so it is out of the
- *      way of canvas graphs and  adheres to a layout.
+ *	way of canvas graphs and  adheres to a layout.
  * Aug 28, 2020 (IC V1.57)
  *  (a) Update the connection for updateCellSize().
  *  (b) Improve the code which populates the edit tab.
@@ -360,6 +360,31 @@
  *  (a) Rename saveSettings() -> saveWinSizeSettings() to clarify.
  *  (b) Add some code to make the use of settings more robust.
  *  (c) Tidy white-space.
+ * Sep 4, 2020 (IC V1.59)
+ *  (a) Lots of infrastructure added for the new canvas graph editing tab.
+ *	There are now connections that call style_Canvas_Graph() with the
+ *	appropriate ID of the widget that changed and all relevant widget
+ *	information. Numerous on_clicked functions were added for the new
+ *	colour widgets and checkboxes and set_Font_Sizes will now set the
+ *	font for all widgets on the canvas graph tab.
+ * Sep 8, 2020 (IC V1.60)
+ *  (a) Fixed a rotation issue related to the new select mode.
+ * Sep 9, 2020 (IC V1.61)
+ *  (a) Changed the canvas change signals to slot into scheduleUpdate()
+ *	instead of updateEditTab(). Currently, the edit tab should ONLY update
+ *	when the user switches to it AND either a signal has been sent by
+ *	canvasscene/view or a change was made on the canvas graph tab.
+ *	(i.e. when ui->tabWidget->currentIndex() == 2 && updateNeeded == true)
+ * Sep 10, 2020 (IC V1.62)
+ *  (a) resetCanvasGraphTab() added to reset the widgets on the canvas graph
+ *	to their defaults whenever the selectedList is cleared. It also resets
+ *	any static variables used in style_Canvas_Graph().
+ * Sep 11, 2020 (IC V1.63)
+ *  (a) somethingChanged() function now also calls updateCanvasGraphList()
+ *	to populate the graph list on the canvas graph tab.
+ * Oct 17, 2020 (JD V1.64)
+ *  (a) Replace a lot of code with colour.name().
+ *  (b) Generic code tidying.
  */
 
 #include "mainwindow.h"
@@ -412,8 +437,8 @@ QSettings settings("Acadia", "Graphic");
 qreal currentPhysicalDPI, currentPhysicalDPI_X, currentPhysicalDPI_Y;
 
 static qreal screenLogicalDPI_X;
-
-
+static bool updateNeeded = false;
+static int previousRotation;
 
 /*
  * Name:	MainWindow
@@ -610,15 +635,15 @@ QMainWindow(parent),
     // These connects update the edit tab when the number of items on the
     // canvas changes.
     connect(ui->canvas->scene(), SIGNAL(graphDropped()),
-	    this, SLOT(updateEditTab()));
+	    this, SLOT(scheduleUpdate()));
     connect(ui->canvas->scene(), SIGNAL(graphJoined()),
-	    this, SLOT(updateEditTab()));
+	    this, SLOT(scheduleUpdate()));
     connect(ui->canvas->scene(), SIGNAL(graphSeparated()),
-	    this, SLOT(updateEditTab()));
+	    this, SLOT(scheduleUpdate()));
     connect(ui->canvas, SIGNAL(nodeCreated()),
-	    this, SLOT(updateEditTab()));
+	    this, SLOT(scheduleUpdate()));
     connect(ui->canvas, SIGNAL(edgeCreated()),
-	    this, SLOT(updateEditTab()));
+	    this, SLOT(scheduleUpdate()));
 
     // Adds a new graph to the preview pane when the previous is dropped onto
     // the canvas.
@@ -636,7 +661,7 @@ QMainWindow(parent),
 	    ui->canvas, SLOT(clearCanvas()));
 
     // Ask to save on exit if any changes were made on the canvas since
-    // last save.
+    // last save and update the list of graphs on the canvas graph tab.
     connect(ui->canvas->scene(), SIGNAL(somethingChanged()),
 	    this, SLOT(somethingChanged()));
     connect(ui->canvas, SIGNAL(nodeCreated()),
@@ -648,6 +673,65 @@ QMainWindow(parent),
     connect(ui->canvas->scene(), SIGNAL(graphJoined()),
 	    this, SLOT(somethingChanged()));
 
+    // The following connects relate to the Canvas Graph tab...
+    connect(ui->nodeDiameter_2,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cNodeDiam_WGT); });
+    connect(ui->nodeThickness_2,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cNodeThickness_WGT); });
+    connect(ui->NodeLabel1_2,
+	    (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
+	    this, [this]() { style_Canvas_Graph(cNodeLabel1_WGT); });
+    connect(ui->NodeLabelSize_2,
+	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cNodeLabelSize_WGT); });
+    connect(ui->NodeNumLabelCheckBox_2,
+	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
+	    this, [this]() { style_Canvas_Graph(cNodeNumLabelCheckBox_WGT); });
+    connect(ui->NodeNumLabelStart_2,
+	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cNodeNumLabelStart_WGT); });
+    connect(ui->NodeFillColor_2,
+	    (void(QPushButton::*)(bool))&QPushButton::clicked,
+	    this, [this]() { style_Canvas_Graph(cNodeFillColour_WGT); });
+    connect(ui->NodeOutlineColor_2,
+	    (void(QPushButton::*)(bool))&QPushButton::clicked,
+	    this, [this]() { style_Canvas_Graph(cNodeOutlineColour_WGT); });
+
+    connect(ui->edgeThickness_2,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cEdgeThickness_WGT); });
+    connect(ui->EdgeLabel_2,
+	    (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
+	    this, [this]() { style_Canvas_Graph(cEdgeLabel_WGT); });
+    connect(ui->EdgeLabelSize_2,
+	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cEdgeLabelSize_WGT); });
+    connect(ui->EdgeNumLabelCheckBox_2,
+	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
+	    this, [this]() { style_Canvas_Graph(cEdgeNumLabelCheckBox_WGT); });
+    connect(ui->EdgeNumLabelStart_2,
+	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cEdgeNumLabelStart_WGT); });
+    connect(ui->EdgeLineColor_2,
+	    (void(QPushButton::*)(bool))&QPushButton::clicked,
+	    this, [this]() { style_Canvas_Graph(cEdgeLineColour_WGT); });
+
+    connect(ui->graphRotation_2,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cGraphRotation_WGT); });
+    connect(ui->graphHeight_2,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cGraphHeight_WGT); });
+    connect(ui->graphWidth_2,
+	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
+	    this, [this]() { style_Canvas_Graph(cGraphWidth_WGT); });
+
+    // Reset appropriate widgets and variables whenever selectedList clears
+    connect(ui->canvas, SIGNAL(selectedListChanged()),
+	    this, SLOT(resetCanvasGraphTab()));
+
     // Initialize the canvas to be in "drag" mode.
     ui->dragMode_radioButton->click();
 
@@ -656,8 +740,13 @@ QMainWindow(parent),
     ui->EdgeLineColor->setStyleSheet(s);
     ui->NodeOutlineColor->setStyleSheet(s);
 
+    ui->EdgeLineColor_2->setStyleSheet(s);
+    ui->NodeOutlineColor_2->setStyleSheet(s);
+
     s = "background: #ffffff;" BUTTON_STYLE;
     ui->NodeFillColor->setStyleSheet(s);
+
+    ui->NodeFillColor_2->setStyleSheet(s);
 
     edgeParamsUpdated();
     nodeParamsUpdated();
@@ -665,11 +754,10 @@ QMainWindow(parent),
     // Initialize the canvas to enable snapToGrid feature when loaded.
     ui->canvas->snapToGrid(ui->snapToGrid_checkBox->isChecked());
 
-    set_Font_Sizes();
     // Initialize font sizes for ui labels/widgets (Linux fix).
-    gridLayout = new QGridLayout();
+    set_Font_Sizes();
 
-    //ui->editGraph->setLayout(gridLayout);
+    gridLayout = new QGridLayout();
     ui->scrollAreaWidgetContents->setLayout(gridLayout);
 
     // Initialize Create Graph pane to default values
@@ -751,7 +839,7 @@ MainWindow::~MainWindow()
  * Outputs:	Nothing.
  * Modifies:	The ui->graphType_ComboBox
  * Returns:	Nothing.
- * Assumptions:	ui->graphType_ComboBox is set up.
+ * Assumptions: ui->graphType_ComboBox is set up.
  * Bugs:	?
  * Notes:	None.
  */
@@ -778,7 +866,7 @@ MainWindow::generate_Combobox_Titles()
  * Outputs:	An edge list of the graph to the file.
  * Modifies:	Nothing.
  * Returns:	True on success.
- * Assumptions:	Args are valid.
+ * Assumptions: Args are valid.
  * Bugs:	?!
  * Notes:	Currently always returns T, but maybe in the future ...
  */
@@ -825,7 +913,7 @@ saveEdgelist(QTextStream &outfile, QVector<Node *> nodes)
  * Outputs:	Nothing.
  * Modifies:	Nothing.
  * Returns:	A TikZ colour name (as a QString) or nullptr.
- * Assumptions:	None.
+ * Assumptions: None.
  * Bugs:	This is shamefully unsophisticated.
  *		The colours known to TikZ may be a moving target.
  * Notes:	At time of writing (Oct 2019), the following are
@@ -848,14 +936,14 @@ saveEdgelist(QTextStream &outfile, QVector<Node *> nodes)
  */
 
 // Allow a bit of slop in some cases (see noted examples below).
-#define     CLOSE(x, c)	    (((x) == (c)) || ((x) == ((c) + 1)))
+#define	    CLOSE(x, c)	    (((x) == (c)) || ((x) == ((c) + 1)))
 
 QString
-lookupColour(QColor color)
+lookupColour(QColor colour)
 {
-    int r = color.red();
-    int g = color.green();
-    int b = color.blue();
+    int r = colour.red();
+    int g = colour.green();
+    int b = colour.blue();
 
     if (r == 0)
     {
@@ -925,7 +1013,7 @@ typedef struct
     int fillR, fillG, fillB;
     int lineR, lineG, lineB;
     qreal nodeDiameter;		// inches
-    qreal penSize;              // pixels (!); thickness of line.
+    qreal penSize;		// pixels (!); thickness of line.
     qreal labelSize;		// points; See Node::setNodeLabelSize()
 } nodeInfo;
 
@@ -946,7 +1034,7 @@ typedef struct
  * Outputs:	Nothing.
  * Modifies:	Nothing.
  * Returns:	The two sets of R, G and B.
- * Assumptions:	None.
+ * Assumptions: None.
  * Bugs:	?
  * Notes:	Returns (0,0,0) in the case there are no edges or vertices.
  */
@@ -996,7 +1084,8 @@ findDefaults(QVector<Node *> nodes,
     }
 
     max_count = 0;
-    result = nodeDefaults_p->fillR << 16 | nodeDefaults_p->fillG << 8
+    result = nodeDefaults_p->fillR << 16
+	| nodeDefaults_p->fillG << 8
 	| nodeDefaults_p->fillB;
     for (auto item : vFillColour)
     {
@@ -1149,12 +1238,12 @@ findDefaults(QVector<Node *> nodes,
  * Outputs:	A TikZ picture (in LaTeX syntax) which draws the graph.
  * Modifies:	Nothing.
  * Returns:	True on success.
- * Assumptions:	Args are valid.
+ * Assumptions: Args are valid.
  * Bugs:	This is grotesquely long.
  * Notes:	Currently always returns T, but maybe in the future ...
  *		Idea: to minimize the amount of TikZ code, the most
  *		common vertex and edge attributes are found and stored
- *		in the styles v/.style, e/.style and l/.style.  Then
+ *		in the styles v/.style, e/.style and l/.style.	Then
  *		when drawing a particular vertex or edge, anything not
  *		matching the default is output, over-riding the style.
  */
@@ -1190,10 +1279,10 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     if (defNodeFillColourName == nullptr)
     {
 	defineDefNodeFillColour = true;
-	outfile << "    n/.style={fill=defNodeFillColour, ";
+	outfile << "	n/.style={fill=defNodeFillColour, ";
     }
     else
-	outfile << "    n/.style={fill=" << defNodeFillColourName << ", ";
+	outfile << "	n/.style={fill=" << defNodeFillColourName << ", ";
 
     bool defineDefNodeLineColour = false;
     QColor defNodeLineColour
@@ -1229,10 +1318,10 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     if (defEdgeLineColourName == nullptr)
     {
 	defineDefEdgeLineColour = true;
-	outfile << "    e/.style={draw=defEdgeLineColour";
+	outfile << "	e/.style={draw=defEdgeLineColour";
     }
     else
-	outfile << "    e/.style={draw=" << defEdgeLineColourName;
+	outfile << "	e/.style={draw=" << defEdgeLineColourName;
 
     outfile << ", line width="
 	    << QString::number(edgeDefaults.penSize / currentPhysicalDPI_X,
@@ -1295,8 +1384,8 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     qreal midy = (maxy + miny) / 2.;
 
     // Sample output for a node:
-    //  \definecolor{n<n>lineClr} {RGB} {R,G,B}   (if not default)
-    //  \definecolor{n<n>fillClr} {RGB} {R,G,B}   (if not default)
+    //	\definecolor{n<n>lineClr} {RGB} {R,G,B}	  (if not default)
+    //	\definecolor{n<n>fillClr} {RGB} {R,G,B}	  (if not default)
     //	\node (v<n>) at (x,y) [n ,diffs from defaults] {$<node label>$};
     // Note that to change the text colour we could add (e.g.) "text=red"
     // to the \node options (or to the 'n' style above).
@@ -1400,8 +1489,8 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
     }
 
     // Sample output for an edge:
-    //  \definecolor{e<n>_<m>lineClr} {RGB} {R,G,B}   (if not default)
-    //  \path (v<n>) edge[e, diff from defaults] node[l, diff from defaults]
+    //	\definecolor{e<n>_<m>lineClr} {RGB} {R,G,B}   (if not default)
+    //	\path (v<n>) edge[e, diff from defaults] node[l, diff from defaults]
     //		{$<edge label>} (v_<m>);
     for (int i = 0; i < nodes.count(); i++)
     {
@@ -1412,7 +1501,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
 	    // TODO: is it possible that with various and sundry
 	    // operations on graphs neither the sourceID nor the
 	    // destID of an edge in nodes.at(i)'s list is equal to
-	    // i, and thus some edge won't be printed?  If so,
+	    // i, and thus some edge won't be printed?	If so,
 	    // should we just test "sourceID < destID in the if
 	    // test immediately below?
 	    Edge * edge = nodes.at(i)->edgeList.at(j);
@@ -1505,7 +1594,7 @@ saveTikZ(QTextStream &outfile, QVector<Node *> nodes)
  * Outputs:	The graph-ic description of the current graph.
  * Modifies:	Nothing.
  * Returns:	True on success.
- * Assumptions:	Args are valid.
+ * Assumptions: Args are valid.
  * Bugs:
  * Notes:	Currently always returns T, but maybe in the future ...
  *		Normally vertex and edge label info is not output if
@@ -1541,7 +1630,7 @@ saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
     // coordinates are negative and "large", and the graph is not
     // visible in the preview pane when I load it, which also
     // means (as of time of writing) that I can't drag it to the
-    // canvas.  Thus the graph is effectively lost.  Avoid this by
+    // canvas.	Thus the graph is effectively lost.  Avoid this by
     // centering the graph on (0, 0) when writing it out.
     qreal minx = 0, maxx = 0, miny = 0, maxy = 0;
     if (nodes.count() > 0)
@@ -1601,7 +1690,7 @@ saveGraphIc(QTextStream &outfile, QVector<Node *> nodes, bool outputExtra)
 
     outfile << "\n# Edge descriptions; the format is:\n"
 	    << "# u, v, dest_radius, source_radius, rotation, pen_width,\n"
-	    << "#       line r,g,b[, label font size, label]\n";
+	    << "#	line r,g,b[, label font size, label]\n";
 
     for (int i = 0; i < nodes.count(); i++)
     {
@@ -1670,6 +1759,7 @@ void
 MainWindow::somethingChanged()
 {
     promptSave = true;
+    updateCanvasGraphList();
 }
 
 
@@ -1683,7 +1773,7 @@ MainWindow::somethingChanged()
  * Returns:	True on file successfully saved, false otherwise.
  * Assumptions: ?
  * Bugs:	This function is too long.
- * Notes:	none
+ * Notes:	None.
  */
 
 bool
@@ -1693,7 +1783,7 @@ MainWindow::save_Graph()
 
     fileTypes += GRAPHiCS_SAVE_FILE ";;"
 	TIKZ_SAVE_FILE ";;"
-	EDGES_SAVE_FILE	";;";
+	EDGES_SAVE_FILE ";;";
 
     foreach (QByteArray format, QImageWriter::supportedImageFormats())
     {
@@ -1787,8 +1877,8 @@ MainWindow::save_Graph()
 	{
 	    if (settings.contains("jpgBgColour"))
 	    {
-		QColor color = settings.value("jpgBgColour").toString();
-		image->fill(color);
+		QColor colour = settings.value("jpgBgColour").toString();
+		image->fill(colour);
 	    }
 	    else
 		image->fill(Qt::white);
@@ -1797,8 +1887,8 @@ MainWindow::save_Graph()
 	{
 	    if (settings.contains("otherImageBgColour"))
 	    {
-		QColor color = settings.value("otherImageBgColour").toString();
-		image->fill(color);
+		QColor colour = settings.value("otherImageBgColour").toString();
+		image->fill(colour);
 	    }
 	    else
 		image->fill(Qt::transparent);
@@ -1922,7 +2012,7 @@ MainWindow::save_Graph()
  * Outputs:	Displays a file chooser.
  * Modifies:	Nothing.
  * Returns:	True.  (TODO: Why?)
- * Assumptions:	None.
+ * Assumptions: None.
  * Bugs:
  * Notes:
  */
@@ -1950,7 +2040,7 @@ MainWindow::load_Graphic_File()
  * Outputs:	Nothing.
  * Modifies:	ui->graphType_ComboBox
  * Returns:	Nothing.
- * Assumptions:	fileDirectory has been initialized.
+ * Assumptions: fileDirectory has been initialized.
  *		This assumes that if a file has a GRAPHiCS_FILE_EXTENSION
  *		extension then it is a graph-ic file.
  * Bugs:
@@ -2126,17 +2216,17 @@ MainWindow::select_Custom_Graph(QString graphName)
 	    qDebu("  node id %d at (%.4f, %.4f)\n\tX [%.4f, %.4f], "
 		  "Y [%.4f, %.4f]", i - 1, x, y, minX, maxX, minY, maxY);
 
-	    QColor fillColor;
-	    fillColor.setRedF(fields.at(5).toDouble());
-	    fillColor.setGreenF(fields.at(6).toDouble());
-	    fillColor.setBlueF(fields.at(7).toDouble());
-	    node->setFillColour(fillColor);
+	    QColor fillColour;
+	    fillColour.setRedF(fields.at(5).toDouble());
+	    fillColour.setGreenF(fields.at(6).toDouble());
+	    fillColour.setBlueF(fields.at(7).toDouble());
+	    node->setFillColour(fillColour);
 
-	    QColor lineColor;
-	    lineColor.setRedF(fields.at(8).toDouble());
-	    lineColor.setGreenF(fields.at(9).toDouble());
-	    lineColor.setBlueF(fields.at(10).toDouble());
-	    node->setLineColour(lineColor);
+	    QColor lineColour;
+	    lineColour.setRedF(fields.at(8).toDouble());
+	    lineColour.setGreenF(fields.at(9).toDouble());
+	    lineColour.setBlueF(fields.at(10).toDouble());
+	    node->setLineColour(lineColour);
 	    if (fields.count() >= 13)
 	    {
 		// If the label has one or more commas, we must glue
@@ -2175,15 +2265,15 @@ MainWindow::select_Custom_Graph(QString graphName)
 	    edge->setSourceRadius(fields.at(3).toDouble());
 	    edge->setRotation(fields.at(4).toDouble());
 	    edge->setPenWidth(fields.at(5).toDouble());
-	    QColor lineColor;
-	    lineColor.setRedF(fields.at(6).toDouble());
-	    lineColor.setGreenF(fields.at(7).toDouble());
-	    lineColor.setBlueF(fields.at(8).toDouble());
+	    QColor lineColour;
+	    lineColour.setRedF(fields.at(6).toDouble());
+	    lineColour.setGreenF(fields.at(7).toDouble());
+	    lineColour.setBlueF(fields.at(8).toDouble());
 	    // printf("setting edge (%d, %d) colour to %.3f, %.3f, %.3f\n",
-	    //    fields.at(0).toInt(), fields.at(1).toInt(),
-	    //    fields.at(6).toDouble(), fields.at(7).toDouble(),
-	    //    fields.at(8).toDouble());
-	    edge->setColour(lineColor);
+	    //	  fields.at(0).toInt(), fields.at(1).toInt(),
+	    //	  fields.at(6).toDouble(), fields.at(7).toDouble(),
+	    //	  fields.at(8).toDouble());
+	    edge->setColour(lineColour);
 	    if (fields.count() >= 11)
 	    {
 		edge->setEdgeLabelSize(fields.at(9).toFloat());
@@ -2212,7 +2302,7 @@ MainWindow::select_Custom_Graph(QString graphName)
     qDebu("    Y: [%.4f, %.4f], Yr min %.4f, max %.4f",
 	  minY, maxY, minYr, maxYr);
     qDebu("    width %.4f, height %.4f", width, height);
-    qDeb() << "    minX = " << minX << ", maxX = "
+    qDeb() << "	   minX = " << minX << ", maxX = "
 	   << maxX << "\n\tminY = " << minY << ", maxY = " << maxY
 	   << "; width = " << width << " and height = " << height;
     for (int i = 0; i < nodes.count(); i++)
@@ -2222,7 +2312,7 @@ MainWindow::select_Custom_Graph(QString graphName)
 			    : n->x() / width / currentPhysicalDPI_X,
 			    height == 0. ? 0.
 			    : n->y() / height / currentPhysicalDPI_Y);
-	qDebu("    nodes[%s] coords: screen (%.4f, %.4f); "
+	qDebu("	   nodes[%s] coords: screen (%.4f, %.4f); "
 	      "preview set to (%.4f, %.4f)", n->getLabel().toLatin1().data(),
 	      n->x(), n->y(), n->getPreviewX(), n->getPreviewY());
     }
@@ -2233,17 +2323,17 @@ MainWindow::select_Custom_Graph(QString graphName)
     // Apparently we have to center the graph in the viewport.
     // (Presumably this is because the node positions are relative to
     // their parent, the graph?)
-    qDeb() << "    graph current position is " << graph->x() << ", "
+    qDeb() << "	   graph current position is " << graph->x() << ", "
 	   << graph->y();
-    //  graph->setPos(mapToScene(viewport()->rect().center()));
-    // "viewport() is unknown in this context.  For now, kludge the
+    //	graph->setPos(mapToScene(viewport()->rect().center()));
+    // "viewport() is unknown in this context.	For now, kludge the
     // centering of the graph as follows.  Those are the numbers from
     // PV::Create_Graph (every time), presumably they come from the
     // fact that PV::PV sets the scene rectangle to (0, 0, 100, 30).
     // But 100 and 30 are this->width and this->height, and it is not
     // clear to me how those numbers get set.
     graph->setPos(49, 15);
-    qDeb() << "    graph NEW position is " << graph->x() << ", "
+    qDeb() << "	   graph NEW position is " << graph->x() << ", "
 	   << graph->y();
     graph->setRotation(-1 * ui->graphRotation->value(), false);
 
@@ -2432,27 +2522,20 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
  * Outputs:	Nothing.
  * Modifies:	ui->NodeOutlineColor.
  * Returns:	Nothing.
- * Assumptions:	???
- * Bugs:	???
+ * Assumptions: ???
+ * Bugs:	Setting the style sheet shrinks the button size.
  * Notes:	???
  */
 
 void
 MainWindow::on_NodeOutlineColor_clicked()
 {
-    QColor color = QColorDialog::getColor();
+    QColor colour = QColorDialog::getColor();
 
-    if (!color.isValid())
+    if (!colour.isValid())
 	return;
 
-    QString s("background: #"
-	      + QString(color.red() < 16 ? "0" : "")
-	      + QString::number(color.red(), 16)
-	      + QString(color.green() < 16 ? "0" : "")
-	      + QString::number(color.green(), 16)
-	      + QString(color.blue() < 16 ? "0" : "")
-	      + QString::number(color.blue(), 16) + ";"
-	      BUTTON_STYLE);
+    QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
     qDeb() << "MW::on_NodeOutlineColor_clicked(): outline colour set to" << s;
     ui->NodeOutlineColor->setStyleSheet(s);
     ui->NodeOutlineColor->update();
@@ -2468,26 +2551,19 @@ MainWindow::on_NodeOutlineColor_clicked()
  * Modifies:	ui->NodeFillColor
  * Returns:	Nothing.
  * Assumptions: ???
- * Bugs:	???
+ * Bugs:	Setting the style sheet shrinks the button size.
  * Notes:	???
  */
 
 void
 MainWindow::on_NodeFillColor_clicked()
 {
-    QColor color = QColorDialog::getColor();
+    QColor colour = QColorDialog::getColor();
 
-    if (!color.isValid())
+    if (!colour.isValid())
 	return;
 
-    QString s("background: #"
-	      + QString(color.red() < 16 ? "0" : "")
-	      + QString::number(color.red(), 16)
-	      + QString(color.green() < 16 ? "0" : "")
-	      + QString::number(color.green(), 16)
-	      + QString(color.blue() < 16 ? "0" : "")
-	      + QString::number(color.blue(), 16) + ";"
-	      BUTTON_STYLE);
+    QString s("background: " + colour.name() + ";" + BUTTON_STYLE);
     qDeb() << "MW::on_NodeFillColor_clicked(): fill colour set to " << s;
     ui->NodeFillColor->setStyleSheet(s);
     ui->NodeFillColor->update();
@@ -2503,29 +2579,106 @@ MainWindow::on_NodeFillColor_clicked()
  * Modifies:	ui->EdgeLineColor
  * Returns:	Nothing.
  * Assumptions: ???
- * Bugs:	???
+ * Bugs:	Setting the style sheet shrinks the button size.
  * Notes:	???
  */
 
 void
 MainWindow::on_EdgeLineColor_clicked()
 {
-    QColor color = QColorDialog::getColor();
+    QColor colour = QColorDialog::getColor();
 
-    if (!color.isValid())
+    if (!colour.isValid())
 	return;
 
-    QString s("background: #"
-	      + QString(color.red() < 16 ? "0" : "")
-	      + QString::number(color.red(), 16)
-	      + QString(color.green() < 16 ? "0" : "")
-	      + QString::number(color.green(), 16)
-	      + QString(color.blue() < 16 ? "0" : "")
-	      + QString::number(color.blue(), 16) + ";"
-	      BUTTON_STYLE);
+    QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
     qDeb() << "MW::on_EdgeLineColor_clicked(): edge line colour set to" << s;
     ui->EdgeLineColor->setStyleSheet(s);
     ui->EdgeLineColor->update();
+}
+
+
+
+/*
+ * Name:	on_NodeOutlineColor_2_clicked()
+ * Purpose:
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	ui->NodeOutlineColor_2.
+ * Returns:	Nothing.
+ * Assumptions: ???
+ * Bugs:	Setting the style sheet shrinks the button size.
+ * Notes:	???
+ */
+
+void
+MainWindow::on_NodeOutlineColor_2_clicked()
+{
+    QColor colour = QColorDialog::getColor();
+
+    if (!colour.isValid())
+	return;
+
+    QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
+    qDeb() << "MW::on_NodeOutlineColor_2_clicked(): outline colour set to" << s;
+    ui->NodeOutlineColor_2->setStyleSheet(s);
+    ui->NodeOutlineColor_2->update();
+}
+
+
+
+/*
+ * Name:	on_NodeFillColor_2_clicked()
+ * Purpose:
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	ui->NodeFillColor_2
+ * Returns:	Nothing.
+ * Assumptions: ???
+ * Bugs:	Setting the style sheet shrinks the button size.
+ * Notes:	???
+ */
+
+void
+MainWindow::on_NodeFillColor_2_clicked()
+{
+    QColor colour = QColorDialog::getColor();
+
+    if (!colour.isValid())
+	return;
+
+    QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
+    qDeb() << "MW::on_NodeFillColor_2_clicked(): fill colour set to " << s;
+    ui->NodeFillColor_2->setStyleSheet(s);
+    ui->NodeFillColor_2->update();
+}
+
+
+
+/*
+ * Name:	on_EdgeLineColor_2_clicked()
+ * Purpose:
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	ui->EdgeLineColor_2
+ * Returns:	Nothing.
+ * Assumptions: ???
+ * Bugs:	Setting the style sheet shrinks the button size.
+ * Notes:	???
+ */
+
+void
+MainWindow::on_EdgeLineColor_2_clicked()
+{
+    QColor colour = QColorDialog::getColor();
+
+    if (!colour.isValid())
+	return;
+
+    QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
+    qDeb() << "MW::on_EdgeLineColor_2_clicked(): edge line colour set to" << s;
+    ui->EdgeLineColor_2->setStyleSheet(s);
+    ui->EdgeLineColor_2->update();
 }
 
 
@@ -2573,6 +2726,46 @@ MainWindow::on_EdgeNumLabelCheckBox_clicked(bool checked)
 
 
 /*
+ * Name:	on_NodeNumLabelCheckBox_clicked()
+ * Purpose:
+ * Arguments:
+ * Outputs:
+ * Modifies:
+ * Returns:
+ * Assumptions:
+ * Bugs:
+ * Notes:
+ */
+
+void
+MainWindow::on_NodeNumLabelCheckBox_2_clicked(bool checked)
+{
+    ui->NodeLabel1_2->setDisabled(checked);
+}
+
+
+
+/*
+ * Name:	on_EdgeNumLabelCheckBox_clicked()
+ * Purpose:
+ * Arguments:
+ * Outputs:
+ * Modifies:
+ * Returns:
+ * Assumptions:
+ * Bugs:
+ * Notes:
+ */
+
+void
+MainWindow::on_EdgeNumLabelCheckBox_2_clicked(bool checked)
+{
+    ui->EdgeLabel_2->setDisabled(checked);
+}
+
+
+
+/*
  * Name:	MainWindow::set_Font_Sizes()
  * Purpose:
  * Arguments:
@@ -2595,13 +2788,20 @@ MainWindow::set_Font_Sizes()
     font.setPointSize(TITLE_SIZE);
     ui->graphLabel->setFont(font);
 
+    ui->graphLabel_2->setFont(font);
+
     font.setPointSize(TITLE_SIZE - 1);
     ui->edgeLabel->setFont(font);
     ui->nodeLabel->setFont(font);
 
+    ui->edgeLabel_2->setFont(font);
+    ui->nodeLabel_2->setFont(font);
+
     font.setPointSize(SUB_TITLE_SIZE);
     ui->partitionLabel->setFont(font);
     ui->colorLabel->setFont(font);
+
+    ui->colorLabel_2->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->edgeThicknessLabel->setFont(font);
@@ -2617,6 +2817,21 @@ MainWindow::set_Font_Sizes()
     ui->nodeThicknessLabel->setFont(font);
     ui->nodeDiameterLabel->setFont(font);
     ui->numLabel->setFont(font);
+
+    ui->edgeThicknessLabel_2->setFont(font);
+    ui->rotationLabel_2->setFont(font);
+    ui->widthLabel_2->setFont(font);
+    ui->heightLabel_2->setFont(font);
+    ui->textInputLabel_3->setFont(font);
+    ui->textInputLabel_4->setFont(font);
+    ui->textSizeLabel_3->setFont(font);
+    ui->textSizeLabel_4->setFont(font);
+    ui->fillLabel_2->setFont(font);
+    ui->outlineLabel_2->setFont(font);
+    ui->nodeThicknessLabel_2->setFont(font);
+    ui->nodeDiameterLabel_2->setFont(font);
+    ui->numLabel_2->setFont(font);
+
     ui->zoomDisplay->setFont(font);
     ui->zoomDisplay_2->setFont(font);
     ui->clearCanvas->setFont(font);
@@ -2629,6 +2844,11 @@ MainWindow::set_Font_Sizes()
     ui->EdgeLabel->setFont(font);
     ui->NodeLabel1->setFont(font);
     ui->NodeLabel2->setFont(font);
+
+    ui->NodeNumLabelCheckBox_2->setFont(font);
+    ui->EdgeNumLabelCheckBox_2->setFont(font);
+    ui->EdgeLabel_2->setFont(font);
+    ui->NodeLabel1_2->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE - 2);
     ui->graphHeight->setFont(font);
@@ -2644,31 +2864,41 @@ MainWindow::set_Font_Sizes()
     ui->NodeNumLabelStart->setFont(font);
     ui->EdgeNumLabelStart->setFont(font);
     offsets->setFont(font);
-}
 
+    ui->graphHeight_2->setFont(font);
+    ui->graphWidth_2->setFont(font);
+    ui->nodeThickness_2->setFont(font);
+    ui->graphRotation_2->setFont(font);
+    ui->EdgeLabelSize_2->setFont(font);
+    ui->edgeThickness_2->setFont(font);
+    ui->NodeLabelSize_2->setFont(font);
+    ui->nodeDiameter_2->setFont(font);
+    ui->NodeNumLabelStart_2->setFont(font);
+    ui->EdgeNumLabelStart_2->setFont(font);
+}
 
 
 /*
  * Name:	MainWindow::set_Interface_Sizes()
- * Purpose:     Resize the UI and correct widget minimum sizes
+ * Purpose:	Resize the UI and correct widget minimum sizes
  * Arguments:
  * Outputs:
  * Modifies:
  * Returns:
  * Assumptions:
  * Bugs:
- * Notes:       Qt will scale fonts automatically according to logicalDPI
- *              so we must handraulically scale some of the widgets that don't
- *              scale well (or at all).
+ * Notes:	Qt will scale fonts automatically according to logicalDPI
+ *		so we must handraulically scale some of the widgets that don't
+ *		scale well (or at all).
  */
 
 void
 MainWindow::set_Interface_Sizes()
 {
 #ifdef __APPLE__
-#define SYSTEM_DEFAULT_LOGICAL_DPI 72
+    #define SYSTEM_DEFAULT_LOGICAL_DPI 72
 #else
-#define SYSTEM_DEFAULT_LOGICAL_DPI 96
+    #define SYSTEM_DEFAULT_LOGICAL_DPI 96
 #endif
     qreal scale = screenLogicalDPI_X / SYSTEM_DEFAULT_LOGICAL_DPI;
 
@@ -2689,7 +2919,8 @@ MainWindow::set_Interface_Sizes()
     ui->zoomDisplay->resize(ui->zoomDisplay->sizeHint());
     ui->zoomDisplay_2->resize(ui->zoomDisplay_2->sizeHint());
 
-    // Fix tabWidgets minimum width
+    // Set the tabWidget to the first tab and fix the minimum width
+    ui->tabWidget->setCurrentIndex(0);
     ui->tabWidget->setMinimumWidth(
 	ui->scrollAreaWidgetContents_2->sizeHint().width() + borderWidth1);
 
@@ -2849,7 +3080,7 @@ MainWindow::on_graphType_ComboBox_currentIndexChanged(int index)
  * Outputs:	Nothing.
  * Modifies:	Possibly ui->numOfNodes1.
  * Returns:	Nothing.
- * Assumptions:	???
+ * Assumptions: ???
  * Bugs:	???
  * Notes:	At time of writing, magically connected to the
  *		ui->numOfNodes1 QSpinBox.
@@ -2885,7 +3116,7 @@ MainWindow::on_numOfNodes1_valueChanged(int arg1)
  * Outputs:	Nothing.
  * Modifies:	Possibly ui->numOfNodes2.
  * Returns:	Nothing.
- * Assumptions:	???
+ * Assumptions: ???
  * Bugs:	???
  * Notes:	At time of writing, magically connected to the
  *		ui->numOfNodes2 QSpinBox.
@@ -2931,7 +3162,7 @@ MainWindow::nodeParamsUpdated()
 
     ui->canvas->setUpNodeParams(
 	ui->nodeDiameter->value(),
-	ui->NodeNumLabelCheckBox->isChecked(),  // Useful?
+	ui->NodeNumLabelCheckBox->isChecked(),	// Useful?
 	ui->NodeLabel1->text(),		    // Useful?
 	ui->NodeLabelSize->value(),
 	ui->NodeFillColor->palette().window().color(),
@@ -2964,8 +3195,9 @@ MainWindow::edgeParamsUpdated()
 	ui->EdgeLabel->text(),
 	ui->EdgeLabelSize->value(),
 	ui->EdgeLineColor->palette().window().color(),
-	ui->EdgeNumLabelCheckBox->isChecked());  // Useful?
+	ui->EdgeNumLabelCheckBox->isChecked());	 // Useful?
 }
+
 
 
 void
@@ -2973,6 +3205,7 @@ MainWindow::on_deleteMode_radioButton_clicked()
 {
     ui->canvas->setMode(CanvasView::del);
 }
+
 
 
 void
@@ -2983,6 +3216,7 @@ MainWindow::on_joinMode_radioButton_clicked()
 }
 
 
+
 void
 MainWindow::on_editMode_radioButton_clicked()
 {
@@ -2990,11 +3224,13 @@ MainWindow::on_editMode_radioButton_clicked()
 }
 
 
+
 void
 MainWindow::on_dragMode_radioButton_clicked()
 {
     ui->canvas->setMode(CanvasView::drag);
 }
+
 
 
 void
@@ -3006,10 +3242,53 @@ MainWindow::on_freestyleMode_radioButton_clicked()
 
 
 void
+MainWindow::on_selectMode_radioButton_clicked()
+{
+    ui->canvas->setMode(CanvasView::select);
+}
+
+
+
+/*
+ * Name:	on_tabWidget_currentChanged()
+ * Purpose:	Determines if the user has been on the canvas graph tab then
+ *		updates the edit tab once the user switches to the edit tab.
+ * Arguments:	The tab index.
+ * Outputs:	Nothing.
+ * Modifies:	The user view.
+ * Returns:	Nothing.
+ * Assumptions: ?
+ * Bugs:	?
+ * Notes:
+ */
+
+void
+MainWindow::on_tabWidget_currentChanged(int index)
+{
+    if (index == 2)
+	updateEditTab();
+}
+
+
+
+void
+MainWindow::scheduleUpdate()
+{
+    updateNeeded = true;
+    updateEditTab();
+}
+
+
+
+void
 MainWindow::updateEditTab() // Quick, ugly, dirty fix
 {
-    updateEditTab(0);
-    updateEditTab(1);
+    if (updateNeeded && ui->tabWidget->currentIndex() == 2)
+    {
+	updateEditTab(0);
+	updateEditTab(2);
+	updateNeeded = false;
+    }
 }
 
 
@@ -3022,7 +3301,7 @@ MainWindow::updateEditTab() // Quick, ugly, dirty fix
  * Outputs:	Nothing.
  * Modifies:	The user view.
  * Returns:	Nothing.
- * Assumptions:	?
+ * Assumptions: ?
  * Bugs:	?
  * Notes:	The UI for tab 0 is drawn by ui_mainwindow.
  */
@@ -3052,8 +3331,9 @@ MainWindow::updateEditTab(int index)
 	{
 	    // Q: when would item be a 0 or nullptr?
 	    if (item != 0 || item != nullptr)
-	    {   // Only creates headers for "root" graphs
-		if (item->type() == Graph::Type && item->parentItem() == nullptr
+	    {	// Only creates headers for "root" graphs
+		if (item->type() == Graph::Type
+		    && item->parentItem() == nullptr
 		    && !item->childItems().isEmpty())
 		{
 		    Graph * graph = qgraphicsitem_cast<Graph*>(item);
@@ -3140,19 +3420,11 @@ MainWindow::updateEditTab(int index)
 
 			node->htmlLabel->editTabLabel = label;
 
-			QDoubleSpinBox * diamBox
-			    = new QDoubleSpinBox();
-
-			QDoubleSpinBox * thicknessBox
-			    = new QDoubleSpinBox();
-
-			QPushButton * lineColorButton
-			    = new QPushButton();
-			QPushButton * fillColorButton
-			    = new QPushButton();
-
-			QSpinBox * fontSizeBox
-			    = new QSpinBox();
+			QDoubleSpinBox * diamBox = new QDoubleSpinBox();
+			QDoubleSpinBox * thicknessBox = new QDoubleSpinBox();
+			QPushButton * lineColorButton = new QPushButton();
+			QPushButton * fillColorButton = new QPushButton();
+			QSpinBox * fontSizeBox = new QSpinBox();
 
 			nodeEdit->installEventFilter(node);
 			diamBox->installEventFilter(node);
@@ -3161,24 +3433,20 @@ MainWindow::updateEditTab(int index)
 
 			// All controllers handle deleting of widgets
 			SizeController * sizeController
-			    = new SizeController(node, diamBox,
-						 thicknessBox);
+			    = new SizeController(node, diamBox, thicknessBox);
 			ColorLineController * colorLineController
-			    = new ColorLineController(node,
-						      lineColorButton);
+			    = new ColorLineController(node, lineColorButton);
 			LabelController * weightController
 			    = new LabelController(node, nodeEdit);
 			LabelSizeController * weightSizeController
-			    = new LabelSizeController(node,
-						      fontSizeBox);
+			    = new LabelSizeController(node, fontSizeBox);
 			ColorFillController * colorFillController
-			    = new ColorFillController(node,
-						      fillColorButton);
+			    = new ColorFillController(node, fillColorButton);
 
 			gridLayout->addWidget(label, i, 1);
 			gridLayout->addWidget(thicknessBox, i, 2);
 			gridLayout->addWidget(diamBox, i, 3);
-			gridLayout->addWidget(nodeEdit,  i, 4);
+			gridLayout->addWidget(nodeEdit,	 i, 4);
 			gridLayout->addWidget(fontSizeBox, i, 5);
 			gridLayout->addWidget(lineColorButton, i, 6);
 			gridLayout->addWidget(fillColorButton, i, 7);
@@ -3244,33 +3512,9 @@ MainWindow::updateEditTab(int index)
 		}
 	    }
 	}
-	// TODO: the setRowStretch() was added 2019/11/18 because
-	// the extra vertical space was being distributed *between*
-	// the rows, rather than at the end.
-	// Dumps core if setRowStretch(i - 1, 40) is called when i == 0.
-	// So to get it to work I added a label with a blank at the
-	// end of the section, and then it works.  Kludge.
+
 	if (i > 0)
 	{
-	    // printf("Setting row stretch for row %d to 40\n", i - 1);
-	    // gridLayout->setRowStretch(i - 1, 40);
-	    // TODO: JD could not figure out any way to get a spacer
-	    // in here.
-	    // QSpacerItem * verticalSpacer;
-	    //QSpacerItem verticalSpacer = QSpacerItem(40, 20, QSizePolicy::Minimum, QSizePolicy::Expanding);
-	    //auto widget = new QWidget();
-	    //widget->setLayout( verticalSpacer );
-	    //gridLayout->addWidget(widget, 0, 1);
-	    //QLineEdit * editEdge = new QLineEdit();
-	    //gridLayout->addWidget(editEdge, i, 1);
-	    //gridLayout->addItem(verticalSpacer, i/2, 1, 1, 1, Qt::AlignTop);
-	    //gridLayout->addItem(verticalSpacer);//, 12, 1, 0, 0, 0);
-	    //gridLayout->addItem(verticalSpacer);
-// compile error	      gridLayout->addItem(new QSpacerItem((1, 1, QSizePolicy::Expanding, QSizePolicy::Preferred), 3,1,1,4, Qt::AlignTop);
-	    // This is a horrible kludge that makes the stretch work
-	    // before anything is deleted from the Edit Graph tab.
-	    // With this the setRowStretch() for i-1 is not needed.
-	    // The horror, the horror.
 	    QLabel * label = new QLabel(" ");
 	    gridLayout->addWidget(label, 1000, 1);
 	    gridLayout->setRowStretch(1000, 40);
@@ -3409,4 +3653,296 @@ MainWindow::closeEvent(QCloseEvent * event)
 	saveWinSizeSettings();
 	event->accept();
     }
+}
+
+
+/*
+ * Name:	style_Canvas_Graph()
+ * Purpose:	Update the selected items on the canvas when a widget on the
+ *		canvas graph tab is updated. This function simply passes the
+ *		relevant information to the following overloaded function.
+ * Arguments:	The changed widget ID.
+ * Outputs:	Nothing.
+ * Modifies:	The drawing of the canvas graph.
+ * Returns:	Nothing.
+ * Assumptions: ?
+ * Bugs:	?
+ * Notes:	Closely mimics the style_graph() function.
+ */
+
+void
+MainWindow::style_Canvas_Graph(enum canvas_widget_ID what_changed)
+{
+    qDeb() << "MW::style_Canvas_Graph(CWID " << what_changed << ") called";
+
+    if (selectedList.isEmpty())
+	return;
+
+    style_Canvas_Graph(
+	what_changed,
+	ui->nodeDiameter_2->value(),
+	ui->NodeLabel1_2->text(),
+	ui->NodeNumLabelCheckBox_2->isChecked(),
+	ui->NodeLabelSize_2->value(),
+	ui->NodeFillColor_2->palette().window().color(),
+	ui->NodeOutlineColor_2->palette().window().color(),
+	ui->edgeThickness_2->value(),
+	ui->EdgeLabel_2->text(),
+	ui->EdgeLabelSize_2->value(),
+	ui->EdgeLineColor_2->palette().window().color(),
+	ui->graphWidth_2->value(),
+	ui->graphHeight_2->value(),
+	ui->graphRotation_2->value(),
+	ui->NodeNumLabelStart_2->value(),
+	ui->nodeThickness_2->value(),
+	ui->EdgeNumLabelCheckBox_2->isChecked(),
+	ui->EdgeNumLabelStart_2->value());
+}
+
+
+
+/*
+ * Name:	style_Canvas_Graph()
+ * Purpose:	Update the selected items on the canvas when a widget on the
+ *		canvas graph tab is updated.
+ * Arguments:	All relevant graph drawing info.
+ * Outputs:	Nothing.
+ * Modifies:	The drawing of the graph.
+ * Returns:	Nothing.
+ * Assumptions: ?
+ * Bugs:	So many...
+ * Notes:	Currently, the height and width widgets do nothing and
+ *		the rotation resets the graph to it's default rotation.
+ *		Rotation also only works if an entire graph is selected.
+ */
+
+#define GUARD(x) if (x == what_changed)
+
+void
+MainWindow::style_Canvas_Graph(enum canvas_widget_ID what_changed,
+			       qreal nodeDiameter,	QString nodeLabel,
+			       bool nodeLabelsNumbered, qreal nodeLabelSize,
+			       QColor nodeFillColor,	QColor nodeOutlineColor,
+			       qreal edgeSize,		QString edgeLabel,
+			       qreal edgeLabelSize,	QColor edgeLineColor,
+			       qreal totalWidth,	qreal totalHeight,
+			       qreal rotation,		qreal nodeNumStart,
+			       qreal nodeThickness,	bool edgeLabelsNumbered,
+			       qreal edgeNumStart)
+{
+    int i = nodeNumStart;
+    int j = edgeNumStart;
+
+    foreach (QGraphicsItem * item, selectedList)
+    {
+	if (item->type() == Node::Type)
+	{
+	    Node * node = qgraphicsitem_cast<Node *>(item);
+
+	    node->physicalDotsPerInchX = currentPhysicalDPI_X;
+
+	    GUARD(cNodeThickness_WGT) node->setPenWidth(nodeThickness);
+	    GUARD(cNodeDiam_WGT) node->setDiameter(nodeDiameter);
+	    GUARD(cNodeFillColour_WGT) node->setFillColour(nodeFillColor);
+	    GUARD(cNodeOutlineColour_WGT) node->setLineColour(nodeOutlineColor);
+	    GUARD(cNodeLabelSize_WGT) node->setNodeLabelSize(nodeLabelSize);
+
+	    if (what_changed == cNodeLabel1_WGT
+		|| what_changed == cNodeNumLabelCheckBox_WGT
+		|| what_changed == cNodeNumLabelStart_WGT)
+	    {
+		// Clear the node label, in case it was set previously.
+		node->setNodeLabel("");
+		if (nodeLabelsNumbered)
+		    node->setNodeLabel(i++);
+		else if (nodeLabel.length() != 0)
+		    node->setNodeLabel(nodeLabel, i++);
+	    }
+	}
+	else if (item->type() == Edge::Type)
+	{
+	    Edge * edge = qgraphicsitem_cast<Edge *>(item);
+	    GUARD(cEdgeThickness_WGT) edge->setPenWidth(edgeSize);
+	    GUARD(cEdgeLineColour_WGT) edge->setColour(edgeLineColor);
+	    GUARD(cEdgeLabelSize_WGT)
+		edge->setEdgeLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
+	    if (what_changed == cEdgeLabel_WGT
+		|| what_changed == cEdgeNumLabelCheckBox_WGT
+		|| what_changed == cEdgeNumLabelStart_WGT)
+	    {
+		// Clear the edge label, in case it was set previously.
+		edge->setEdgeLabel("");
+		if (edgeLabelsNumbered)
+		    edge->setEdgeLabel(j++);
+		else if (edgeLabel.length() != 0)
+		    edge->setEdgeLabel(edgeLabel, j++);
+	    }
+	    GUARD(cNodeDiam_WGT) edge->setDestRadius(nodeDiameter / 2.);
+	    GUARD(cNodeDiam_WGT) edge->setSourceRadius(nodeDiameter / 2.);
+	}
+	else if (item->type() == Graph::Type)
+	{
+	    Graph * graph = qgraphicsitem_cast<Graph *>(item);
+	    qDeb() << "	  graph currently located at " << graph->x() << ", "
+		   << graph->y();
+
+	    GUARD(cGraphRotation_WGT)
+	    {
+		// Origin point of freestyleGraph is bogus... so the rotation
+		// looks horrible. PROBLEM IS TRANSFORM ORIGIN POINT
+		int netRotation = rotation - previousRotation;
+		graph->setRotation(-1 * netRotation, true);
+	    }
+	    if (what_changed == cGraphWidth_WGT
+		|| what_changed == cGraphHeight_WGT)
+	    {
+		// A lot of this is inaccurate. totalWidth and totalHeight
+		// should refer to each selected graph's dimensions.
+		// nodeDiameter should probably also be calculated instead
+		// of using the widget value. We also need to factor in
+		// the difference between the current value of the width/
+		// height widgets and their previous values so we know how
+		// much to adjust the graphs in relative terms instead of
+		// absolute terms. Lastly, we should only really increment
+		// either width or height, depending on which widget was the
+		// one that changed, instead of both simultaneously.
+		qreal centerWidth = totalWidth - nodeDiameter;
+		if (centerWidth < 0.1)
+		    centerWidth = 0.1;
+		qreal widthScaleFactor = centerWidth * currentPhysicalDPI_X;
+		qreal centerHeight = totalHeight - nodeDiameter;
+		if (centerHeight < 0.1)
+		    centerHeight = 0.1;
+		qreal heightScaleFactor = centerHeight * currentPhysicalDPI_Y;
+
+		qDeb() << "    Desired total width: " << totalWidth
+		       << "; desired center width " << centerWidth
+		       << "\n\twidthScaleFactor: " << widthScaleFactor;
+		qDeb() << "    Desired total height: " << totalHeight
+		       << "; desired center height " << centerHeight
+		       << "\n\theightScaleFactor: " << heightScaleFactor;
+
+		foreach (QGraphicsItem * child, graph->childItems())
+		{
+		    if (child->type() == Node::Type)
+		    {
+			Node * node = qgraphicsitem_cast<Node *>(child);
+			// Freestyle nodes dont have previewX/Y values...
+			node->setPos(node->getPreviewX() * widthScaleFactor,
+				     node->getPreviewY() * heightScaleFactor);
+		    }
+		}
+	    }
+	}
+    }
+    // Once thickness has be fixed to affect the boundingRect, it should be
+    // included here. You might also want to consider large labels?
+    if (what_changed == cNodeDiam_WGT ||
+	what_changed == cGraphWidth_WGT ||
+	what_changed == cGraphHeight_WGT ||
+	what_changed == cGraphRotation_WGT)
+	updateCanvasGraphList();
+
+
+    previousRotation = ui->graphRotation_2->value();
+    updateNeeded = true;
+}
+
+
+
+/*
+ * Name:	updateCanvasGraphList()
+ * Purpose:	Similar in methodology to updateEditTab, this clears the list
+ *		of graphs on the canvas graph tab and repopulates it with each
+ *		graph in the canvasGraphList and their respective widths and
+ *		heights.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The graph list on the canvas graph tab.
+ * Returns:	Nothing.
+ * Assumptions: ?
+ * Bugs:	None known.
+ * Notes:	None.
+ */
+
+void
+MainWindow::updateCanvasGraphList()
+{
+    // Clear the list, sadly..
+    QLayoutItem * wItem;
+    while ((wItem = ui->graphListLayout->layout()->takeAt(1))
+	   != 0)
+    {
+	if (wItem->widget())
+	    wItem->widget()->setParent(NULL);
+	delete wItem;
+    }
+
+    // Now populate the list with the graphs and their dimensions.
+    int i = 1;
+    foreach (QGraphicsItem * item, canvasGraphList)
+    {
+	Graph * graph = qgraphicsitem_cast<Graph *>(item);
+
+	QLabel * graphLabel = new QLabel("Graph " + QString::number(i));
+	ui->graphListLayout->addWidget(graphLabel, i, 0);
+
+	qreal height = graph->boundingRect().height()/currentPhysicalDPI_Y;
+	QLabel * heightLabel = new QLabel("Height: " + QString::number(height));
+	ui->graphListLayout->addWidget(heightLabel, i, 1);
+
+	qreal width = graph->boundingRect().width()/currentPhysicalDPI_X;
+	QLabel * widthLabel = new QLabel("Width: " + QString::number(width));
+	ui->graphListLayout->addWidget(widthLabel, i, 2);
+
+	connect(graph, SIGNAL(destroyed(QObject*)),
+		graphLabel, SLOT(deleteLater()));
+	connect(graph, SIGNAL(destroyed(QObject*)),
+		heightLabel, SLOT(deleteLater()));
+	connect(graph, SIGNAL(destroyed(QObject*)),
+		widthLabel, SLOT(deleteLater()));
+
+	i++;
+    }
+}
+
+
+
+/*
+ * Name:	resetCanvasGraphTab()
+ * Purpose:	Ensures that the widgets on the canvas graph tab are reset
+ *		to their defaults whenever the selectedList is cleared.
+ * Arguments:	None.
+ * Outputs:	Nothing.
+ * Modifies:	The widgets on the canvas graph tab.
+ * Returns:	Nothing.
+ * Assumptions: ?
+ * Bugs:	?
+ * Notes:
+ */
+
+void
+MainWindow::resetCanvasGraphTab()
+{
+    previousRotation = 0;
+    ui->graphRotation_2->setValue(0);
+
+    ui->graphHeight_2->setValue(2.50);
+    ui->graphWidth_2->setValue(2.50);
+
+    ui->nodeThickness_2->setValue(1.0);
+    ui->NodeLabelSize_2->setValue(12);
+    ui->nodeDiameter_2->setValue(0.20);
+
+    ui->edgeThickness_2->setValue(1.0);
+    ui->EdgeLabelSize_2->setValue(12);
+
+    ui->NodeNumLabelStart_2->setValue(0);
+    ui->EdgeNumLabelStart_2->setValue(0);
+
+    ui->NodeNumLabelCheckBox_2->setChecked(false);
+    ui->EdgeNumLabelCheckBox_2->setChecked(false);
+
+    ui->EdgeLabel_2->setText("");
+    ui->NodeLabel1_2->setText("");
 }
