@@ -2,7 +2,7 @@
  * File:	mainwindow.cpp
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.64
+ * Version:	1.65
  *
  * Purpose:	Implement the main window and functions called from there.
  *
@@ -295,7 +295,7 @@
  *	to colour saved graphs.
  * Aug 11, 2020 (IC V1.49)
  *  (a) A zoom function was added to the canvas similar to the one for the
- *	preview so zoomDisplay_2 needs to be scaled in set_Interface_Sizes().
+ *	preview so C_ZoomDisplay needs to be scaled in set_Interface_Sizes().
  *  (b) New connection for zoomChanged() signal.
  *  (c) Update preview when settings DPI is changed.  Add
  *	updateDpiAndPreview() function.
@@ -385,6 +385,24 @@
  * Oct 17, 2020 (JD V1.64)
  *  (a) Replace a lot of code with colour.name().
  *  (b) Generic code tidying.
+ * Oct 18, 2020 (JD V1.65)
+ *  (a) Change all possible "color"s to "colour"s.
+ *  (b) Add an enum tab_IDs and fix missed change from last commit (where
+ *	the edit nodes and edges tab changed from tab 1 to tab 2).
+ *  (c) Clarify some names, such as there was formerly both edgeLabel
+ *	(a QLabel) and EdgeLabel (a QLineEdit); "EdgeLabel" is now
+ *	"edgeLabelEdit".
+ *  (d) zoomDisplay_2 is now C_ZoomDisplay ('C' for canvas, the other
+ *	zoom display is on the preview pane).
+ *  (e) The changes to add a new tab with many widgets similar to the
+ *	preview pane introduced many widgets whose names were the same
+ *	as the preview pane widgets, but with _2 appended.  All of
+ *	these names were changed along the lines of this:
+ *	   nodeDiameter_2 -> cNodeDiameter
+ *	where (unlike (d)) 'c' is from 'edit Canvas graph tab'.
+ *	This required many analogous changes in mainwindow.ui.
+ *	Even with all the name changes things are still not as clear
+ *	as I would like.
  */
 
 #include "mainwindow.h"
@@ -410,6 +428,9 @@
 #include <QErrorMessage>
 #include <QDate>
 #include <QCloseEvent>
+
+// The tab order is set in mainwindow.ui.  If it changes, so must this:
+enum tab_IDs { previewTab, editCanvasTab, editNodesAndEdgesTab };
 
 
 #define GRAPHiCS_FILE_EXTENSION "grphc"
@@ -538,10 +559,10 @@ QMainWindow(parent),
     connect(ui->NodeNumLabelStart,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(nodeNumLabelStart_WGT); });
-    connect(ui->NodeFillColor,
+    connect(ui->NodeFillColour,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
 	    this, [this]() { generate_Graph(nodeFillColour_WGT); });
-    connect(ui->NodeOutlineColor,
+    connect(ui->NodeOutlineColour,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
 	    this, [this]() { generate_Graph(nodeOutlineColour_WGT); });
 
@@ -550,7 +571,7 @@ QMainWindow(parent),
     connect(ui->edgeThickness,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(edgeThickness_WGT); });
-    connect(ui->EdgeLabel,
+    connect(ui->edgeLabelEdit,
 	    (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
 	    this, [this]() { generate_Graph(edgeLabel_WGT); });
     connect(ui->EdgeLabelSize,
@@ -562,7 +583,7 @@ QMainWindow(parent),
     connect(ui->EdgeNumLabelStart,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
 	    this, [this]() { generate_Graph(edgeNumLabelStart_WGT); });
-    connect(ui->EdgeLineColor,
+    connect(ui->EdgeLineColour,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
 	    this, [this]() { generate_Graph(edgeLineColour_WGT); });
 
@@ -609,20 +630,20 @@ QMainWindow(parent),
 	    this, SLOT(nodeParamsUpdated()));
     connect(ui->NodeNumLabelCheckBox, SIGNAL(clicked(bool)),
 	    this, SLOT(nodeParamsUpdated()));
-    connect(ui->NodeFillColor, SIGNAL(clicked(bool)),
+    connect(ui->NodeFillColour, SIGNAL(clicked(bool)),
 	    this, SLOT(nodeParamsUpdated()));
-    connect(ui->NodeOutlineColor, SIGNAL(clicked(bool)),
+    connect(ui->NodeOutlineColour, SIGNAL(clicked(bool)),
 	    this, SLOT(nodeParamsUpdated()));
 
     connect(ui->edgeThickness, SIGNAL(valueChanged(double)),
 	    this, SLOT(edgeParamsUpdated()));
-    connect(ui->EdgeLabel, SIGNAL(textChanged(QString)),
+    connect(ui->edgeLabelEdit, SIGNAL(textChanged(QString)),
 	    this, SLOT(edgeParamsUpdated()));
     connect(ui->EdgeLabelSize, SIGNAL(valueChanged(int)),
 	    this, SLOT(edgeParamsUpdated()));
     connect(ui->EdgeNumLabelCheckBox, SIGNAL(clicked(bool)),
 	    this, SLOT(edgeParamsUpdated()));
-    connect(ui->EdgeLineColor, SIGNAL(clicked(bool)),
+    connect(ui->EdgeLineColour, SIGNAL(clicked(bool)),
 	    this, SLOT(edgeParamsUpdated()));
 
     // Yet more connections...
@@ -654,7 +675,7 @@ QMainWindow(parent),
     connect(ui->preview, SIGNAL(zoomChanged(QString)),
 	    ui->zoomDisplay, SLOT(setText(QString)));
     connect(ui->canvas, SIGNAL(zoomChanged(QString)),
-	    ui->zoomDisplay_2, SLOT(setText(QString)));
+	    ui->C_ZoomDisplay, SLOT(setText(QString)));
 
     // Clears all items from the canvas
     connect(ui->clearCanvas, SIGNAL(clicked()),
@@ -674,57 +695,57 @@ QMainWindow(parent),
 	    this, SLOT(somethingChanged()));
 
     // The following connects relate to the Canvas Graph tab...
-    connect(ui->nodeDiameter_2,
+    connect(ui->cNodeDiameter,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cNodeDiam_WGT); });
-    connect(ui->nodeThickness_2,
+    connect(ui->cNodeThickness,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cNodeThickness_WGT); });
-    connect(ui->NodeLabel1_2,
+    connect(ui->cNodeLabel1,
 	    (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
 	    this, [this]() { style_Canvas_Graph(cNodeLabel1_WGT); });
-    connect(ui->NodeLabelSize_2,
+    connect(ui->cNodeLabelSize,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cNodeLabelSize_WGT); });
-    connect(ui->NodeNumLabelCheckBox_2,
+    connect(ui->cNodeNumLabelCheckBox,
 	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
 	    this, [this]() { style_Canvas_Graph(cNodeNumLabelCheckBox_WGT); });
-    connect(ui->NodeNumLabelStart_2,
+    connect(ui->cNodeNumLabelStart,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cNodeNumLabelStart_WGT); });
-    connect(ui->NodeFillColor_2,
+    connect(ui->cNodeFillColour,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
 	    this, [this]() { style_Canvas_Graph(cNodeFillColour_WGT); });
-    connect(ui->NodeOutlineColor_2,
+    connect(ui->cNodeOutlineColour,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
 	    this, [this]() { style_Canvas_Graph(cNodeOutlineColour_WGT); });
 
-    connect(ui->edgeThickness_2,
+    connect(ui->cEdgeThickness,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cEdgeThickness_WGT); });
-    connect(ui->EdgeLabel_2,
+    connect(ui->cEdgeLabelEdit,
 	    (void(QLineEdit::*)(const QString &))&QLineEdit::textChanged,
 	    this, [this]() { style_Canvas_Graph(cEdgeLabel_WGT); });
-    connect(ui->EdgeLabelSize_2,
+    connect(ui->cEdgeLabelSize,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cEdgeLabelSize_WGT); });
-    connect(ui->EdgeNumLabelCheckBox_2,
+    connect(ui->cEdgeNumLabelCheckBox,
 	    (void(QCheckBox::*)(bool))&QCheckBox::clicked,
 	    this, [this]() { style_Canvas_Graph(cEdgeNumLabelCheckBox_WGT); });
-    connect(ui->EdgeNumLabelStart_2,
+    connect(ui->cEdgeNumLabelStart,
 	    (void(QSpinBox::*)(int))&QSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cEdgeNumLabelStart_WGT); });
-    connect(ui->EdgeLineColor_2,
+    connect(ui->cEdgeLineColour,
 	    (void(QPushButton::*)(bool))&QPushButton::clicked,
 	    this, [this]() { style_Canvas_Graph(cEdgeLineColour_WGT); });
 
-    connect(ui->graphRotation_2,
+    connect(ui->cGraphRotation,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cGraphRotation_WGT); });
-    connect(ui->graphHeight_2,
+    connect(ui->cGraphHeight,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cGraphHeight_WGT); });
-    connect(ui->graphWidth_2,
+    connect(ui->cGraphWidth,
 	    (void(QDoubleSpinBox::*)(double))&QDoubleSpinBox::valueChanged,
 	    this, [this]() { style_Canvas_Graph(cGraphWidth_WGT); });
 
@@ -737,16 +758,16 @@ QMainWindow(parent),
 
     // Initialize colour buttons.
     QString s("background: #000000;" BUTTON_STYLE);
-    ui->EdgeLineColor->setStyleSheet(s);
-    ui->NodeOutlineColor->setStyleSheet(s);
+    ui->EdgeLineColour->setStyleSheet(s);
+    ui->NodeOutlineColour->setStyleSheet(s);
 
-    ui->EdgeLineColor_2->setStyleSheet(s);
-    ui->NodeOutlineColor_2->setStyleSheet(s);
+    ui->cEdgeLineColour->setStyleSheet(s);
+    ui->cNodeOutlineColour->setStyleSheet(s);
 
     s = "background: #ffffff;" BUTTON_STYLE;
-    ui->NodeFillColor->setStyleSheet(s);
+    ui->NodeFillColour->setStyleSheet(s);
 
-    ui->NodeFillColor_2->setStyleSheet(s);
+    ui->cNodeFillColour->setStyleSheet(s);
 
     edgeParamsUpdated();
     nodeParamsUpdated();
@@ -2377,12 +2398,12 @@ MainWindow::style_Graph(enum widget_ID what_changed)
 		ui->NodeLabel2->text(),
 		ui->NodeNumLabelCheckBox->isChecked(),
 		ui->NodeLabelSize->value(),
-		ui->NodeFillColor->palette().window().color(),
-		ui->NodeOutlineColor->palette().window().color(),
+		ui->NodeFillColour->palette().window().color(),
+		ui->NodeOutlineColour->palette().window().color(),
 		ui->edgeThickness->value(),
-		ui->EdgeLabel->text(),
+		ui->edgeLabelEdit->text(),
 		ui->EdgeLabelSize->value(),
-		ui->EdgeLineColor->palette().window().color(),
+		ui->EdgeLineColour->palette().window().color(),
 		ui->graphWidth->value(),
 		ui->graphHeight->value(),
 		ui->graphRotation->value(),
@@ -2516,11 +2537,11 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
 
 
 /*
- * Name:	on_NodeOutlineColor_clicked()
- * Purpose:
+ * Name:	on_NodeOutlineColour_clicked()
+ * Purpose:	Set the node outline colour for the preview pane.
  * Arguments:	None.
  * Outputs:	Nothing.
- * Modifies:	ui->NodeOutlineColor.
+ * Modifies:	ui->NodeOutlineColour.
  * Returns:	Nothing.
  * Assumptions: ???
  * Bugs:	Setting the style sheet shrinks the button size.
@@ -2528,7 +2549,7 @@ MainWindow::generate_Graph(enum widget_ID changed_widget)
  */
 
 void
-MainWindow::on_NodeOutlineColor_clicked()
+MainWindow::on_NodeOutlineColour_clicked()
 {
     QColor colour = QColorDialog::getColor();
 
@@ -2536,19 +2557,19 @@ MainWindow::on_NodeOutlineColor_clicked()
 	return;
 
     QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
-    qDeb() << "MW::on_NodeOutlineColor_clicked(): outline colour set to" << s;
-    ui->NodeOutlineColor->setStyleSheet(s);
-    ui->NodeOutlineColor->update();
+    qDeb() << "MW::on_NodeOutlineColour_clicked(): outline colour set to" << s;
+    ui->NodeOutlineColour->setStyleSheet(s);
+    ui->NodeOutlineColour->update();
 }
 
 
 
 /*
- * Name:	on_NodeFillColor_clicked()
- * Purpose:
+ * Name:	on_NodeFillColour_clicked()
+ * Purpose:	Set the node fill colour for the preview pane.
  * Arguments:	None.
  * Outputs:	Nothing.
- * Modifies:	ui->NodeFillColor
+ * Modifies:	ui->NodeFillColour
  * Returns:	Nothing.
  * Assumptions: ???
  * Bugs:	Setting the style sheet shrinks the button size.
@@ -2556,7 +2577,7 @@ MainWindow::on_NodeOutlineColor_clicked()
  */
 
 void
-MainWindow::on_NodeFillColor_clicked()
+MainWindow::on_NodeFillColour_clicked()
 {
     QColor colour = QColorDialog::getColor();
 
@@ -2564,19 +2585,19 @@ MainWindow::on_NodeFillColor_clicked()
 	return;
 
     QString s("background: " + colour.name() + ";" + BUTTON_STYLE);
-    qDeb() << "MW::on_NodeFillColor_clicked(): fill colour set to " << s;
-    ui->NodeFillColor->setStyleSheet(s);
-    ui->NodeFillColor->update();
+    qDeb() << "MW::on_NodeFillColour_clicked(): fill colour set to " << s;
+    ui->NodeFillColour->setStyleSheet(s);
+    ui->NodeFillColour->update();
 }
 
 
 
 /*
- * Name:	on_EdgeLineColor_clicked()
- * Purpose:
+ * Name:	on_EdgeLineColour_clicked()
+ * Purpose:	Set the edge line colour for the preview pane.
  * Arguments:	None.
  * Outputs:	Nothing.
- * Modifies:	ui->EdgeLineColor
+ * Modifies:	ui->EdgeLineColour
  * Returns:	Nothing.
  * Assumptions: ???
  * Bugs:	Setting the style sheet shrinks the button size.
@@ -2584,7 +2605,7 @@ MainWindow::on_NodeFillColor_clicked()
  */
 
 void
-MainWindow::on_EdgeLineColor_clicked()
+MainWindow::on_EdgeLineColour_clicked()
 {
     QColor colour = QColorDialog::getColor();
 
@@ -2592,19 +2613,19 @@ MainWindow::on_EdgeLineColor_clicked()
 	return;
 
     QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
-    qDeb() << "MW::on_EdgeLineColor_clicked(): edge line colour set to" << s;
-    ui->EdgeLineColor->setStyleSheet(s);
-    ui->EdgeLineColor->update();
+    qDeb() << "MW::on_EdgeLineColour_clicked(): edge line colour set to" << s;
+    ui->EdgeLineColour->setStyleSheet(s);
+    ui->EdgeLineColour->update();
 }
 
 
 
 /*
- * Name:	on_NodeOutlineColor_2_clicked()
- * Purpose:
+ * Name:	on_cNodeOutlineColour_clicked()
+ * Purpose:	Set the node outline colour for the preview pane.
  * Arguments:	None.
  * Outputs:	Nothing.
- * Modifies:	ui->NodeOutlineColor_2.
+ * Modifies:	ui->cNodeOutlineColour.
  * Returns:	Nothing.
  * Assumptions: ???
  * Bugs:	Setting the style sheet shrinks the button size.
@@ -2612,7 +2633,7 @@ MainWindow::on_EdgeLineColor_clicked()
  */
 
 void
-MainWindow::on_NodeOutlineColor_2_clicked()
+MainWindow::on_cNodeOutlineColour_clicked()
 {
     QColor colour = QColorDialog::getColor();
 
@@ -2620,19 +2641,19 @@ MainWindow::on_NodeOutlineColor_2_clicked()
 	return;
 
     QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
-    qDeb() << "MW::on_NodeOutlineColor_2_clicked(): outline colour set to" << s;
-    ui->NodeOutlineColor_2->setStyleSheet(s);
-    ui->NodeOutlineColor_2->update();
+    qDeb() << "MW::on_cNodeOutlineColour_clicked(): outline colour set to" << s;
+    ui->cNodeOutlineColour->setStyleSheet(s);
+    ui->cNodeOutlineColour->update();
 }
 
 
 
 /*
- * Name:	on_NodeFillColor_2_clicked()
- * Purpose:
+ * Name:	on_cNodeFillColour_clicked()
+ * Purpose:	Set the node fill colour for the preview pane.
  * Arguments:	None.
  * Outputs:	Nothing.
- * Modifies:	ui->NodeFillColor_2
+ * Modifies:	ui->cNodeFillColour
  * Returns:	Nothing.
  * Assumptions: ???
  * Bugs:	Setting the style sheet shrinks the button size.
@@ -2640,7 +2661,7 @@ MainWindow::on_NodeOutlineColor_2_clicked()
  */
 
 void
-MainWindow::on_NodeFillColor_2_clicked()
+MainWindow::on_cNodeFillColour_clicked()
 {
     QColor colour = QColorDialog::getColor();
 
@@ -2648,19 +2669,19 @@ MainWindow::on_NodeFillColor_2_clicked()
 	return;
 
     QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
-    qDeb() << "MW::on_NodeFillColor_2_clicked(): fill colour set to " << s;
-    ui->NodeFillColor_2->setStyleSheet(s);
-    ui->NodeFillColor_2->update();
+    qDeb() << "MW::on_cNodeFillColour_clicked(): fill colour set to " << s;
+    ui->cNodeFillColour->setStyleSheet(s);
+    ui->cNodeFillColour->update();
 }
 
 
 
 /*
- * Name:	on_EdgeLineColor_2_clicked()
- * Purpose:
+ * Name:	on_cEdgeLineColour_clicked()
+ * Purpose:	Set the edge line colour for the preview pane.
  * Arguments:	None.
  * Outputs:	Nothing.
- * Modifies:	ui->EdgeLineColor_2
+ * Modifies:	ui->cEdgeLineColour
  * Returns:	Nothing.
  * Assumptions: ???
  * Bugs:	Setting the style sheet shrinks the button size.
@@ -2668,7 +2689,7 @@ MainWindow::on_NodeFillColor_2_clicked()
  */
 
 void
-MainWindow::on_EdgeLineColor_2_clicked()
+MainWindow::on_cEdgeLineColour_clicked()
 {
     QColor colour = QColorDialog::getColor();
 
@@ -2676,9 +2697,9 @@ MainWindow::on_EdgeLineColor_2_clicked()
 	return;
 
     QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
-    qDeb() << "MW::on_EdgeLineColor_2_clicked(): edge line colour set to" << s;
-    ui->EdgeLineColor_2->setStyleSheet(s);
-    ui->EdgeLineColor_2->update();
+    qDeb() << "MW::on_cEdgeLineColour_clicked(): edge line colour set to" << s;
+    ui->cEdgeLineColour->setStyleSheet(s);
+    ui->cEdgeLineColour->update();
 }
 
 
@@ -2720,14 +2741,14 @@ MainWindow::on_NodeNumLabelCheckBox_clicked(bool checked)
 void
 MainWindow::on_EdgeNumLabelCheckBox_clicked(bool checked)
 {
-    ui->EdgeLabel->setDisabled(checked);
+    ui->edgeLabelEdit->setDisabled(checked);
 }
 
 
 
 /*
  * Name:	on_NodeNumLabelCheckBox_clicked()
- * Purpose:
+ * Purpose:	Enable or disable the preview pane node label text box.
  * Arguments:
  * Outputs:
  * Modifies:
@@ -2738,9 +2759,9 @@ MainWindow::on_EdgeNumLabelCheckBox_clicked(bool checked)
  */
 
 void
-MainWindow::on_NodeNumLabelCheckBox_2_clicked(bool checked)
+MainWindow::on_cNodeNumLabelCheckBox_clicked(bool checked)
 {
-    ui->NodeLabel1_2->setDisabled(checked);
+    ui->cNodeLabel1->setDisabled(checked);
 }
 
 
@@ -2758,9 +2779,9 @@ MainWindow::on_NodeNumLabelCheckBox_2_clicked(bool checked)
  */
 
 void
-MainWindow::on_EdgeNumLabelCheckBox_2_clicked(bool checked)
+MainWindow::on_cEdgeNumLabelCheckBox_clicked(bool checked)
 {
-    ui->EdgeLabel_2->setDisabled(checked);
+    ui->cEdgeLabelEdit->setDisabled(checked);
 }
 
 
@@ -2788,20 +2809,20 @@ MainWindow::set_Font_Sizes()
     font.setPointSize(TITLE_SIZE);
     ui->graphLabel->setFont(font);
 
-    ui->graphLabel_2->setFont(font);
+    ui->cGraphLabel->setFont(font);
 
     font.setPointSize(TITLE_SIZE - 1);
     ui->edgeLabel->setFont(font);
     ui->nodeLabel->setFont(font);
 
-    ui->edgeLabel_2->setFont(font);
-    ui->nodeLabel_2->setFont(font);
+    ui->cEdgeLabel->setFont(font);
+    ui->cNodeLabel->setFont(font);
 
     font.setPointSize(SUB_TITLE_SIZE);
     ui->partitionLabel->setFont(font);
-    ui->colorLabel->setFont(font);
+    ui->colourLabel->setFont(font);
 
-    ui->colorLabel_2->setFont(font);
+    ui->cColourLabel->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE);
     ui->edgeThicknessLabel->setFont(font);
@@ -2809,31 +2830,31 @@ MainWindow::set_Font_Sizes()
     ui->widthLabel->setFont(font);
     ui->heightLabel->setFont(font);
     ui->textInputLabel->setFont(font);
-    ui->textInputLabel_2->setFont(font);
+    ui->cTextInputLabel->setFont(font);
     ui->textSizeLabel->setFont(font);
-    ui->textSizeLabel_2->setFont(font);
+    ui->cTextSizeLabel->setFont(font);
     ui->fillLabel->setFont(font);
     ui->outlineLabel->setFont(font);
     ui->nodeThicknessLabel->setFont(font);
     ui->nodeDiameterLabel->setFont(font);
     ui->numLabel->setFont(font);
 
-    ui->edgeThicknessLabel_2->setFont(font);
-    ui->rotationLabel_2->setFont(font);
-    ui->widthLabel_2->setFont(font);
-    ui->heightLabel_2->setFont(font);
+    ui->cEdgeThicknessLabel->setFont(font);
+    ui->cRotationLabel->setFont(font);
+    ui->cWidthLabel->setFont(font);
+    ui->cHeightLabel->setFont(font);
     ui->textInputLabel_3->setFont(font);
     ui->textInputLabel_4->setFont(font);
     ui->textSizeLabel_3->setFont(font);
     ui->textSizeLabel_4->setFont(font);
-    ui->fillLabel_2->setFont(font);
-    ui->outlineLabel_2->setFont(font);
-    ui->nodeThicknessLabel_2->setFont(font);
-    ui->nodeDiameterLabel_2->setFont(font);
-    ui->numLabel_2->setFont(font);
+    ui->cFillLabel->setFont(font);
+    ui->cOutlineLabel->setFont(font);
+    ui->cNodeThicknessLabel->setFont(font);
+    ui->cNodeDiameterLabel->setFont(font);
+    ui->cNumLabel->setFont(font);
 
     ui->zoomDisplay->setFont(font);
-    ui->zoomDisplay_2->setFont(font);
+    ui->C_ZoomDisplay->setFont(font);
     ui->clearCanvas->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE - 1);
@@ -2841,14 +2862,14 @@ MainWindow::set_Font_Sizes()
     ui->complete_checkBox->setFont(font);
     ui->NodeNumLabelCheckBox->setFont(font);
     ui->EdgeNumLabelCheckBox->setFont(font);
-    ui->EdgeLabel->setFont(font);
+    ui->edgeLabelEdit->setFont(font);
     ui->NodeLabel1->setFont(font);
     ui->NodeLabel2->setFont(font);
 
-    ui->NodeNumLabelCheckBox_2->setFont(font);
-    ui->EdgeNumLabelCheckBox_2->setFont(font);
-    ui->EdgeLabel_2->setFont(font);
-    ui->NodeLabel1_2->setFont(font);
+    ui->cNodeNumLabelCheckBox->setFont(font);
+    ui->cEdgeNumLabelCheckBox->setFont(font);
+    ui->cEdgeLabelEdit->setFont(font);
+    ui->cNodeLabel1->setFont(font);
 
     font.setPointSize(SUB_SUB_TITLE_SIZE - 2);
     ui->graphHeight->setFont(font);
@@ -2865,16 +2886,16 @@ MainWindow::set_Font_Sizes()
     ui->EdgeNumLabelStart->setFont(font);
     offsets->setFont(font);
 
-    ui->graphHeight_2->setFont(font);
-    ui->graphWidth_2->setFont(font);
-    ui->nodeThickness_2->setFont(font);
-    ui->graphRotation_2->setFont(font);
-    ui->EdgeLabelSize_2->setFont(font);
-    ui->edgeThickness_2->setFont(font);
-    ui->NodeLabelSize_2->setFont(font);
-    ui->nodeDiameter_2->setFont(font);
-    ui->NodeNumLabelStart_2->setFont(font);
-    ui->EdgeNumLabelStart_2->setFont(font);
+    ui->cGraphHeight->setFont(font);
+    ui->cGraphWidth->setFont(font);
+    ui->cNodeThickness->setFont(font);
+    ui->cGraphRotation->setFont(font);
+    ui->cEdgeLabelSize->setFont(font);
+    ui->cEdgeThickness->setFont(font);
+    ui->cNodeLabelSize->setFont(font);
+    ui->cNodeDiameter->setFont(font);
+    ui->cNodeNumLabelStart->setFont(font);
+    ui->cEdgeNumLabelStart->setFont(font);
 }
 
 
@@ -2909,7 +2930,7 @@ MainWindow::set_Interface_Sizes()
     int borderWidth2 = 30 * scale;
 
     // These three widgets need a max width or they misbehave, so we scale them
-    ui->EdgeLabel->setMaximumWidth(ui->EdgeLabel->maximumWidth() * scale);
+    ui->edgeLabelEdit->setMaximumWidth(ui->edgeLabelEdit->maximumWidth() * scale);
     ui->NodeLabel1->setMaximumWidth(ui->NodeLabel1->maximumWidth() * scale);
     ui->NodeLabel2->setMaximumWidth(ui->NodeLabel2->maximumWidth() * scale);
 
@@ -2917,7 +2938,7 @@ MainWindow::set_Interface_Sizes()
     // automatically.
     ui->clearCanvas->resize(ui->clearCanvas->sizeHint());
     ui->zoomDisplay->resize(ui->zoomDisplay->sizeHint());
-    ui->zoomDisplay_2->resize(ui->zoomDisplay_2->sizeHint());
+    ui->C_ZoomDisplay->resize(ui->C_ZoomDisplay->sizeHint());
 
     // Set the tabWidget to the first tab and fix the minimum width
     ui->tabWidget->setCurrentIndex(0);
@@ -3165,8 +3186,8 @@ MainWindow::nodeParamsUpdated()
 	ui->NodeNumLabelCheckBox->isChecked(),	// Useful?
 	ui->NodeLabel1->text(),		    // Useful?
 	ui->NodeLabelSize->value(),
-	ui->NodeFillColor->palette().window().color(),
-	ui->NodeOutlineColor->palette().window().color(),
+	ui->NodeFillColour->palette().window().color(),
+	ui->NodeOutlineColour->palette().window().color(),
 	ui->nodeThickness->value());
 }
 
@@ -3192,9 +3213,9 @@ MainWindow::edgeParamsUpdated()
 
     ui->canvas->setUpEdgeParams(
 	ui->edgeThickness->value(),
-	ui->EdgeLabel->text(),
+	ui->edgeLabelEdit->text(),
 	ui->EdgeLabelSize->value(),
-	ui->EdgeLineColor->palette().window().color(),
+	ui->EdgeLineColour->palette().window().color(),
 	ui->EdgeNumLabelCheckBox->isChecked());	 // Useful?
 }
 
@@ -3285,8 +3306,8 @@ MainWindow::updateEditTab() // Quick, ugly, dirty fix
 {
     if (updateNeeded && ui->tabWidget->currentIndex() == 2)
     {
-	updateEditTab(0);
-	updateEditTab(2);
+	updateEditTab(previewTab);
+	updateEditTab(editNodesAndEdgesTab);
 	updateNeeded = false;
     }
 }
@@ -3314,7 +3335,7 @@ MainWindow::updateEditTab(int index)
 
     switch(index)
     {
-      case 0:
+      case previewTab:
 	QLayoutItem * wItem;
 	while ((wItem = ui->scrollAreaWidgetContents->layout()->takeAt(0))
 	       != 0)
@@ -3325,7 +3346,7 @@ MainWindow::updateEditTab(int index)
 	}
 	break;
 
-      case 1:
+      case editNodesAndEdgesTab:
 	i = 0;
 	foreach (QGraphicsItem * item, ui->canvas->scene()->items())
 	{
@@ -3408,9 +3429,6 @@ MainWindow::updateEditTab(int index)
 			QGraphicsItem * gItem = nodeList.at(0);
 			Node * node = qgraphicsitem_cast<Node*>(gItem);
 			QLineEdit * nodeEdit = new QLineEdit();
-			// Q: what was the point of this?
-			// nodeEdit->setText("Node\n");
-			// gridLayout->addWidget(nodeEdit);
 
 			QLabel * label = new QLabel("Node");
 			// When this node is deleted, also
@@ -3422,8 +3440,8 @@ MainWindow::updateEditTab(int index)
 
 			QDoubleSpinBox * diamBox = new QDoubleSpinBox();
 			QDoubleSpinBox * thicknessBox = new QDoubleSpinBox();
-			QPushButton * lineColorButton = new QPushButton();
-			QPushButton * fillColorButton = new QPushButton();
+			QPushButton * lineColourButton = new QPushButton();
+			QPushButton * fillColourButton = new QPushButton();
 			QSpinBox * fontSizeBox = new QSpinBox();
 
 			nodeEdit->installEventFilter(node);
@@ -3434,25 +3452,25 @@ MainWindow::updateEditTab(int index)
 			// All controllers handle deleting of widgets
 			SizeController * sizeController
 			    = new SizeController(node, diamBox, thicknessBox);
-			ColorLineController * colorLineController
-			    = new ColorLineController(node, lineColorButton);
+			ColourLineController * colourLineController
+			    = new ColourLineController(node, lineColourButton);
 			LabelController * weightController
 			    = new LabelController(node, nodeEdit);
 			LabelSizeController * weightSizeController
 			    = new LabelSizeController(node, fontSizeBox);
-			ColorFillController * colorFillController
-			    = new ColorFillController(node, fillColorButton);
+			ColourFillController * colourFillController
+			    = new ColourFillController(node, fillColourButton);
 
 			gridLayout->addWidget(label, i, 1);
 			gridLayout->addWidget(thicknessBox, i, 2);
 			gridLayout->addWidget(diamBox, i, 3);
 			gridLayout->addWidget(nodeEdit,	 i, 4);
 			gridLayout->addWidget(fontSizeBox, i, 5);
-			gridLayout->addWidget(lineColorButton, i, 6);
-			gridLayout->addWidget(fillColorButton, i, 7);
+			gridLayout->addWidget(lineColourButton, i, 6);
+			gridLayout->addWidget(fillColourButton, i, 7);
 			Q_UNUSED(sizeController);
-			Q_UNUSED(colorLineController);
-			Q_UNUSED(colorFillController);
+			Q_UNUSED(colourLineController);
+			Q_UNUSED(colourFillController);
 			Q_UNUSED(weightController);
 			Q_UNUSED(weightSizeController);
 			i++;
@@ -3490,8 +3508,8 @@ MainWindow::updateEditTab(int index)
 			// All controllers handle deleting of widgets
 			SizeController * sizeController
 			    = new SizeController(edge, sizeBox);
-			ColorLineController * colorController
-			    = new ColorLineController(edge, button);
+			ColourLineController * colourController
+			    = new ColourLineController(edge, button);
 			LabelController * weightController
 			    = new LabelController(edge, edgeEdit);
 			LabelSizeController * weightSizeController
@@ -3503,7 +3521,7 @@ MainWindow::updateEditTab(int index)
 			gridLayout->addWidget(fontSizeBox, i, 5);
 			gridLayout->addWidget(button, i, 6);
 			Q_UNUSED(sizeController);
-			Q_UNUSED(colorController);
+			Q_UNUSED(colourController);
 			Q_UNUSED(weightController);
 			Q_UNUSED(weightSizeController);
 			i++;
@@ -3680,23 +3698,23 @@ MainWindow::style_Canvas_Graph(enum canvas_widget_ID what_changed)
 
     style_Canvas_Graph(
 	what_changed,
-	ui->nodeDiameter_2->value(),
-	ui->NodeLabel1_2->text(),
-	ui->NodeNumLabelCheckBox_2->isChecked(),
-	ui->NodeLabelSize_2->value(),
-	ui->NodeFillColor_2->palette().window().color(),
-	ui->NodeOutlineColor_2->palette().window().color(),
-	ui->edgeThickness_2->value(),
-	ui->EdgeLabel_2->text(),
-	ui->EdgeLabelSize_2->value(),
-	ui->EdgeLineColor_2->palette().window().color(),
-	ui->graphWidth_2->value(),
-	ui->graphHeight_2->value(),
-	ui->graphRotation_2->value(),
-	ui->NodeNumLabelStart_2->value(),
-	ui->nodeThickness_2->value(),
-	ui->EdgeNumLabelCheckBox_2->isChecked(),
-	ui->EdgeNumLabelStart_2->value());
+	ui->cNodeDiameter->value(),
+	ui->cNodeLabel1->text(),
+	ui->cNodeNumLabelCheckBox->isChecked(),
+	ui->cNodeLabelSize->value(),
+	ui->cNodeFillColour->palette().window().color(),
+	ui->cNodeOutlineColour->palette().window().color(),
+	ui->cEdgeThickness->value(),
+	ui->cEdgeLabelEdit->text(),
+	ui->cEdgeLabelSize->value(),
+	ui->cEdgeLineColour->palette().window().color(),
+	ui->cGraphWidth->value(),
+	ui->cGraphHeight->value(),
+	ui->cGraphRotation->value(),
+	ui->cNodeNumLabelStart->value(),
+	ui->cNodeThickness->value(),
+	ui->cEdgeNumLabelCheckBox->isChecked(),
+	ui->cEdgeNumLabelStart->value());
 }
 
 
@@ -3722,9 +3740,9 @@ void
 MainWindow::style_Canvas_Graph(enum canvas_widget_ID what_changed,
 			       qreal nodeDiameter,	QString nodeLabel,
 			       bool nodeLabelsNumbered, qreal nodeLabelSize,
-			       QColor nodeFillColor,	QColor nodeOutlineColor,
+			       QColor nodeFillColour,	QColor nodeOutlineColour,
 			       qreal edgeSize,		QString edgeLabel,
-			       qreal edgeLabelSize,	QColor edgeLineColor,
+			       qreal edgeLabelSize,	QColor edgeLineColour,
 			       qreal totalWidth,	qreal totalHeight,
 			       qreal rotation,		qreal nodeNumStart,
 			       qreal nodeThickness,	bool edgeLabelsNumbered,
@@ -3743,8 +3761,8 @@ MainWindow::style_Canvas_Graph(enum canvas_widget_ID what_changed,
 
 	    GUARD(cNodeThickness_WGT) node->setPenWidth(nodeThickness);
 	    GUARD(cNodeDiam_WGT) node->setDiameter(nodeDiameter);
-	    GUARD(cNodeFillColour_WGT) node->setFillColour(nodeFillColor);
-	    GUARD(cNodeOutlineColour_WGT) node->setLineColour(nodeOutlineColor);
+	    GUARD(cNodeFillColour_WGT) node->setFillColour(nodeFillColour);
+	    GUARD(cNodeOutlineColour_WGT) node->setLineColour(nodeOutlineColour);
 	    GUARD(cNodeLabelSize_WGT) node->setNodeLabelSize(nodeLabelSize);
 
 	    if (what_changed == cNodeLabel1_WGT
@@ -3763,7 +3781,7 @@ MainWindow::style_Canvas_Graph(enum canvas_widget_ID what_changed,
 	{
 	    Edge * edge = qgraphicsitem_cast<Edge *>(item);
 	    GUARD(cEdgeThickness_WGT) edge->setPenWidth(edgeSize);
-	    GUARD(cEdgeLineColour_WGT) edge->setColour(edgeLineColor);
+	    GUARD(cEdgeLineColour_WGT) edge->setColour(edgeLineColour);
 	    GUARD(cEdgeLabelSize_WGT)
 		edge->setEdgeLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
 	    if (what_changed == cEdgeLabel_WGT
@@ -3844,7 +3862,7 @@ MainWindow::style_Canvas_Graph(enum canvas_widget_ID what_changed,
 	updateCanvasGraphList();
 
 
-    previousRotation = ui->graphRotation_2->value();
+    previousRotation = ui->cGraphRotation->value();
     updateNeeded = true;
 }
 
@@ -3925,24 +3943,24 @@ void
 MainWindow::resetCanvasGraphTab()
 {
     previousRotation = 0;
-    ui->graphRotation_2->setValue(0);
+    ui->cGraphRotation->setValue(0);
 
-    ui->graphHeight_2->setValue(2.50);
-    ui->graphWidth_2->setValue(2.50);
+    ui->cGraphHeight->setValue(2.50);
+    ui->cGraphWidth->setValue(2.50);
 
-    ui->nodeThickness_2->setValue(1.0);
-    ui->NodeLabelSize_2->setValue(12);
-    ui->nodeDiameter_2->setValue(0.20);
+    ui->cNodeThickness->setValue(1.0);
+    ui->cNodeLabelSize->setValue(12);
+    ui->cNodeDiameter->setValue(0.20);
 
-    ui->edgeThickness_2->setValue(1.0);
-    ui->EdgeLabelSize_2->setValue(12);
+    ui->cEdgeThickness->setValue(1.0);
+    ui->cEdgeLabelSize->setValue(12);
 
-    ui->NodeNumLabelStart_2->setValue(0);
-    ui->EdgeNumLabelStart_2->setValue(0);
+    ui->cNodeNumLabelStart->setValue(0);
+    ui->cEdgeNumLabelStart->setValue(0);
 
-    ui->NodeNumLabelCheckBox_2->setChecked(false);
-    ui->EdgeNumLabelCheckBox_2->setChecked(false);
+    ui->cNodeNumLabelCheckBox->setChecked(false);
+    ui->cEdgeNumLabelCheckBox->setChecked(false);
 
-    ui->EdgeLabel_2->setText("");
-    ui->NodeLabel1_2->setText("");
+    ui->cEdgeLabelEdit->setText("");
+    ui->cNodeLabel1->setText("");
 }

@@ -2,7 +2,7 @@
  * File:    edge.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.16
+ * Version: 1.17
  *
  * Purpose: creates an edge for the users graph
  *
@@ -82,6 +82,8 @@
  *	(with, of course, suitable name modifications).
  * Sep 3, 2020 (IC V1.16)
  *  (a) Add chosen() to update the way the edge is drawn.
+ * Oct 18, 2020 (JD V1.17)
+ *  (a) Remove a spurious variable.
  */
 
 #include "edge.h"
@@ -864,15 +866,13 @@ Edge::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
     if (!source || !dest)
 	return;
 
-    QColor color = edgeColour;
-
     QLineF line(sourcePoint, destPoint);
     if (qFuzzyCompare(line.length(), qreal(0.)))
 	return;
 
     // Set the style and draw the line.
     QPen pen;
-    pen.setColor(color);
+    pen.setColor(edgeColour);
     pen.setWidthF(penSize);
     pen.setCapStyle(Qt::RoundCap);
     pen.setJoinStyle(Qt::RoundJoin);
@@ -961,6 +961,7 @@ Edge::createSelectionPolygon()
 
     selectionPolygon = nPolygon;
 }
+
 
 
 /*

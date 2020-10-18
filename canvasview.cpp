@@ -2,7 +2,7 @@
  * File:    canvasview.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.27
+ * Version: 1.28
  *
  * Purpose: Initializes a QGraphicsView that is used to house the
  *	    QGraphicsScene.
@@ -104,6 +104,8 @@
  *	similarly, whenever a graph is deleted, remove it from the list.
  *  (b) Fixed a bug that caused the app to crash if a node was selected when
  *	the canvas was cleared.
+ * Oct 18, 2020 (JD V1.28)
+ *  (a) Fix a spurious "color" spelling.
  */
 
 #include "canvasview.h"
@@ -822,7 +824,7 @@ CanvasView::createEdge(Node * source, Node * destination)
 
     Edge * edge = new Edge(source, destination);
     edge->setPenWidth(edgeParams->size);
-    edge->setColour(edgeParams->color);
+    edge->setColour(edgeParams->colour);
     edge->setEdgeLabelSize((edgeParams->LabelSize > 0)
 			     ? edgeParams->LabelSize : 1);
     edge->setEdgeLabel(edgeParams->label);
@@ -862,7 +864,7 @@ CanvasView::setUpEdgeParams(qreal edgeSize, QString edgeLabel,
     edgeParams->size = edgeSize;
     edgeParams->label = edgeLabel;
     edgeParams->LabelSize = edgeLabelSize;
-    edgeParams->color = edgeLineColour;
+    edgeParams->colour = edgeLineColour;
     edgeParams->isNumbered = numberedLabels;
 }
 

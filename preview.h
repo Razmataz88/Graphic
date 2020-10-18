@@ -2,7 +2,7 @@
  * File:    preview.h
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07 (?)
- * Version: 1.8
+ * Version: 1.9
  *
  * Purpose: define the fields of the preview class.
  *
@@ -39,6 +39,8 @@
  *      some other variables were renamed to avoid confusion.
  * Aug 21, 2020 (IC V1.8)
  *  (a) For circulant graphs added the offsets param to Create_Basic_Graph().
+ * Oct 18, 2020 (JD V1.9)
+ *  (a) Fix spelling.
  */
 
 #ifndef PREVIEW_H
@@ -68,9 +70,9 @@ class PreView: public QGraphicsView
 		       enum widget_ID what_changed, qreal nodeDiameter,
 		       QString topNodeLabels,	    QString bottomNodeLabels,
 		       bool nodeLabelsNumbered,	    qreal nodeLabelSize,
-		       QColor nodeFillColor,	    QColor nodeOutlineColor,
+		       QColor nodeFillColour,	    QColor nodeOutlineColour,
 		       qreal edgeSize,		    QString edgeLabel,
-		       qreal edgeLabelSize,	    QColor edgeLineColor,
+		       qreal edgeLabelSize,	    QColor edgeLineColour,
 		       qreal totalWidth,	    qreal totalHeight,
 		       qreal rotation,		    qreal nodeNumStart,
 		       qreal nodeThickness,	    bool edgeLabelsNumbered,

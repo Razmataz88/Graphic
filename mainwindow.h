@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.22
+ * Version:	1.23
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -76,6 +76,10 @@
  *	style_Canvas_Graph() passes the changed_widget ID to the
  *	overloaded functions of the same name along with all relevant
  *	canvas graph tab widgets to style the selected canvas items.
+ * Oct 18, 2020 (JD V1.23)
+ *  (a) Fix spelling.
+ *  (b) Modify names (see comment in mainwindow.cpp for details).
+ *  (c) Removed spurious private variable.
  */
 
 
@@ -123,19 +127,19 @@ class MainWindow : public QMainWindow
     void dumpTikZ();
 
     void set_Font_Sizes();
-    void on_NodeOutlineColor_clicked();
-    void on_NodeFillColor_clicked();
-    void on_EdgeLineColor_clicked();
+    void on_NodeOutlineColour_clicked();
+    void on_NodeFillColour_clicked();
+    void on_EdgeLineColour_clicked();
 
-    void on_NodeOutlineColor_2_clicked();
-    void on_NodeFillColor_2_clicked();
-    void on_EdgeLineColor_2_clicked();
+    void on_cNodeOutlineColour_clicked();
+    void on_cNodeFillColour_clicked();
+    void on_cEdgeLineColour_clicked();
 
     void on_NodeNumLabelCheckBox_clicked(bool checked);
     void on_EdgeNumLabelCheckBox_clicked(bool checked);
 
-    void on_NodeNumLabelCheckBox_2_clicked(bool checked);
-    void on_EdgeNumLabelCheckBox_2_clicked(bool checked);
+    void on_cNodeNumLabelCheckBox_clicked(bool checked);
+    void on_cEdgeNumLabelCheckBox_clicked(bool checked);
 
     void on_graphType_ComboBox_currentIndexChanged(int index);
     void on_numOfNodes1_valueChanged(int arg1);
@@ -166,9 +170,9 @@ class MainWindow : public QMainWindow
     void style_Canvas_Graph(enum canvas_widget_ID what_changed,
 			    qreal nodeDiameter,	    QString nodeLabel,
 			    bool labelsAreNumbered, qreal nodeLabelSize,
-			    QColor nodeFillColor,   QColor nodeOutlineColor,
+			    QColor nodeFillColour,  QColor nodeOutlineColour,
 			    qreal edgeSize,	    QString edgeLabel,
-			    qreal edgeLabelSize,    QColor edgeLineColor,
+			    qreal edgeLabelSize,    QColor edgeLineColour,
 			    qreal totalWidth,	    qreal totalHeight,
 			    qreal rotation,	    qreal numStart,
 			    qreal nodeThickness,    bool edgeLabelsNumbered,
@@ -179,7 +183,6 @@ class MainWindow : public QMainWindow
     void saveWinSizeSettings();
 
     Ui::MainWindow * ui;
-    QDir dir;
     QString fileDirectory;
     QGridLayout * gridLayout;
     QScrollArea * scroll;

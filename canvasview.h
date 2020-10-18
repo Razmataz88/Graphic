@@ -2,7 +2,7 @@
  * File:    canvasview.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.11
+ * Version: 1.12
  *
  * Purpose: Define the CanvasView class.
  *
@@ -42,6 +42,8 @@
  * Sep 10, 2020 (IC V1.11)
  *  (a) Added selectedListChanged signal to tell the mainwindow to reset the
  *	canvas graph tab.
+ * Oct 18, 2020 (JD V1.12)
+ *  (a) Fix a spurious "color" spelling.
  */
 
 
@@ -83,7 +85,7 @@ class CanvasView: public QGraphicsView
 	qreal size;
 	QString label;
 	qreal LabelSize;
-	QColor color;
+	QColor colour;
 	bool isNumbered;
     } Edge_Params;
 

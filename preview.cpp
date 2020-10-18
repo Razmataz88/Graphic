@@ -2,7 +2,7 @@
  * File:    preview.cpp
  * Author:  Rachel Bood 100088769
  * Date:    2014/11/07
- * Version: 1.16
+ * Version: 1.17
  *
  * Purpose: Initializes a QGraphicsView that is used to house the QGraphicsScene
  *
@@ -84,6 +84,9 @@
  *	to Create_Basic_Graph().
  * Aug 25, 2020 (IC V1.16)
  *  (a) Minor clean-up of yesterday's additions.
+ * Oct 18, 2020 (JD V1.17)
+ *  (a) Fix spurious error message when no graph is selected.
+ *  (b) Fix spelling of "colour" throughout, where possible.
  */
 
 #include "basicgraphs.h"
@@ -398,6 +401,11 @@ PreView::Create_Basic_Graph(int graphType, int numOfNodes1, int numOfNodes2,
 
     switch (graphType)
     {
+      case 0:
+	// We get this when the drop-down menu just shows the menu title.
+	delete basicG;
+	break;
+
       case BasicGraphs::Antiprism:
         basicG->generate_antiprism(g, numOfNodes1, drawEdges);
         break;
@@ -464,7 +472,6 @@ PreView::Create_Basic_Graph(int graphType, int numOfNodes1, int numOfNodes2,
 
       default:
         // This should never happen!  Do not change to qDeb().
-        // (IC: Sure it can; Everytime you select "Select Graph Type"
 	qDebug() << "PV::Create_Graph(): unknown/invalid graph index "
 		 << graphType;
         break;
@@ -503,9 +510,9 @@ PreView::Style_Graph(Graph * graph,		    int graphType,
 		     enum widget_ID what_changed,   qreal nodeDiameter,
 		     QString topNodeLabels,	    QString bottomNodeLabels,
 		     bool nodeLabelsNumbered,	    qreal nodeLabelSize,
-		     QColor nodeFillColor,	    QColor nodeOutlineColor,
+		     QColor nodeFillColour,	    QColor nodeOutlineColour,
 		     qreal edgeSize,		    QString edgeLabel,
-		     qreal edgeLabelSize,	    QColor edgeLineColor,
+		     qreal edgeLabelSize,	    QColor edgeLineColour,
 		     qreal totalWidth,		    qreal totalHeight,
 		     qreal rotation,		    qreal nodeNumStart,
 		     qreal nodeThickness,	    bool edgeLabelsNumbered,
@@ -549,8 +556,8 @@ PreView::Style_Graph(Graph * graph,		    int graphType,
 
 	    GUARD(nodeThickness_WGT) node->setPenWidth(nodeThickness);
 	    GUARD(nodeDiam_WGT) node->setDiameter(nodeDiameter);
-	    GUARD(nodeFillColour_WGT) node->setFillColour(nodeFillColor);
-	    GUARD(nodeOutlineColour_WGT) node->setLineColour(nodeOutlineColor);
+	    GUARD(nodeFillColour_WGT) node->setFillColour(nodeFillColour);
+	    GUARD(nodeOutlineColour_WGT) node->setLineColour(nodeOutlineColour);
 	    GUARD(nodeLabelSize_WGT) node->setNodeLabelSize(nodeLabelSize);
 	    node->setPos(node->getPreviewX() * widthScaleFactor,
 			 node->getPreviewY() * heightScaleFactor);
@@ -593,7 +600,7 @@ PreView::Style_Graph(Graph * graph,		    int graphType,
 	    Edge * edge = qgraphicsitem_cast<Edge *>(item);
 	    edge->setParentItem(nullptr);	// ?? Eh?
 	    GUARD(edgeThickness_WGT) edge->setPenWidth(edgeSize);
-	    GUARD(edgeLineColour_WGT) edge->setColour(edgeLineColor);
+	    GUARD(edgeLineColour_WGT) edge->setColour(edgeLineColour);
 	    GUARD(edgeLabelSize_WGT)
 		edge->setEdgeLabelSize((edgeLabelSize > 0) ? edgeLabelSize : 1);
 	    if (what_changed == ALL_WGT

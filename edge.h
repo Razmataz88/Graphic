@@ -2,7 +2,7 @@
  * File:    edge.h
  * Author:  Rachel Bood
  * Date:    2014/11/07 (?)
- * Version: 1.12
+ * Version: 1.13
  *
  * Purpose: creates an edge for the users graph
  * Modification history:
@@ -51,6 +51,8 @@
  *  (b) setLabelSize renamed to setEdgeLabelSize for clarity.
  * Sep 3, 2020 (IC V1.12)
  *  (a) Add chosen(), which sets the pen style.
+ * Oct 18, 2020 (JD V1.13)
+ *  (a) Fix spelling.
  */
 
 #ifndef EDGE_H
@@ -88,7 +90,7 @@ public:
     void setRotation(qreal aRotation);
     qreal getRotation();
 
-    void setColour(QColor color);
+    void setColour(QColor colour);
     QColor getColour();
 
     void setEdgeLabel(int number);

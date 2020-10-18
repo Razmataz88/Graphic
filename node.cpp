@@ -2,7 +2,7 @@
  * File:    node.cpp
  * Author:  Rachel Bood
  * Date:    2014/11/07
- * Version: 1.18
+ * Version: 1.19
  *
  * Purpose: creates a node for the users graph
  *
@@ -86,6 +86,8 @@
  * Aug 26, 2020 (IC V1.18)
  *  (a) Save the current penstyle when an associated edit tab widget sends
  *      a focusIn event and restore the penstyle during the focusOut event.
+ * Oct 18, 2020 (JD V1.19)
+ *  (a) Fix spelling; tweak comments.
  */
 
 #include "defuns.h"
@@ -286,7 +288,7 @@ Node::getRotation()
 /*
  * Name:        setFillColour()
  * Purpose:     Sets the fill colour of the node.
- * Arguments:   QColor
+ * Arguments:   A QColor.
  * Output:      Nothing.
  * Modifies:    nodeFill
  * Returns:     Nothing.
@@ -296,16 +298,16 @@ Node::getRotation()
  */
 
 void
-Node::setFillColour(QColor fColor)
+Node::setFillColour(QColor fColour)
 {
-    nodeFill = fColor;
+    nodeFill = fColour;
     update();
 }
 
 
 
 /*
- * Name:        getFillColor()
+ * Name:        getFillColour()
  * Purpose:     Returns the fill colour of the node.
  * Arguments:   None.
  * Output:      Nothing.
@@ -327,7 +329,7 @@ Node::getFillColour()
 /*
  * Name:        setLineColour()
  * Purpose:     Sets the outline colour of the node.
- * Arguments:   QColor
+ * Arguments:   A QColor.
  * Output:      Nothing.
  * Modifies:    nodeLine
  * Returns:     Nothing.
@@ -337,16 +339,16 @@ Node::getFillColour()
  */
 
 void
-Node::setLineColour(QColor lColor)
+Node::setLineColour(QColor lColour)
 {
-    nodeLine = lColor;
+    nodeLine = lColour;
     update();
 }
 
 
 
 /*
- * Name:        getLineColor()
+ * Name:        getLineColour()
  * Purpose:     Returns the outline colour of the node.
  * Arguments:   None.
  * Output:      Nothing.
@@ -838,10 +840,10 @@ Node::paint(QPainter * painter, const QStyleOptionGraphicsItem * option,
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
-    QColor brushColor;
+    QColor brushColour;
 
-    brushColor = nodeFill;
-    painter->setBrush(brushColor);
+    brushColour = nodeFill;
+    painter->setBrush(brushColour);
 
     QPen pen;
 
