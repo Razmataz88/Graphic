@@ -2,7 +2,7 @@
  * File:	mainwindow.h
  * Author:	Rachel Bood
  * Date:	January 25, 2015.
- * Version:	1.23
+ * Version:	1.24
  *
  * Purpose:	Define the MainWindow class.
  *
@@ -80,6 +80,10 @@
  *  (a) Fix spelling.
  *  (b) Modify names (see comment in mainwindow.cpp for details).
  *  (c) Removed spurious private variable.
+ * Oct 22, 2020 (JD V1.24)
+ *  (a) Not all of the actions above were checked in.  Now they are.
+ *  (b) Modify the collection of function and variable names to
+ *	reflect the fact that many functions were moved to file-io.
  */
 
 
@@ -114,32 +118,24 @@ class MainWindow : public QMainWindow
   protected:
     virtual void closeEvent (QCloseEvent *event);
 
-    private slots:
-	bool save_Graph();
-    bool load_Graphic_File();
-    void load_Graphic_Library();
-    void select_Custom_Graph(QString graphName);
-    void generate_Graph();
-    void generate_Graph(enum widget_ID changed_widget);
-    void style_Graph(enum widget_ID changed_widget);
-    void generate_Combobox_Titles();
+  private slots:
+    bool saveGraph();
+    bool loadGraphicFile();
+    void regenerateGraph();
+    void generateGraph(enum widget_ID changed_widget);
+    void styleGraph(enum widget_ID changed_widget);
+    void generateComboboxTitles();
     void dumpGraphIc();
     void dumpTikZ();
 
-    void set_Font_Sizes();
+    void setFontSizes();
+
     void on_NodeOutlineColour_clicked();
     void on_NodeFillColour_clicked();
     void on_EdgeLineColour_clicked();
 
-    void on_cNodeOutlineColour_clicked();
-    void on_cNodeFillColour_clicked();
-    void on_cEdgeLineColour_clicked();
-
     void on_NodeNumLabelCheckBox_clicked(bool checked);
     void on_EdgeNumLabelCheckBox_clicked(bool checked);
-
-    void on_cNodeNumLabelCheckBox_clicked(bool checked);
-    void on_cEdgeNumLabelCheckBox_clicked(bool checked);
 
     void on_graphType_ComboBox_currentIndexChanged(int index);
     void on_numOfNodes1_valueChanged(int arg1);
@@ -147,6 +143,13 @@ class MainWindow : public QMainWindow
 
     void nodeParamsUpdated();
     void edgeParamsUpdated();
+
+    void on_cNodeNumLabelCheckBox_clicked(bool checked);
+    void on_cEdgeNumLabelCheckBox_clicked(bool checked);
+
+    void on_cNodeOutlineColour_clicked();
+    void on_cNodeFillColour_clicked();
+    void on_cEdgeLineColour_clicked();
 
     void on_deleteMode_radioButton_clicked();
     void on_joinMode_radioButton_clicked();
@@ -156,7 +159,6 @@ class MainWindow : public QMainWindow
     void on_selectMode_radioButton_clicked();
     void on_tabWidget_currentChanged(int index);
 
-    void updateEditTab(int index);
     void updateEditTab();
     void scheduleUpdate();
 
@@ -183,7 +185,6 @@ class MainWindow : public QMainWindow
     void saveWinSizeSettings();
 
     Ui::MainWindow * ui;
-    QString fileDirectory;
     QGridLayout * gridLayout;
     QScrollArea * scroll;
     bool promptSave = false;
