@@ -2,7 +2,7 @@
  * File:	graph.h
  * Author:	Rachel Bood
  * Date:	2014 or 2015?
- * Version:	1.2
+ * Version:	1.3
  *
  * Purpose:	Define the graph class.
  *
@@ -17,13 +17,14 @@
  * Aug 14, 2020 (IC V1.2)
  *  (a) Add "keepRotation" param to setRotation().
  *  (b) Add a private "rotation" variable and its "getRotation()" getter.
+ * Oct 18, 20202 (JD V1.3)
+ *  (a) Remove the apparently-unused cornergrabber.h.
  */
 
 #ifndef GRAPH_H
 #define GRAPH_H
 
 #include <QGraphicsItemGroup>
-#include "cornergrabber.h"
 
 class CanvasView;
 class Node;

@@ -18,8 +18,8 @@ SOURCES += \
     canvasview.cpp \
     colourfillcontroller.cpp \
     colourlinecontroller.cpp \
-    cornergrabber.cpp \
     edge.cpp \
+    file-io.cpp \
     graph.cpp \
     graphmimedata.cpp \
     html-label.cpp \
@@ -38,9 +38,9 @@ HEADERS += \
     canvasview.h \
     colourfillcontroller.h \
     colourlinecontroller.h \
-    cornergrabber.h \
     defuns.h \
     edge.h \
+    file-io.h \
     graph.h \
     graphmimedata.h \
     html-label.h \
