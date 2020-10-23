@@ -1,14 +1,36 @@
+/*
+ * File:	graph.h
+ * Author:	Rachel Bood
+ * Date:	2014 or 2015?
+ * Version:	1.3
+ *
+ * Purpose:	Define the graph class.
+ *
+ * Modification history:
+ * Oct 10, 2019 (JD)
+ *  (a) Add this header comment.
+ *  (b) Remove unused field "point_star" from the graph struct.
+ *  (c) Minor reformatting.
+ * Jun 17, 2020 (IC V1.1)
+ *  (a) Changed class type from QGraphicsItem to QGraphicsObject for access to
+ *      destroyed() signal in connect statements for graphs.
+ * Aug 14, 2020 (IC V1.2)
+ *  (a) Add "keepRotation" param to setRotation().
+ *  (b) Add a private "rotation" variable and its "getRotation()" getter.
+ * Oct 18, 20202 (JD V1.3)
+ *  (a) Remove the apparently-unused cornergrabber.h.
+ */
+
 #ifndef GRAPH_H
 #define GRAPH_H
 
 #include <QGraphicsItemGroup>
-#include "cornergrabber.h"
 
 class CanvasView;
 class Node;
 class Edge;
 
-class Graph : public QGraphicsItem
+class Graph : public QGraphicsObject
 {
 public:
     typedef struct graph
@@ -16,15 +38,13 @@ public:
         QList<Node *> cycle;
         QList<QList <Node *>> double_cycle;
         QList<QList <Node *>> list_of_cycles;
-        QList<Node *> point_star;
         QList<Node *> bipartite_top;
         QList<Node *> bipartite_bottom;
         QList<Node *> grid;
         QList<Node *> path;
         QVector<Node *> binaryHeap;
         Node * center;
-
-    }Nodes;
+    } Nodes;
 
     Graph();
     void isMoved();
@@ -33,15 +53,19 @@ public:
     Nodes nodes;
 
     QRectF boundingRect() const;
-    void setRotation(qreal aRotation);
-    QGraphicsItem *getRootParent();
+    void setRotation(qreal aRotation, bool keepRotation);
+    qreal getRotation();
+    QGraphicsItem * getRootParent();
 
 protected:
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
+    void paint(QPainter * painter,
+	       const QStyleOptionGraphicsItem * option,
+	       QWidget * widget);
 
 private:
-     int moved;
+     int moved;		// 1 means the graph was dropped onto the canvas.
+     qreal rotation;
 };
 
 #endif // GRAPH_H

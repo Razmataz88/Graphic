@@ -1,28 +1,36 @@
+/*
+ * File:    colourlinecontroller.cpp
+ * Author:  Rachel Bood 100088769
+ * Date:    2014 (?)
+ * Version: 1.2
+ *
+ * Purpose:
+ *
+ * Modification history:
+ * Jul 9, 2020 (IC V1.1)
+ *  (a) BUTTON_STYLE moved to defuns.h.
+ * Oct 18, 2020 (JD V1.2)
+ *  (a) Code tidying, spelling corrections, code simplifications.
+ */
+
 #include "colourlinecontroller.h"
 
 #include <QColorDialog>
 #include <QtCore>
 
-#define BUTTON_STYLE "border-style: outset; border-width: 2px; border-radius: 5px; border-color: beige; padding: 3px;"
 
-ColorLineController::ColorLineController(Edge * anEdge, QPushButton * aButton)
+ColourLineController::ColourLineController(Edge * anEdge, QPushButton * aButton)
 {
     edge = anEdge;
     button = aButton;
     if (button != nullptr || button != 0)
     {
-        QColor color = edge->getColour();
-        QString s("background: #"
-                  + QString(color.red() < 16? "0" : "")
-                  + QString::number(color.red(),16)
-                  + QString(color.green() < 16? "0" : "")
-                  + QString::number(color.green(),16)
-                  + QString(color.blue() < 16? "0" : "")
-                  + QString::number(color.blue(),16) + ";"
-                  BUTTON_STYLE);
+        QColor colour = edge->getColour();
+	QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
         button->setStyleSheet(s);
+
         connect(button, SIGNAL (clicked(bool)),
-                this, SLOT(setEdgeLineColor()));
+		this, SLOT(setEdgeLineColour()));
         connect(anEdge, SIGNAL(destroyed(QObject*)),
                 this, SLOT(deleteButton()));
         connect(anEdge, SIGNAL(destroyed(QObject*)),
@@ -30,24 +38,20 @@ ColorLineController::ColorLineController(Edge * anEdge, QPushButton * aButton)
     }
 }
 
-ColorLineController::ColorLineController(Node * aNode, QPushButton *aButton)
+
+
+ColourLineController::ColourLineController(Node * aNode, QPushButton * aButton)
 {
     node = aNode;
     button = aButton;
     if (button != nullptr || button != 0)
     {
-        QColor color = node->getLineColour();
-        QString s("background: #"
-                  + QString(color.red() < 16? "0" : "")
-                  + QString::number(color.red(),16)
-                  + QString(color.green() < 16? "0" : "")
-                  + QString::number(color.green(),16)
-                  + QString(color.blue() < 16? "0" : "")
-                  + QString::number(color.blue(),16) + ";"
-                  BUTTON_STYLE);
+        QColor colour = node->getLineColour();
+	QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
         button->setStyleSheet(s);
+
         connect(button, SIGNAL (clicked(bool)),
-                this, SLOT(setNodeOutlineColor()));
+                this, SLOT(setNodeOutlineColour()));
         connect(aNode, SIGNAL(destroyed(QObject*)),
                 this, SLOT(deleteButton()));
         connect(aNode, SIGNAL(destroyed(QObject*)),
@@ -56,46 +60,39 @@ ColorLineController::ColorLineController(Node * aNode, QPushButton *aButton)
 
 }
 
-void ColorLineController::setEdgeLineColor()
+
+// The original code always set the button stylesheet.  Do we want that?
+void
+ColourLineController::setEdgeLineColour()
 {
-    QColor color = QColorDialog::getColor();
-    QString s("background: #"
-              + QString(color.red() < 16? "0" : "")
-              + QString::number(color.red(),16)
-              + QString(color.green() < 16? "0" : "")
-              + QString::number(color.green(),16)
-              + QString(color.blue() < 16? "0" : "")
-              + QString::number(color.blue(),16) + ";"
-              BUTTON_STYLE);
-    button->setStyleSheet(s);
     if (edge != 0 || edge != nullptr)
     {
-        edge->setColour(color);
+	QColor colour = QColorDialog::getColor();
+	QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
+	button->setStyleSheet(s);
+        edge->setColour(colour);
     }
 }
 
-void ColorLineController::setNodeOutlineColor()
+
+
+// The original code always set the button stylesheet.  Do we want that?
+void
+ColourLineController::setNodeOutlineColour()
 {
-    QColor color = QColorDialog::getColor();
-    QString s("background: #"
-              + QString(color.red() < 16? "0" : "")
-              + QString::number(color.red(),16)
-              + QString(color.green() < 16? "0" : "")
-              + QString::number(color.green(),16)
-              + QString(color.blue() < 16? "0" : "")
-              + QString::number(color.blue(),16) + ";"
-              BUTTON_STYLE);
-    button->setStyleSheet(s);
     if (node != 0 || node != nullptr)
     {
-        node->setLineColour(color);
+	QColor colour = QColorDialog::getColor();
+	QString s("background: " + colour.name() + "; " + BUTTON_STYLE);
+	button->setStyleSheet(s);
+        node->setLineColour(colour);
     }
 }
 
-void ColorLineController::deleteButton()
+
+
+void
+ColourLineController::deleteButton()
 {
     delete button;
 }
-
-
-

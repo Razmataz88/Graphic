@@ -18,17 +18,18 @@ SOURCES += \
     canvasview.cpp \
     colourfillcontroller.cpp \
     colourlinecontroller.cpp \
-    cornergrabber.cpp \
     edge.cpp \
+    file-io.cpp \
     graph.cpp \
     graphmimedata.cpp \
-    label.cpp \
+    html-label.cpp \
     labelcontroller.cpp \
     labelsizecontroller.cpp \
     main.cpp \
     mainwindow.cpp \
     node.cpp \
     preview.cpp \
+    settingsdialog.cpp \
     sizecontroller.cpp
 
 HEADERS += \
@@ -37,19 +38,23 @@ HEADERS += \
     canvasview.h \
     colourfillcontroller.h \
     colourlinecontroller.h \
+    defuns.h \
     edge.h \
+    file-io.h \
     graph.h \
     graphmimedata.h \
-    label.h \
+    html-label.h \
     labelcontroller.h \
     labelsizecontroller.h \
     mainwindow.h \
     node.h \
     preview.h \
+    settingsdialog.h \
     sizecontroller.h
 
 
-FORMS += mainwindow.ui
+FORMS += mainwindow.ui \
+    settingsdialog.ui
 
 CONFIG += c++11 \
     thread
